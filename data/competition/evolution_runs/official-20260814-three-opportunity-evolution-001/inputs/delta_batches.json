@@ -1,0 +1,267 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "source_path": "data/competition/demo_v1/CURATED_DEMO_DELTA_v1.json",
+  "record_count": 20,
+  "batches": [
+    {
+      "batch_id": "delta-01",
+      "records": [
+        {
+          "raw_id": "MJ-RAW-0005",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "“网上风很大的国风果酒。叛身颜值确实好看，但讲真的茶香有点太抢戏了。盖过了本身的酒味，很容易上头！而且后味有点微苦，果香散得也快”",
+          "context_content": "来源：抖音平台用户评论",
+          "source_platform": "抖音",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!6"
+        },
+        {
+          "raw_id": "MJ-RAW-0010",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "可能本人没喝过酒，28岁男，喝朋友送的梅见，一口就感觉是酒精兑香精，然后就放厨房当料酒了。",
+          "context_content": "来源：B站平台用户评论",
+          "source_platform": "B站",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!11"
+        },
+        {
+          "raw_id": "MJ-RAW-0018",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "别单喝很伤胃的，这个兑汽水好一点，醒目就挺好喝！而且比例是酒少汽水多一点，也不涨肚子！但是每次喝梅见胃都要痛好几天，前几天刚喝了兑汽水胃没事，后面半瓶没兑直接喝的给我整吐了",
+          "context_content": "来源：小红书平台用户评论",
+          "source_platform": "小红书",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!19"
+        },
+        {
+          "raw_id": "MJ-RAW-0026",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "感觉烟熏的那款会比这款味道好很多，这款的话口感一般，整体喝下来还是烟熏的那个酸甜感更重一点，这款口感偏淡，反正不不太好喝感觉",
+          "context_content": "梅见原味青梅酒｜原味330mL×6瓶｜页面未展示数字星级｜未显示追评标识",
+          "source_platform": "京东",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!27"
+        },
+        {
+          "raw_id": "MJ-RAW-0027",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "工业酒精味比较重。一点点青梅的回甘",
+          "context_content": "梅见原味青梅酒｜原味330mL×1瓶｜页面未展示数字星级｜未显示追评标识",
+          "source_platform": "京东",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!28"
+        }
+      ]
+    },
+    {
+      "batch_id": "delta-02",
+      "records": [
+        {
+          "raw_id": "XHS-SOC-0200",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "尝了一口感觉像是止咳糖浆的味道",
+          "context_content": "梅见成分分析-浓缩汁勾兑｜2025-10-01｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/search_result/梅见测评",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!112"
+        },
+        {
+          "raw_id": "MJ-RAW-0013",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "自己泡的梅酒、国外的梅酒、梅见都试过，梅见我的口粮酒了。说是用了什么露酒的生产工艺，入口很顺，高粱酒的香味也够，我感觉没有你说的这么差😂。我自己泡的会有点反苦倒是真的，昆竹没试过，没听过这个牌子。",
+          "context_content": "来源：小红书平台用户评论",
+          "source_platform": "小红书",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!14"
+        },
+        {
+          "raw_id": "MJ-RAW-0034",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "对于不能喝酒的小白来说应该还行吧，个人觉得甜度太大了",
+          "context_content": "梅见旗舰店｜超酸梅见及时光梅多口味商品｜已购：12度梅见乌梅150ml",
+          "source_platform": "淘宝",
+          "original_url": "https://detail.tmall.com/item.htm?id=720970105698",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!33"
+        },
+        {
+          "raw_id": "MJ-RAW-0042",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "哥 我来了 梅见空口喝就好喝 兑葡萄味的气泡水和养乐多也不错 推荐",
+          "context_content": "来源：抖音平台用户评论",
+          "source_platform": "抖音",
+          "original_url": "https://www.douyin.com/jingxuan/search/%E6%A2%85%E8%A7%81?aid=5d675a76-bfbf-47be-9dd6-a3198f6b9bc9&modal_id=7618135895257924594&type=general",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!41"
+        },
+        {
+          "raw_id": "MJ-RAW-0043",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "1.水溶c+茉莉花茶+梅见 比例1:1:1",
+          "context_content": "来源：抖音平台用户评论",
+          "source_platform": "抖音",
+          "original_url": "https://www.douyin.com/jingxuan/search/%E6%A2%85%E8%A7%81%E9%9D%92%E6%A2%85%E6%9E%9C%E9%85%92?aid=31cba53f-1ead-41a4-8ab2-c89001b4512f&modal_id=7546647568504179968&type=general",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-07T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!42"
+        }
+      ]
+    },
+    {
+      "batch_id": "delta-03",
+      "records": [
+        {
+          "raw_id": "XHS-SOC-0034",
+          "sample_type": "场景需求",
+          "raw_sample_type": "饮法调配与内容共创",
+          "raw_content": "原来这种调酒都是酒50饮料200我一比一调的我说怎么不好喝",
+          "context_content": "梅见青梅酒调酒搭配｜2025-08-27｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/search_result/梅见配什么",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!462"
+        },
+        {
+          "raw_id": "XHS-SOC-0038",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "茉莉蜜茶，4:1，或者3:2，喝起来特别清爽",
+          "context_content": "梅见加柠檬汁雪碧酸梅汤蔓越莓｜2025-05-07｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/explore/69fc7e9a000000003502d2e8",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!55"
+        },
+        {
+          "raw_id": "XHS-SOC-0247",
+          "sample_type": "场景需求",
+          "raw_sample_type": "饮法调配与内容共创",
+          "raw_content": "梅见和养乐多兑有点不对劲，有点乳清分离",
+          "context_content": "梅见青梅酒调酒搭配｜2025-08-27｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/search_result/梅见配什么",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!473"
+        },
+        {
+          "raw_id": "JD-20260809-005",
+          "sample_type": "场景需求",
+          "raw_sample_type": "饮法调配与内容共创",
+          "raw_content": "以前吃日料总是习惯配清酒，\n自打吃了一次居酒屋搭配了这款梅酒\n感觉是解锁了新技能\n冰球配梅酒，随着冰的溶解，梅酒的风味\n也想茶一样会有渐变 值得推荐",
+          "context_content": "品牌：CHOYA俏雅｜商品/规格：带梅子本格梅酒430mL｜SKU：100049386783",
+          "source_platform": "京东",
+          "original_url": "https://item.jd.com/100049386783.html",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!474"
+        },
+        {
+          "raw_id": "MJ-RAW-0004",
+          "sample_type": "梅见反馈",
+          "raw_sample_type": "梅见产品体验反馈",
+          "raw_content": "\"梅见的青梅酒很烂 虽然说便宜 但是高度高粱酒的基酒辣嗓子 高度蒸馏直接盖过去 而且苦涩 入口没有任何融合\n推荐昆竹牌三得利古越龙山 都碾压梅见\"“[捂脸R]反正当时买完打开一瞬间的很后悔就是了”",
+          "context_content": "来源：小红书平台用户评论",
+          "source_platform": "小红书",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!5"
+        }
+      ]
+    },
+    {
+      "batch_id": "delta-04",
+      "records": [
+        {
+          "raw_id": "XHS-SOC-0017",
+          "sample_type": "竞品反馈",
+          "raw_sample_type": "竞品选择与替代理由",
+          "raw_content": "昆竹牌！广东龙门这边生产的真的很好喝，冰一下喝绝了，我觉得比梅见好喝",
+          "context_content": "除了梅见还有其他梅子酒推荐吗｜2025-07-04｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/explore/6a48b570000000001603dc9b",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!268"
+        },
+        {
+          "raw_id": "JD-20260809-041",
+          "sample_type": "竞品反馈",
+          "raw_sample_type": "竞品选择与替代理由",
+          "raw_content": "还行有点小辣酒的味道兑饮料还不错\n比梅见酒味淡一点，不过好像更甜一点\n好喝不上头，推荐推荐多次回购了 家里老人挺喜欢的 也很上档次",
+          "context_content": "品牌：昆竹牌｜商品/规格：青梅酒450ml*6瓶｜SKU：100348071270",
+          "source_platform": "京东",
+          "original_url": "https://item.jd.com/100348071270.html",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!272"
+        },
+        {
+          "raw_id": "XHS-SOC-0046",
+          "sample_type": "竞品反馈",
+          "raw_sample_type": "竞品选择与替代理由",
+          "raw_content": "昆竹白金版，或者进口俏雅。但是，都太甜，必须加冰喝。和自己泡的还是差太远。",
+          "context_content": "除了梅见还有其他梅子酒推荐吗｜2025-07-04｜小红书",
+          "source_platform": "小红书",
+          "original_url": "https://www.xiaohongshu.com/explore/6a48b570000000001603dc9b",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!269"
+        },
+        {
+          "raw_id": "MJ-RAW-0096",
+          "sample_type": "竞品反馈",
+          "raw_sample_type": "竞品产品体验反馈",
+          "raw_content": "没骗人！choya的梅子酒好好喝！\n看热烈欢迎里面侯佩岑推荐的choya的梅子酒兑气泡水，被种草了马上试试！对于我这种喝酒小白超级好接受！梅子酒酸酸甜甜的，苏打水有一定程度的中和了它的酒味~尊嘟好好喝！",
+          "context_content": "来源：小红书平台用户评论",
+          "source_platform": "小红书",
+          "original_url": null,
+          "platform_url_available": "False",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!183"
+        },
+        {
+          "raw_id": "JD-20260809-004",
+          "sample_type": "场景需求",
+          "raw_sample_type": "购买决策与价格反馈",
+          "raw_content": "此款本格俏雅梅酒，第一次喝到朋友送的这款酒，一下子就喜欢上了，酸甜平衡，酒精度刚刚好，入口顺滑，梅香馥郁不上头。已多次回购。",
+          "context_content": "品牌：CHOYA俏雅｜商品/规格：纪州Kishu本格梅酒720ml｜SKU：100049386783",
+          "source_platform": "京东",
+          "original_url": "https://item.jd.com/100049386783.html",
+          "platform_url_available": "True",
+          "collected_at": "2026-08-09T00:00:00",
+          "source_ref": "品牌语料分析与洞察体系.xlsx#表1：原始语料库!426"
+        }
+      ]
+    }
+  ]
+}

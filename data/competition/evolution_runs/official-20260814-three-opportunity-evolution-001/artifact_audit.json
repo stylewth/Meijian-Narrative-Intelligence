@@ -1,0 +1,19 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "through": "final-synthesis",
+  "blind_summary": "valid",
+  "selection": "valid",
+  "selected_candidate_ids": [
+    "EC-ADD-01-口味图鉴",
+    "EC-ADD-02-梅见溯源记",
+    "EC-03-双容量双剧本"
+  ],
+  "selected_candidates": 3,
+  "checkpoints": 5,
+  "model_results": 6,
+  "weighted_scores": "valid",
+  "text_changes": 0,
+  "delta_batches": 4,
+  "delta_evidence": "20/20",
+  "final_synthesis": "valid"
+}

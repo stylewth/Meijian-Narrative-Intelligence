@@ -1,0 +1,151 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "checkpoint_id": "checkpoint-00",
+  "previous_checkpoint_id": null,
+  "new_evidence_ids": [
+    "BLIND_SUMMARY_20260814"
+  ],
+  "visible_evidence_ids": [
+    "BLIND_SUMMARY_20260814"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "EC-ADD-01-口味图鉴",
+      "title": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸写明白",
+      "model_original_text": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花写清楚，先看标签再下单，理性饮酒",
+      "presentation_text": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花写清楚，先看标签再下单，理性饮酒",
+      "scores": {
+        "evidence_strength": {
+          "score": 78.0,
+          "rationale": "盲评中'不同产品的口味图鉴'吸引力评分最高（mean=3.98/5, n=56），且有26/56（46.4%）用户选择该机会点；Q12开放回答中也有用户表达对口味选择困惑的需求，证据支持强。"
+        },
+        "emotional_tension": {
+          "score": 68.0,
+          "rationale": "用户面临口味多、选择困难的痛点，Q7中 choice_intent 均值3.77，体现决策压力带来的张力；但张力为中等偏上。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 58.0,
+          "rationale": "直接关联梅见多SKU特点，但Q7 different 均值仅3.29，显示品牌专属感不强，且官方图鉴容易被竞品复制，独特性中等。"
+        },
+        "competitor_difference": {
+          "score": 35.0,
+          "rationale": "官方口味图鉴概念本身并非绝对差异化，Q7 different 均值3.29，显示用户感知差异不明显，竞品也可能提供类似指南。"
+        },
+        "scene_conversion": {
+          "score": 68.0,
+          "rationale": "选购/决策场景直接，Q5高吸引力和Q6选择率支持转化；盲评中双人便饭场景占比最高（Q11=25/51）也间接有利于日常餐桌饮用决策，转化潜力较大。"
+        }
+      },
+      "weighted_score": 63.05,
+      "rank": 1,
+      "score_change": 1.35,
+      "patches": [],
+      "risks": [
+        "口味图鉴可能被竞品快速复制，差异化窗口有限；Q7 different均值偏低，感知差异不足。",
+        "官方图鉴需依赖SKU清单和工艺信息，若信息更新不及时可能引发负面反馈。"
+      ]
+    },
+    {
+      "candidate_id": "EC-ADD-02-梅见溯源记",
+      "title": "梅见是勾兑的吗？用陶坛浸泡实拍回答“酒精+青梅汁”的疑虑",
+      "model_original_text": "梅见到底是不是勾兑的？打开批次码看陶坛浸泡记录，用可验证的信息代替猜测，理性饮酒",
+      "presentation_text": "梅见到底是不是勾兑的？打开批次码看陶坛浸泡记录，用可验证的信息代替猜测，理性饮酒",
+      "scores": {
+        "evidence_strength": {
+          "score": 62.0,
+          "rationale": "盲评中'青梅来源与风味说明'吸引力评分较低（mean=3.30/5），但选择率最高（32/56=57.1%），说明用户兴趣高但吸引文案不足；Q12开放回答有用户表达对品牌勾兑疑虑的证据，综合证据中等偏强。"
+        },
+        "emotional_tension": {
+          "score": 82.0,
+          "rationale": "信任疑虑和健康担忧带来高情绪张力，Q12中有用户直接质疑梅见是否勾兑，焦虑感强，因此张力高。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 70.0,
+          "rationale": "直接针对梅见品牌的核心疑虑和工艺叙事，品牌专属感较强；盲评中Q9 brand_fit均值3.90，显示用户认为该方向契合品牌，独特性较高。"
+        },
+        "competitor_difference": {
+          "score": 32.0,
+          "rationale": "溯源透明概念在酒类竞品中已有类似叙事，盲评Q7 different均值3.29较低，显示差异化不突出，故分数不高。"
+        },
+        "scene_conversion": {
+          "score": 55.0,
+          "rationale": "场景依赖扫描批次码和验证流程，转化链路较长；盲评中Q6选择率高但Q5吸引力低，实际餐桌场景转换尚需打通，因此转化分中等偏低。"
+        }
+      },
+      "weighted_score": 62.45,
+      "rank": 2,
+      "score_change": 2.5,
+      "patches": [],
+      "risks": [
+        "批次码和陶坛浸泡记录若未能真实落地，将加剧消费者不信任，反噬品牌信誉。",
+        "溯源内容若被竞品模仿，差异化优势会被稀释；且现有证据不支持批次级验证可行性。"
+      ]
+    },
+    {
+      "candidate_id": "EC-03-双容量双剧本",
+      "title": "150ml 一次喝完、330ml 一人一瓶：梅见双容量接住独饮与小聚",
+      "model_original_text": "如果 150ml/330ml 规格实际在售，可以讲“两种容量、两种自洽喝法”：150ml 小瓶适合一次喝完不浪费，330ml 适合一人一瓶不劝酒；这是饮用建议而非普遍结论，理性饮酒。",
+      "presentation_text": "如果 150ml/330ml 规格实际在售，可以讲“两种容量、两种自洽喝法”：150ml 小瓶适合一次喝完不浪费，330ml 适合一人一瓶不劝酒；这是饮用建议而非普遍结论，理性饮酒。",
+      "scores": {
+        "evidence_strength": {
+          "score": 70.0,
+          "rationale": "盲评中'一人、两人或多人对应的容量'吸引力评分中等偏上（mean=3.63/5），选择率29/56=51.8%；Q12开放回答有大量提及双人日常便饭、两人简餐等场景，证据支持强。"
+        },
+        "emotional_tension": {
+          "score": 60.0,
+          "rationale": "围绕小酌放松和避免劝酒压力存在一定张力，但盲评开放回答多描述轻松氛围，情绪强度中等，故给60。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 62.0,
+          "rationale": "容量对应场景与梅见产品线直接相关，盲评Q12中大量双人场景反馈，品牌契合度较高；但独饮场景已被RIO等竞品占据，独特性受限。"
+        },
+        "competitor_difference": {
+          "score": 30.0,
+          "rationale": "双容量和双剧本概念容易模仿，盲评中未显示与众不同的强差异，Q7 different均值3.29也较低，因此差异分不高。"
+        },
+        "scene_conversion": {
+          "score": 68.0,
+          "rationale": "盲评Q11显示双人日常便饭为首选场景（25/51=49%），该机会点直接对应此场景，转化路径清晰；Q12开放回答也频繁出现双人便饭需要合适容量和氛围，转化潜力高。"
+        }
+      },
+      "weighted_score": 59.7,
+      "rank": 3,
+      "score_change": 4.15,
+      "patches": [],
+      "risks": [
+        "双容量规格若未实际在售，该概念无法落地，可能导致用户失望。",
+        "独饮场景已有RIO等品牌占位，若强调独饮可能引发竞品对比，注意话术边界。"
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "TWO_PERSON_DAILY_MEAL",
+      "tier": "PRIMARY",
+      "label": "两个人日常便饭",
+      "support_summary": "盲评Q11中25/51（49.0%）用户选择双人日常便饭为首选饮用场景；Q12开放回答中大量用户提及双人简餐、份量合适、氛围轻松（如BLIND-Q12-006至012等），证据充分。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814"
+      ]
+    },
+    {
+      "scene_id": "SMALL_GROUP_HEAVY_MEAL",
+      "tier": "SECONDARY",
+      "label": "三五人重口味小聚",
+      "support_summary": "盲评Q11中14/51（27.5%）用户选择多人重口味聚餐；开放回答提到梅见解辣解腻、适合重口菜肴（如BLIND-Q12-011、018、025、043），证据较充分。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814"
+      ]
+    },
+    {
+      "scene_id": "SOLO_CHINESE_MEAL",
+      "tier": "EXTENSION",
+      "label": "一个人吃中餐",
+      "support_summary": "盲评Q11中7/51（13.7%）用户选择独酌场景；开放回答有少量提及睡前微醺（BLIND-Q12-022）和个人小酌，证据有限，暂列为扩展场景。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814"
+      ]
+    }
+  ],
+  "decision_brief": "在checkpoint-00中，基于盲评摘要对三个机会点进行重评，不修改候选原文。盲评数据显示：口味图鉴在吸引力上得分最高（Q5 mean=3.98），但选择率略低于溯源；溯源选择率最高（Q6=57.1%）但吸引力偏低；双容量在场景支持上最强（Q11双人场景占49%）。重评后三个机会点的加权分分别调整为63.05、62.45、59.70，排序维持1>2>3，但双容量提升幅度最大（+4.15），说明其场景诉求被低估。场景方面，双人日常便饭被明确为首选场景，多人重口味小聚为次要，独酌为扩展。建议后续将场景证据整合到各机会点的文案与传播策略中。"
+}

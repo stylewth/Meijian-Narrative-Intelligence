@@ -1,0 +1,32 @@
+{
+  "annotation_version": "routing-v2-luna-max-v1-formal-attempt-0001",
+  "batch_ids": [
+    "analysis_baseline-0001",
+    "analysis_baseline-0002",
+    "analysis_baseline-0003",
+    "analysis_baseline-0004",
+    "analysis_baseline-0005",
+    "analysis_baseline-0006",
+    "analysis_baseline-0007",
+    "analysis_baseline-0008",
+    "analysis_baseline-0009",
+    "analysis_baseline-0010",
+    "analysis_baseline-0011",
+    "analysis_baseline-0012",
+    "analysis_demo_delta-0001",
+    "challenge_pool-0001",
+    "challenge_pool-0002",
+    "challenge_pool-0003",
+    "holdout-0001",
+    "holdout-0002",
+    "holdout-0003"
+  ],
+  "dataset_sha256": "8be71070cc078c8f2f9994e7a412df85b04682b3a8af3009c0e5ce8c354a6214",
+  "dataset_version": "screened_v2",
+  "generated_at": "2026-08-12T01:49:29.301030Z",
+  "model_id": "gpt-5.6-luna",
+  "prompt_sha256": "c6758a1205966032a8ea0ecee0c55117a44d50233ffebda4374200398e0dbdf3",
+  "prompt_version": "v2",
+  "reasoning_effort": "max",
+  "result_sha256": "092dbd64d6cef08e2fcf8ae73c25577d66f30c8e03b4d540a1cc176cd2c5b8c1"
+}

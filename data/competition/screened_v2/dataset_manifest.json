@@ -1,0 +1,15 @@
+{
+  "dataset_sha256": "8be71070cc078c8f2f9994e7a412df85b04682b3a8af3009c0e5ce8c354a6214",
+  "dataset_version": "screened_v2",
+  "effective_record_count": 419,
+  "manifest_type": "ScreenedCompetitionDatasetManifest",
+  "record_count": 484,
+  "schema_version": "screened_competition_dataset_v2",
+  "screening_result_sha256": "60831547377368e2ec4e5260eabffbede673b4cb3fd44eec2902bb3d553c538f",
+  "source_sha256": "7b94ed49c942214f682459e58f99d8672a0c6dd4f96b00056141b20a2de2c7b3",
+  "status_counts": {
+    "EXCLUDE": 54,
+    "KEEP": 419,
+    "REVIEW": 11
+  }
+}

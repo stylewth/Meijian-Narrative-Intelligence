@@ -1,0 +1,34 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "status": "COMPLETE",
+  "source_paths": [
+    "盲评问卷/q1-8.xlsx",
+    "盲评问卷/q9-12.xlsx",
+    "data/competition/five_candidate_validation/official-20260813-five-candidate-validation-002/evaluation/result.json",
+    "data/competition/five_candidate_validation/official-20260813-five-candidate-validation-002/candidates/*/final_candidate.json",
+    "data/competition/demo_v1/CURATED_DEMO_DELTA_v1.json"
+  ],
+  "model_profile": "deepseek-v4-flash + thinking max",
+  "expected_model_calls": 6,
+  "timeout_seconds": 180,
+  "stages": [
+    "checkpoint-00",
+    "checkpoint-01",
+    "checkpoint-02",
+    "checkpoint-03",
+    "checkpoint-04",
+    "final-synthesis"
+  ],
+  "completed_stages": [
+    "checkpoint-00",
+    "checkpoint-01",
+    "checkpoint-02",
+    "checkpoint-03",
+    "checkpoint-04",
+    "final-synthesis"
+  ],
+  "artifacts": {
+    "artifact_audit": "artifact_audit.json",
+    "ui_handoff": "UI_HANDOFF.md"
+  }
+}

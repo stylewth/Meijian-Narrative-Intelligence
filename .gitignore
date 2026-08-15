@@ -1,0 +1,32 @@
+# Local credentials and Streamlit secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.streamlit/secrets.*.toml
+
+# Python runtime and test artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage*
+htmlcov/
+
+# Local imports, exports, logs, and notification state
+data/uploads/
+data/exports/
+outputs/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE and operating-system metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+~$*

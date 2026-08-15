@@ -1,0 +1,185 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "checkpoint_id": "checkpoint-02",
+  "previous_checkpoint_id": "checkpoint-01",
+  "new_evidence_ids": [
+    "XHS-SOC-0200",
+    "MJ-RAW-0013",
+    "MJ-RAW-0034",
+    "MJ-RAW-0042",
+    "MJ-RAW-0043"
+  ],
+  "visible_evidence_ids": [
+    "BLIND_SUMMARY_20260814",
+    "MJ-RAW-0005",
+    "MJ-RAW-0010",
+    "MJ-RAW-0018",
+    "MJ-RAW-0026",
+    "MJ-RAW-0027",
+    "XHS-SOC-0200",
+    "MJ-RAW-0013",
+    "MJ-RAW-0034",
+    "MJ-RAW-0042",
+    "MJ-RAW-0043"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "EC-ADD-02-梅见溯源记",
+      "title": "梅见是勾兑的吗？用陶坛浸泡实拍回答“酒精+青梅汁”的疑虑",
+      "model_original_text": "梅见到底是不是勾兑的？打开批次码看陶坛浸泡记录，用可验证的信息代替猜测，理性饮酒",
+      "presentation_text": "梅见到底是不是勾兑的？打开批次码看陶坛浸泡记录，用可验证的信息代替猜测，理性饮酒",
+      "scores": {
+        "evidence_strength": {
+          "score": 75.0,
+          "rationale": "新证据中MJ-RAW-0013为正面辩护（口粮酒、入口顺），XHS-SOC-0200再次出现负面味道反馈（止咳糖浆），显示勾兑/工艺疑虑仍存在且有争议，证据基础与上轮相当，维持75。"
+        },
+        "emotional_tension": {
+          "score": 80.0,
+          "rationale": "新证据中MJ-RAW-0013的正面评价缓和了纯负面情绪，但XHS-SOC-0200的“止咳糖浆”仍带有失望与不信任，情感张力较上轮略降，但仍显著。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 78.0,
+          "rationale": "MJ-RAW-0013提到“露酒生产工艺，入口很顺”，为工艺真实性提供正面佐证，增强陶坛浸泡记录的适配度；虽然溯源概念易被模仿，但用户口碑提升品牌专属感，故从76升至78。"
+        },
+        "competitor_difference": {
+          "score": 32.0,
+          "rationale": "新证据未提供竞品对比信息，差异化格局无变化，维持低分。"
+        },
+        "scene_conversion": {
+          "score": 58.0,
+          "rationale": "新证据中兑饮配方与溯源验证无直接关联，即便有口粮酒评价，但“打开批次码”仍需额外行动，转化链路长，维持58。"
+        }
+      },
+      "weighted_score": 67.75,
+      "rank": 1,
+      "score_change": -0.5,
+      "patches": [],
+      "risks": [
+        "批次码和陶坛浸泡记录若未能真实落地，将加剧消费者不信任，反噬品牌信誉。",
+        "溯源内容若被竞品模仿，差异化优势会被稀释；且现有证据不支持批次级验证可行性。",
+        "XHS-SOC-0200的'止咳糖浆'评价和此前勾兑/香精质疑共同强化负面感知，若回应不及时或流于空话，品牌信任将进一步受损。"
+      ]
+    },
+    {
+      "candidate_id": "EC-ADD-01-口味图鉴",
+      "title": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸写明白",
+      "model_original_text": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花写清楚，先看标签再下单，理性饮酒",
+      "presentation_text": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花、茶香、甜度写清楚，先看标签再下单，理性饮酒",
+      "scores": {
+        "evidence_strength": {
+          "score": 85.0,
+          "rationale": "新证据中XHS-SOC-0200（止咳糖浆）、MJ-RAW-0034（甜度太大）、MJ-RAW-0042/0043（兑饮配方）均围绕口味感知，显示用户对口味细节高度敏感，口味图鉴的用户基础扩大，从82升至85。"
+        },
+        "emotional_tension": {
+          "score": 75.0,
+          "rationale": "“止咳糖浆”“甜度太大”等负面口味评价增加选择焦虑，MJ-RAW-0013虽正面但整体情绪张力因踩雷风险而上升，从72升至75。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 58.0,
+          "rationale": "甜度等维度同样是梅见真实痛点，图鉴可成为品牌信息资产；但同类果酒品牌易复制，专属感有限，从56微升至58。"
+        },
+        "competitor_difference": {
+          "score": 35.0,
+          "rationale": "新证据未提供竞品对比，差异格局不变，维持35。"
+        },
+        "scene_conversion": {
+          "score": 75.0,
+          "rationale": "兑饮配方（MJ-RAW-0042/0043）为消费者提供即学即用的饮用方案，配合图鉴可缩短“选对口味-喝对方式”的路径，提升餐桌转化，从72升至75。"
+        }
+      },
+      "weighted_score": 67.25,
+      "rank": 2,
+      "score_change": 2.3,
+      "patches": [
+        {
+          "field_name": "presentation_text",
+          "before": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花、茶香写清楚，先看标签再下单，理性饮酒",
+          "after": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花、茶香、甜度写清楚，先看标签再下单，理性饮酒",
+          "trigger_evidence_ids": [
+            "MJ-RAW-0034"
+          ],
+          "reason": "新证据MJ-RAW-0034指出'甜度太大'，说明甜度是用户选购时的关键判断维度，口味图鉴需明确标注甜度以免踩雷。"
+        }
+      ],
+      "risks": [
+        "口味图鉴可能被竞品快速复制，差异化窗口有限；Q7 different均值偏低，感知差异不足。",
+        "官方图鉴需依赖SKU清单和工艺信息，若信息更新不及时可能引发负面反馈。",
+        "若图鉴仅标注烟熏/超酸/桂花/茶香/甜度，而忽略苦味、酒精感等维度，仍可能无法完全解决用户真实踩雷点（如MJ-RAW-0027的'工业酒精味'）。"
+      ]
+    },
+    {
+      "candidate_id": "EC-03-双容量双剧本",
+      "title": "150ml 一次喝完、330ml 一人一瓶：梅见双容量接住独饮与小聚",
+      "model_original_text": "如果 150ml/330ml 规格实际在售，可以讲“两种容量、两种自洽喝法”：150ml 小瓶适合一次喝完不浪费，330ml 适合一人一瓶不劝酒；这是饮用建议而非普遍结论，理性饮酒。",
+      "presentation_text": "如果 150ml/330ml 规格实际在售，可以讲“两种容量、两种自洽喝法”：150ml 小瓶适合一次喝完不浪费，330ml 适合一人一瓶不劝酒；这是饮用建议而非普遍结论，理性饮酒。",
+      "scores": {
+        "evidence_strength": {
+          "score": 72.0,
+          "rationale": "新证据中MJ-RAW-0042（空口喝好喝、兑饮推荐）和MJ-RAW-0043（兑饮配方）显示消费者有明确的饮用方式探索，与容量剧本的“喝法”相关，从70升至72。"
+        },
+        "emotional_tension": {
+          "score": 62.0,
+          "rationale": "新证据中XHS-SOC-0200的负面评价与容量关系不大，MJ-RAW-0034的甜度抱怨可被小容量缓解，但整体紧张感未显著变化，维持62。"
+        },
+        "meijian_fit_and_exclusivity": {
+          "score": 65.0,
+          "rationale": "兑饮配方显示梅见的调饮适配性，与容量搭配可形成“小瓶兑饮、大瓶纯饮”的组合，提升场景适配，但独饮场景仍有RIO等竞争，专属感有限，从62升至65。"
+        },
+        "competitor_difference": {
+          "score": 30.0,
+          "rationale": "无新证据，维持30。"
+        },
+        "scene_conversion": {
+          "score": 72.0,
+          "rationale": "兑饮配方（MJ-RAW-0042/0043）拓展了独饮/小聚的饮用方式，配合容量选择可提升即饮转化，从68升至72。"
+        }
+      },
+      "weighted_score": 61.95,
+      "rank": 3,
+      "score_change": 1.85,
+      "patches": [],
+      "risks": [
+        "双容量规格若未实际在售，该概念无法落地，可能导致用户失望。",
+        "独饮场景已有RIO等品牌占位，若强调独饮可能引发竞品对比，注意话术边界。",
+        "MJ-RAW-0018提示'单喝伤胃'，双容量叙事需明确'一次适量'的理性饮酒边界；新证据中兑饮配方虽拓宽饮用方式，但若过度强调调饮可能偏离梅见本身风味定位。"
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "TWO_PERSON_DAILY_MEAL",
+      "tier": "PRIMARY",
+      "label": "两个人日常便饭",
+      "support_summary": "盲评Q11中25/51（49.0%）用户选择双人日常便饭为首选饮用场景；新证据MJ-RAW-0042（兑葡萄味气泡水/养乐多）和MJ-RAW-0043（水溶c+茉莉花茶+梅见）提供易操作的调饮方案，与轻松用餐氛围契合，双人便饭可提供调饮建议。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814",
+        "MJ-RAW-0018",
+        "MJ-RAW-0042",
+        "MJ-RAW-0043"
+      ]
+    },
+    {
+      "scene_id": "SMALL_GROUP_HEAVY_MEAL",
+      "tier": "SECONDARY",
+      "label": "三五人重口味小聚",
+      "support_summary": "盲评Q11中14/51（27.5%）用户选择多人重口味聚餐；MJ-RAW-0026指出烟熏款酸甜感更重、更适合口味重的菜品；新证据中MJ-RAW-0013正面评价（入口顺）可支撑多人共饮的接受度，但重口味场景仍以烟熏款为主打。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814",
+        "MJ-RAW-0026",
+        "MJ-RAW-0013"
+      ]
+    },
+    {
+      "scene_id": "SOLO_CHINESE_MEAL",
+      "tier": "EXTENSION",
+      "label": "一个人吃中餐",
+      "support_summary": "盲评Q11中7/51（13.7%）用户选择独酌场景；MJ-RAW-0042显示'空口喝就好喝'支持独酌，但MJ-RAW-0018提示单喝可能伤胃，独酌需搭配食饮或兑饮建议，作为扩展场景提醒适量。",
+      "evidence_refs": [
+        "BLIND_SUMMARY_20260814",
+        "MJ-RAW-0018",
+        "MJ-RAW-0042"
+      ]
+    }
+  ],
+  "decision_brief": "checkpoint-02基于5条新证据（XHS-SOC-0200止咳糖浆、MJ-RAW-0013正面口粮酒、MJ-RAW-0034甜度太大、MJ-RAW-0042兑饮推荐、MJ-RAW-0043兑饮配方）对三个机会点重评。梅见溯源记因正面辩护与负面声音并存，加权分微降至67.75，仍列第一；口味图鉴因甜度成为明确选购痛点，补丁增加'甜度'标识，加权分升至67.25，居第二；双容量双剧本因兑饮配方拓宽场景，加权分升至61.95，仍居第三。场景层面，双人日常便饭引入新兑饮配方作为调饮建议；多人重口味小聚增加MJR-RAW-0013的正面支撑；独酌场景引用'空口喝'并保留适量提醒。所有风险均围绕证据所指的信任、口味与健康问题展开。"
+}

@@ -1,0 +1,3395 @@
+{
+  "assignments": [
+    {
+      "leakage_group": "f2a9c574f45f2a4efb1f60ed4139a0095ec8fa8009db4afd8a175907e9c07190",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0048",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "96b69425309cbcb3cb8d9b52f89f7a91ed95b7b9e71001e79fc14d94783caa0f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0049",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "916a1feeb1b6d8b0c42e59a460cd2cd14aae8617acafc5ebb972bae36aede0c3",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0050",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "07d2213fb9041eb1f724e9bced25b0353dc4c6b34b10e98bd6a8f8de29019517",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0051",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "94baaa8aaef631eaeded194f25e85fc8fb8356bb6e852f53de3099b5ad8bfe37",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0052",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "95405c2a0acf4a999893fed96305238cfffab128a26c2d1c076f78a5c10a02bf",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0053",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "00808bf9249a947939ef53c0f75b38581187b475c15dda8490ebb6516938904c",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0054",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e890110e544de106216ba06b30dc05286d97c2ddfad7cb48df7d0e0e4e8cf1eb",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0055",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0a65fd0a0d94941f779a1098b618b2655b93ce6ed67053ff314a98685e64598a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0056",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "424e38ad10fe3434961e9598a7c0a67e61a2768f7e8c6866431fc56f7eb8111b",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0057",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d095784fc30d705269382629612a28c1f81e2028528094bd5cd224c7a3799f93",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0058",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cc17a527ee298d1ff688f59e35b51a34f5b6a6ad92b208f50c46f07e84d3f812",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0059",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "73c6de2e17afbb2934614fa1bac64e15d13a84a620a784812194a61fbb636c80",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0060",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "0de902c2ba88c519f1f3e7de8000f85e41e52e6ae4d6ef22f328e5a9cbd4ef0a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0061",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "af51f623e8a79a1128f06184d3a53e2d5781cfd2fa70b5bb3c8933db4309cb88",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0062",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a4992a667cda45e9f42b4f5da79ec823d5bc1dd2d9f1519b3a37b2a9947ffd02",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0063",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "11d995d61c57bafd3b50905aff09794bbbd524c6e64fd04d44ffedad672cfbc4",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0064",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8206e7548bde33d602871ae75fedc34b2d7ad4cfb59badedb394a18c93c1a90b",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0065",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "5c07919bbf0e9ad8c72ef28cf99babff6969f05e481fe2860d24693985a78fab",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0066",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "16b2e068cf82b1864456b7b3d5f2b1f69600265aaf5e3e7a4d13e65a4045366d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0067",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "44ba6bc72a21907fd4b91b9757faf0975d146687e776eec444c28a5366329628",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0068",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7d8e1977f44751dc2797427b24720fb33c1fe3624d21539c869431f8582d6784",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0069",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a373592a86950c93070e8527c3445991a0a7314ed909ece568f00cd49d3f160f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0070",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "a5b16ae7e893f32341e02275b616e0cecf4fe8cd57df3a6a7213ff72d9e7f14a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0086",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3d9ab4c4b1ec69ed144180a37d5d7dedadcf398c29a26c015c3399e5f568780b",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0087",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "cdb732812e8f38ffdacd81fcc8a67a2aa874056ef43f0d11684810b055913db8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0088",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f9ec01e1f8b76c3e9a569dcbce79f30fa8d48aa0ee082ba5fbd98440a3e848f5",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0089",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "927431c7af9825dc2e45d005a3b6fe6664ed2134e8bbf7400de81f2d707ced36",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0090",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "4719c58447550ea8def1dcbb499229411254b6cb7aa3fe1c82944ad4c60e9fd8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0091",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "fc5790d6a03c1d12c25ac362ba1288c4bcb8c4ae4f84a1cc13f5d550295d0895",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0092",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "46c6593656c2208ad5c47004f92dff4bde59258f29d18b309c46d6cf4fc2d543",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0093",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "e06f9edec36c0db814d5ac759160d7cb193de331f67e515211f982fb723432ab",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0095",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e1922a1195077a1d8b2bf972dd509394da2fd8acac769507a0eb4d0891d2f90c",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0096",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cf753cfae288e5981dfe4bd6affa56271624e446f20d563f4f5a1f6e82dacf34",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0097",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c053e257f5b05335bcf335ad00e8b50e9322c2bd04e1d49ccc22dc0c25d0c5dc",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0098",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3f8fd95db20726eb41748dc6e08e9a744982b5fdc564de14e0c2609d88ac6da4",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0099",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c196c25f5c3e23c3bae9917e86982b78590d1b3c03e8efeec5316558efe42930",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0101",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "28748393d3de398a2f651e97570fa5d954f4a58a460f65f0fd8c3c659c31c615",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0102",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "1a39c66a4cb32c6859e7bca40bb360e02b219f9a421bce89ab2d2ccb47652915",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0103",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "e9a9cfc22856b541b3e7ee96a242c7160ad63972e92b0bb4eba244d31afaf6f8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0104",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cc37f79cce70c77a30830016a00fb2856fcc6a7118b8f1d1a183b26d411dbb54",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0105",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cecca8431a1f86098518e8441cca595ca354f34414e4dcf45b72df5626fed5d2",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0106",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "d38f54dc7555af4a83a49318745fa489730d1bb69934b1f0e07de3257c7e437d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0107",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e9c1c061257b4c1da21d903fe855e35c8b7854c59aa2e1bd061137c90a558f28",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0108",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7952d17bee6d2d536c8ebe5b562a29ebb01f995c8781a7e944f71699df5f601a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0109",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f663743239cac576077a37365e55bff34d33f9459b9e62cf816584ffb414e101",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0110",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4cb343f2ef05d2109d62683cd0b0f354465cb389859c6c6e732c01127eed7d99",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0111",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a04c79bad86535a7bfdcada6eac2d1da1876428f1ed0c61874a70895a16fa88c",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0112",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "9e0a85d9761d5259815fff5717c01660b06544c54f9c0558518a4d328c9d203b",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0113",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "066348e4670915109685bb946a080058bfe1630dd1226dae9012b74f236efa0f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0114",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3603e66f78e530a4ff234dc24506989d7f15e583554a60efbda83e3124577cd0",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0115",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4606151c4792a840501a751ef5f93b604cb728c82a2278b22418189d6b9f5884",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0116",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7ccc421343509941bd3eb565693aced0589835b55d63bc9fcab251b7652ec566",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0117",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b4bae082829190215849712a27e2a3f4be26550c9b6234a29df213585834065b",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0118",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "1c0b65ce7dd51094477e648cee05bff59f7e8f2976e0ff1ac59fc9994abf0e98",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0119",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b0ac86cc231487f014cde7bff9bf2a8cbc122aafa8bafa75c980f3c268ee1732",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0120",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "8919a8c01ee3405d0058e7b52c1082a2b253ed221f995626bb6d2fe079ca9d8c",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0121",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "ba8ecf2b4d94e612afe5e5c0309d393628ab360bfad00df58d6bdd81ee4df39a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0122",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b3ed0c7c5b11585f847c544ad5360ec1c144c4b6c59f931dd299768f7a67f29f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0124",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "1f442bebc7d7b8ca2aa0ef89d6595d7d45648887885f7e7069e34da36e4a0f9f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0125",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0b2712a189ba3b36cc15c034347e7b66aedc04b676becec2b5b7a06b4778531d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0127",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "46856a1be8623dc56368904744efcf7a74908f3128f0346dad90566137ccb052",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0128",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "60e90c97722171dbc12d3dc63aed9aedff8418820253b19b73fee715c9859fbf",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0130",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "bcf942babcea4d187fd6f1cb63ec37dedd7cfcaa4a239a3a7308f8318f6f126a",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0131",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "8b797043602613e44e4ee747be4ffbf4e3385cfa5fe41a04549318018a2de290",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0132",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "73c813b16c396ff72a6d0ab19ec5e61bc2d7fda39f03d67db1fc1d99f5eb5fee",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0133",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "9211f44773667e8726a4edbd7f4be17cce69b98a7f7a92d089c3e79cf10c98c8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0135",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "06a384f0dd03596c3b21de090941a80b8b978d2a38ab460fc2985f71b45b5343",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0136",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "aa9ea693ac88a8aabddee7d8af7509f064200ca6f660b15fd97c654dc2b96ea8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0137",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "c09057d9c78551e11a727232bc52281df835f40dde78b65a2f28eed10feb8ae5",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0138",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0b9026eec49ea16e5997a882e801f2cb9178ddee8cf586e30ff5f130ea504c29",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0139",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8ba2c172b69e8401b41e1f38dc743db030f03e6f1bb03f3c234cec4756056dc8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0143",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "0832c54d6d06b358fa20529e6e2004aaefe1a762ac544f23662e6986ec68ebc3",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0144",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0c2eb3c7dc95fd34b2d0ffcd3a551c21c3b609b7b6ad4a50d87bba7450c8234f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0145",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "b5786f80350fc8c1a4f877cc3e38417b6cdacbe9041e6c3af1d7143a4809adb8",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0146",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ae65e8a4564150a32346a7d92997ceed15ec830d06eb6750ea3868f4db39262d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0157",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dc400aae855e863d61eea14dae1282754c1d2ba4156498bbd2daa8cd6522aabf",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0158",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "14bb14ccbc315d67c772cbb13c1bc3ccd954aefa7124236b85cedea0dedff837",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0159",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0a3ea8a95cbb82aefb8220722f33d646e1b0c5b34e451d0f9677d1f750bedaa6",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0205",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "e71090570b570004e8a3422e65d4a31d623efaa6374622c0b04f467ba915da74",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0206",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5a35d48a2e0de3a4419e3416dff73ec44c9e0fd39338f48957520520cf1e44a1",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0262",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "10b84e5593e50b4f215bfca56eb8dc21deebd839cd89d9a0fd6d646ee42911cb",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0263",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f1ddebe02c0d53cc95590b1f90f6a936618f27c722cbdf50f991b6c84f144918",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0264",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "29de5e972319831dc5c5d9d8bf0b2490e98d6c16e721360716ca2b9e3e560c42",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0265",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "92ce31d9cb441c67bc38a0b4af4db852f053a9e283fe08c3351887d085ea63ac",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0266",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "24be25ed663c424c16f9e443bcf3f05441050a7456b0d3c68d5901c4b2544fb1",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0267",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "033f4d7be181d1219af428bddb1b7890cc3d9ea3be75ecd257d6345372f52641",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0268",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2c14c2430c067545db15f73004a026bba2cdf092e7c9c866c35261b4d9f1271d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0269",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "20196f1d31bf6d4f04dfeff6510c3469158cbab43da2a327c2e6c64b685dfc42",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0270",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a8dd9608de204931f1059c747c7b305652a18a30b937ab810b05d0cd4303ca3f",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0271",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d2a3164e548fc2fe69085b1d6ff9a4eace7d5ae6858f55029a8aa995b292535c",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0272",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0d05ea155be15ebc28f9f71817e4409800f002000103bc678026c9224d9b5fce",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0273",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "afaaa1f673dad549ca13f5fc6029849eb415f0bfcca7d3fd2e8c801095547d22",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0274",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b68b8ec5dc854eb82a4732e14b3056affe10d318971e64a2f79c7456ee5f2950",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0275",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "bd01fb3f6d8cdaf68f137431048c6215f6f49a8e1695b6bf27e4edb6d020a004",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0276",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "5e13392931057f968de6297a4292864d9bd0390cfc80a5fd29f8abf9a258da7d",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0278",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "356f30e2a2b74b19d9bf82519d36dcc078a1fc0550378fcefb1ba369db23fa5e",
+      "platform_url_available": true,
+      "raw_id": "DY-SOC-0280",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "18e9ab064e40dc7a6eebf6293e84d74c9bc4b457a05ad377d7a9385b83cf0f45",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-001",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e92b24b7caffe406cff1b0b258e511dd777f319d07af6f5b1ddabb0546a69a5f",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-002",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "43b644e4edeec69aa60cfa867b454676284ea324d011445196dfa62c99108cb4",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-003",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "096c1046494ce0455029a3f7f7886e40c94fdd1fa57b094cb3f414e5019a4c50",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-004",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9db287134d45ea16c41ece45536bd27fd2b847474532e0b96d2f100110d1087f",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-005",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "97311cbd14284f05c18b527c4258ce53651225bcfde8de8f22da67ed971d3e0d",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-006",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "7a85501c322d83052396a98db0b53684844a600d31c7f4c83f89950298042821",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-007",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "6ee1c375fee5a1256fd59c89f5dfca9a72e13a32aad1dcaef1e85aa5a19352ec",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-008",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "c34db569af1505ee225a62d910128d56f3ee928cd915ab76c038681cc44e8a3a",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-009",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "4236874ed5706c8d85844541cbe81ae2dbb5af3218e34dd04aac2caf34f7642a",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-010",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9abbfdac1b93c8e5bb87375d8c0ccdb291372ed56922ca5d0491f6f1c9133bc9",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-011",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4a148bfe7dfde967f8c31f70893e240eff00ec04addd92116300d8e48a4057b1",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-012",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "ab528ccaf226898be802576ba158431646e99edea40aa4555f3cf5f5a420f7fe",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-013",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b3cfb8b942572b37310cf9335fae07bff6acaeba62d28de8096fcfaf87b17a51",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-014",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "99c9f2a0ba9fe4416fa55906a2676c2791f0bc74c1328c0364463b80e6532e5f",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-015",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4e254fe23467b0ec3dd79684bd12664a50eb53197b4bc58beabe32baaca7d359",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-016",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "51fc78953e2fcda4d51390334069896ea7e65fe1498ac284cfc57f0508d3bae3",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-017",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "53104fa0ff2111fad82866d4d24649b26206bdc0c2241822c4d638d4b5fa67ba",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-018",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c64f9650e0a7ded1ee05f92fc795daa01bb3a09e82eaea5775ec7ea91099bd5d",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-019",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ffb504519a773ee8e3f9df762e48b75d04dafbd09d88294afb08c9029b74868a",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-020",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "355fff5aa2f1cbbabf15b253e101f1d4e9ebb61fb2d1722593bea555c7d70885",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-021",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "112cc1d5791e4970e48701cbf1e2fa36f9016adf791afcf797772c502307ea01",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-022",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a1d87d612fc4585348459e02f7760151b345cbf4bb3886aaf3899ca9f09875b7",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-023",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b49214172b4172d19256cb281bec9f34e2d8ae0543e14b0289b462e0587d9b58",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-024",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ada851c6b7709cbc437f7ff9e93df826c64a6ed9892cc73aadece3d46ef77d54",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-025",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "38d2ac26e5298d997e88476050236759e1622b4bdec61554ddd9885ec3354955",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-026",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "eee4ef169e8d0bd7ee5cff347f828b8e0dec32035fc4214dd606f7ec9115b389",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-027",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "60094b96b3b69ca4bed3d3d5a1c0172c4206ba891bdb3890557e827299f488f2",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-028",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c1aeb8ac85c3a32e3a8bfa059a6aafdf41db0577c3f05f66aa1563f6e8d4a617",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-029",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "65f67d68775b540e9afecb2421f31adc3673745a773294ee1cc415d897cab8ab",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-030",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "18aa2650d421f2adac006a7a7d3c6914f6100c2c58ce427564a5f92898eea5ec",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-031",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "169ccbae070fac59f3ca8240f3a94a21e02eb1078e1d4513d86d8dd0d0d889f3",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-032",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "123521f9cd36360f4575baaa45ad355ef28c66ddcf54b602c8a1009e83661238",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-033",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "09437300dca455eb7c2533f63137cb36e1e1dfd0f51dc04ba68ed2a292138ed9",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-034",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d6cbbf73edaec04b530533b8468c5e6804b65e8f755e9960345c4d1a2fd94003",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-035",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8ba8ba142c49f6262f1ea8b3f89de497e7f7cc70c077782f39d461329d2039e2",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-036",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "1f40dab5508f0c8dd39263082d6b721bfa63b52e65a764ddad27fa8ba5ed82ea",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-037",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "201ef7c1bf33ecec6c08505c516a7c6c51f7e92574291d63e936409b531950ec",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-038",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e2799458be98654414a9d903e6de61f1049dc7b51c0fb7c8c442b6d420d2a035",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-039",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "715d8a105b271c57baf7670218738ab135a996b73fdde705a708b86d6594603a",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-040",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "6a9c0d40fd40a027c139a9c23d23f7abee64059fda98900c2872f4f1afa45621",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-041",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9228a7b8a8a7632b1616554b94a415f1e2066e79992bdd2ab02e877451d0f76e",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-042",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "fc003b2467afe852be92cb7d69408c34739cb36684811afb3faf07a463616cb9",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-043",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5e0e8a6cf3d8e4d0589aaa82a5b0ad8a59e2e7d616853f55c8efcd1b9cf714e5",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-044",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "5b82f9b6017c86d27a4cfb3167b82eba697692c67b9f91aa90cbb1ead6b847dd",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-045",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2e9402461c28719dd499acf68446f35b3416d691d9f166872e04d6787df28cff",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-046",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "ece958098adbfaee317826202e4d22a47417af5e19d15c2a118b299a6043ec8e",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-047",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "334dc7c45c36db28e43bbfc4e4e413ad2bc4a2801ba25ae44952bdd0a0ee464d",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-048",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "381c625b0b41997283a8a9f0d780b5b99f5d9daffd1e79ca2ce15fe392554bb6",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-049",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2cc348ca0963ef747851b69cdb97ef9cbede159f2163299a07b653c37adef4be",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-050",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "350bc7203fa8a1c412f4ba5a11c5d4a72a6fe71207b5d1f6bc73e493c2caf11c",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-051",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ba9cd3a89cb10f6c1c502675eae4ad353d750c5f7e3d6468ac4fc4c4b41eab7a",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-052",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "79e1550d350af990586b10eb5b389bcd460b89a97523762c64a4e7445dad83fc",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-053",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "79314e3d385bbdc94ac10d901af3f526ba16db06947ad3007c982ad0fc4504aa",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-054",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8e200dbf43584181e685c6b27acf80a3fd04f032b506b459859bb7f6beb6d13e",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-055",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e75a40c6834b9ce0f469e74c2faa62ba81303ca48592d426d5e1ccedd3ef21e6",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-056",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "e3ff5bd9e45461270d2be80dcf76860fbad14360e586c9ad5f748151a03af595",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-057",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5ae6f2fa9a80e6b2576792548bc5ded25a20773b0cb5d8c1c4fd3e458b8d06d3",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-058",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b0b14b6ff8d6fbcdd36d2efca18cb813f2ce1398e05332b000a9c1f98b5fbe27",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-059",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "dcd75cdbae0a8d9d282ec25a9836390ad8bd9943d245b78bcc7b570bae33d982",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-060",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "290624098b9ece94b0b661d2a8e56c35d25392d3e52045eaa5838c62869cbb2e",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-061",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "80ac9224895563dbf86a0fcc578a23d30fb3a4af2e1b95c804d746a1a6f9b3f6",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-062",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "51ebd2f6d1b160f7d4351b3fbd7a6bc26a93b8d33a4b678cdba645fd5f72d943",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-063",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "c0b9f1140e120c9389c4bab95744817534c295ee1536ec31aeec84c55140e918",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-064",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dcd443180a9a00dddddf965cc917a98a95b1c741f9ed2f845d204828fa21f97c",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-065",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dfe3b6ed3c1b094f2bad1bb11942b5e7742b6dbee6769de27732016df3985564",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-066",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ccf00c562ad07fc2df89dd3aa5b260d38196e647c1641ef3c903a52f57b2a984",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-067",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c0a0e38170c7f43cdb8f212921c0256317ad18849cf3d11a15a30ecd4221dc83",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-068",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "0d78d1d75a52f7c59d4db5703ef32154fd8182cbc17569595c54b967bb773bfe",
+      "platform_url_available": true,
+      "raw_id": "JD-20260809-069",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "eee4ef169e8d0bd7ee5cff347f828b8e0dec32035fc4214dd606f7ec9115b389",
+      "platform_url_available": true,
+      "raw_id": "JD-RAW-0027",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "14a13d89dbb2d93235cc3a5178630413656faaa3873782b11bd1171e5ac2131f",
+      "platform_url_available": true,
+      "raw_id": "JD-RAW-0102",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "c579bd97f6eab7329d7a9de780a2cf7df35be085ae3c4215e3540c37d61568d5",
+      "platform_url_available": true,
+      "raw_id": "JD-RAW-0105",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "09fe90864aa546a71acf4da324f926964c57509c7e91f11d09569c1e2c24896d",
+      "platform_url_available": true,
+      "raw_id": "JD-RAW-0109",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "9ba47257df8d63897e30fa52fcec29262126a44cfc30be364fbe61af62a39e2c",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0001",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "fb6ed7f3fbbf33ed1377670971c3fc2aeaba43f5f2b276e5b2736c9912ed79bb",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0002",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "d1b737df6dab2c0f5a758364830a5917ba1e486fcab32eb243f67e47cb2b7bd5",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0003",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a0dd567abe596ae779b40937f1e9e8bc2c43d6207e581fdd109984e844c228bd",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0004",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5d6dd19afbf2a4aa5560ced0e14de05e618be0e09350cf298132caac536ded00",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0005",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "281742c0ce82672aef9ccb18e9c1f77484d0210fb756f1b2d1a898aef267dcc6",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0006",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "df653372be511b2ae92922976823f215677afe2f74e94593570111ccdbc666b3",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0007",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3da8cb993b46a70b6cf7370559cecddae81974c47392cf1f8dd2b40fb6278023",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0008",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "B站",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "4383ef7d95ed5a6f4e2b460a5b8c75a726df28e25471b2c86b29e10ded397a4d",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0009",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "B站",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "5c9652d314b4eef939715d5b06bc19f2d73c5aaab7d7fb01738d3c6a11a4cad2",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0010",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "B站",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "03a559d60b7c7feddb9094f90927da6b719508f3c36fb18be3cee21d51f34212",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0011",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "e7d58c75e383db5a7c196c9d388fcd9d03a8e71d35ee61b2b53f479a59a5e2de",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0013",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b3ffec6ab41f967887a70a1acb81946e5e193a12f99a29d6b734e308814bf2dd",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0015",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "79e2dba5706c2f69a8ee953defdf7e0790d495da750981d01571f86528a0f188",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0016",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "95109e38aa0628e2bcb7ef4f2e76c23a8b2dd88019393911d7ce52a0670d2b01",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0018",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "523b6c609686bc08a30bb00c66b77343dd6ab0512905cff8fa22a652b6b3275e",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0019",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5ce62c3c82600a74ef99ba6b3a1f77e75d619c90e5db13f2ba3a3aa0d4faf356",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0021",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f84f04b712dd9058854ca9d46e6336347d7f72bb8ce0cd47f806819ee89bdbba",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0022",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "679ce7f09a77c904a662a359be1f4c062609731b5268f517cf5dc6bc048de71f",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0023",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "fbab6af615ac0e9c9326cd0a8bdd9dc54138cebe5d75827789afb86b39dab030",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0024",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b3396a7491af64a5bcc1c7cf401832235b324e9cd886aab012e5b88db812223f",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0025",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "fed89e80155f36a9725af24f93fa9d84fc27a384475526f20ab8fb8323528a9e",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0026",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cee4b99ea918541da5459d016ab8fc3e7a24af8b974b72ef849fe345935d1a4a",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0027",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7b3e508a7a099d5e8559252cd23946536fbfec862f49775d7519ccdd6d424d95",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0028",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "1b06131079775b6d311ee96b2907f996b7c1318cb0f7d3836121744d900eea02",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0032",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "267ae2a0a7ea6bfe75cb9fa714cea5b6e64b3c84bf68d7fe637e3edf2b468188",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0033",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "158a5049989c5d31952f00b2ef73efa1256b69e4d8d964ac327fdb65f7876d5c",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0034",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ece70530a18462a5952998e535f93e6769d59c2443f3f39d6e8ffff354f6f5bc",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0035",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "c48af44d3b0a5505a3328f27c8edfe2b437134a5da5d0bf56e8bb4c43da73993",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0036",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a763808b995826b5c9db915cd22a697a03f442acda598def36cafaa97b22d44e",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0037",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cf1d74edd22cf540fd17180874746d3586b40e838ec8413399a160e358b1e5a8",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0038",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "82aa20cc9dd8995ae97450c9ce01c79fd78083b2f997ec27756fc295b1286244",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0039",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "214bef0970008dfe335ea4f3d3c327611e1ff6ad28ad2d93bdb7781ce9dbcbd3",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0040",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "1accb1b6d82606d5f1497974b72ab55fe38a82ed73af32ddc8397cdeb164390e",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0042",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8730b4071368d3dc0367e57347d2232dcef310933b617a12c6b76270af96bf74",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0043",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ba5bab0b17b2546d3c16c2be52713f8dda10a99b5ec1432e6d4c77ce2eb5f75f",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0044",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2f6b1288a1a2a00b7255a059e619dbb021890371926ff7cf4c34b4ce206e9ebb",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0045",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7b7846e39cb63e3ea3b5d6972417064570c4fb33effd114acc99d32b3b6e4e3e",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0046",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a8ae2c4b697c53e3fa6c7ff6269555af676c9e69ba1391c52768099b5999c1e2",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0047",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "b3390697ca91731ea2cfa83b0d3b59c903ddb1fd74f83b39f9e63a9d9e8c6b4a",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0061",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "04475aee11f79b4b37a9e8ef915e63d8a42d74df3ddcc4543ef3f7e7168bf027",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0062",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "96b69425309cbcb3cb8d9b52f89f7a91ed95b7b9e71001e79fc14d94783caa0f",
+      "platform_url_available": true,
+      "raw_id": "MJ-RAW-0064",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "14c5689f5109be148561cde85eb020e36b99555173622ec21897a71a49ddd004",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0094",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "B站",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a2c95cb9f5e12dca81789fd496eb2eb33e90136a5ab43a64ca7f5d6b5a97ff13",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0095",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "0d92338f9cba9b2f763edc428723db7cb91a00b1527ca0f9c51b23198d4ca70e",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0096",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "39fb1f0d0f47f33891b17235b76ea30d6331dfa4eb6f70060e3e0b4354879ea8",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0097",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "81b0b67ae9882a2b31b3167ca4ce63b6089354258eb3bdd55ec1ad7dabf8d608",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0098",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cd7397074277021f713ada272dc9dd2b617bb26403323ed4f3e4c4db34cb336c",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0099",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "5e5b8c063d951b99ef43cb7b57f48567da0af85a2a31bc9c45c741498a66921e",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0100",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "c46af2cf03293c036014d36fc795603867aadfd6f974512c4a04e70ad9c2265d",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0101",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d468259e6898c1e2117308d7e5f0bb0f2ad28fc81f244b099a97e07e340d1bf0",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0103",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "京东",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "ab2c462777baa9c61dee244e92547f14fa677924a686511ec365bc3272b936d0",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0220",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "aa9bd19c5b1f43494c7991793a5090fe09285e70f34c734ad506bc32abf4acd4",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0221",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "1c18308918a45e8ddbc21a954e0d7758a580f7a969e092515a0d15356cc3e778",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0223",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "8894bcd10d9c99a8789f90f22bed7f14a5eedb743237f7b9b1d81393d5674c21",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0224",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "aa565e1df697e64db58468a27f2ac0d7e3056474c3da219397d61bc7313653e4",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0225",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "fb559dbee7433e75e375b338b75b2e16b407f60675d27eaf0728f866477f4e18",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0226",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0ca7788a9a590c53be2ea39e508c7a11739590d113a38fd6dab3fd4add441512",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0227",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "82f117bff5c4c30b40a524fbd616abbbf997e85c3869a6a4f9c35ceecca1d5c0",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0228",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "29389a67a54b32742e7bae63252473dd72819213c35dff3b94f266de5957865d",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0229",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "b66b2485f5757cca15d3d438be398e186dc9d3caf5f9c1b14732331ab1a6925d",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0316",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ab2c462777baa9c61dee244e92547f14fa677924a686511ec365bc3272b936d0",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0317",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "8894bcd10d9c99a8789f90f22bed7f14a5eedb743237f7b9b1d81393d5674c21",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0318",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "3cefc038a8836ce16e50b0216d44178833cd14c90aabe73428f74193a46c7973",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0319",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "c905b074148c96f5565f38d1c250506c6d45bcc0693883d35c2ce51b153b39ca",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0320",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "0ca7788a9a590c53be2ea39e508c7a11739590d113a38fd6dab3fd4add441512",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0322",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "52d0df181942147953ad036652be60f346e4d28ca0097cdffa80ea43be850af2",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0323",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "抖音",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "b80dae3588c0a497280a81fcf58d75b2ec602386261bbc16c56646c5fd3035ee",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0361",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "037b6a9ef4a8813ab64c0f141dc206492a109137d044c56519b90a29b96d3a03",
+      "platform_url_available": false,
+      "raw_id": "MJ-RAW-0362",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "京东",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a0c83bbf7aa03c9ef962f1f9d98517d0c86b8b5470c91a1a07bb2cac89ca905e",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-001",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "101fb9e46bc336f4523cd9fbf692c27c393465de224cff80b0763e57a95e6362",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-002",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "55084283a29f381c518644b093f21ad93c5ef8e09d6237bb026e500031546d91",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-003",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a51890e841ee2d627084f87eb14521f2b9d9f9d4c71c97baecf946541a0408a3",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-004",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2fdaac1256e1053a198691c8142b252b831f0ee334436d44d70a7558a24147ca",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-005",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "6ecba9ccb1633a8ed2042d2bf29f92c2917fb5e4d5499c6c9004c79e80c9c040",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-006",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "6bd5c9b4ec81bfdf46925e5126b98929ff610b422b96871b98bf018a2c1e503e",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-007",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "bfa2d1dded7a634bd3a76f2f059016105d9b84f8a71751721d3d046a76af27ea",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-008",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "a5651409d8c8b7228ed9663d637dc887f67a51fbd5a25a3feb986c3960b28bb3",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-009",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7562999aea7254733c194a5a7b80d1047716631cdef3c9bb939475ab1e3b5087",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-010",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "368956f755f4ce13c091938c6f9dd7dc997da0d2c06c77798e31829676eaa8b1",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-011",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ff3ee4726fb1fa659bb26eb0ee998547315f10f173c7cf5c9dfa7ece68b39f2d",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-012",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "acbfe6d204d95108b8bcabe8be27d09f7d1ebc0e8415afb40b53da11d51d7bf6",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-013",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e355ec6aff993cd4b4121f2196a71687d08f386955cdac73e563b5a108a374a4",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-014",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "2dfe038ded29d7e223df1051357bfcfd1af9e90ba645efed9ce8f81d17e3d604",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-015",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "26ebcfc46cd62cba23e6f5c613338059faaa22aef5cf0ba4ba0064bb64f4f8c5",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-016",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dbcae20ce88ce0f217168a5abb18d761102c2e03dc35d9e2eeeb89a4acd5dca5",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-017",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5bd02a0d51fc1250a15ea60ef0266e63e22bb18ffa261a3aa0c02adfc4afb3d9",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-018",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "1349902508f7d14ab85447f9cc7f52e9730b2b7bec0d68b68a5217c7f6f5ce3f",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-019",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "b0f7a4feb1f34012d760f6c0782276156dd25283582da4bba5cde41434b6c17c",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-020",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "dd2a337bc794fbe4c5ec813c977d66d7b7a5048f56815bd0e3814b2de6b76a71",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-021",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "d43b519e66d550e8500c404d2a9158782e0f5f0c5b4188bd282a5f907fa76cd0",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-022",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e27774c21a7efc10674aff0cd5caa3eddfa356d77fe561a47af56238369cedbf",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-023",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2161062c73f78394a99aa36aaa54dd4245799834e99b4564da965346fad31a85",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-024",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "a003c7c3156f58f0aa8e668a9996db8e9325b0fd991780a1810bec5c9007933d",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-025",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "09da1f7fa1a228d7d945e4492c3e6588a554ba256d54bad872cc743b0272f432",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-026",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ff9ca1ceb72267d4ec4bf37be6506209bb0478e488c3392e80653dca8237f53d",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-027",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "299c52117222b5a6bb0c71f57a6643ba7e8900212baa65ec77f06d0c3dcaaa11",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-028",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a0c14b81baa42f5e6a327b2df5ee50974fb21d1cecba1f80ca6d46605db45e0d",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-029",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "95f711d3c0af4d99b0b2877ce46f1d29b66c68ed1c342b991ee5f12907160705",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-030",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "5d42dd68fa44c6c91fdabb50b2a81359869c893b57da99d578918373236d2fff",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-031",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5daa2338975c7e233e5f256293b52dd3f3cf8a25866b5d126463d4900e63173a",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-032",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "14a13d89dbb2d93235cc3a5178630413656faaa3873782b11bd1171e5ac2131f",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-033",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "4d025d2b6926bc484dce29e5c202eb6788e4440e01f043c43dd06413769d2cab",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-034",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5b7bc92255d7c9a9e39e99ab1cfbfb911051085fc6c425a2057bec446be3cc37",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-035",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "c579bd97f6eab7329d7a9de780a2cf7df35be085ae3c4215e3540c37d61568d5",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-036",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "61cde48a26924f6cd6176cc35ce1be9c91fae80f22b51b808a94d29e71805618",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-037",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "b388264b1309eb0b293578400a4e8c45f4a47acc26c4e8603d187be97d0a4737",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-038",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9731a1e927857d0669eada5906645fbfb01d8147d6151102f0f194f19283e780",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-039",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "09fe90864aa546a71acf4da324f926964c57509c7e91f11d09569c1e2c24896d",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-040",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "5f2a4f6b333d046967914560fca943f97389351de342c747ffd926f9ca9c175f",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-041",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9c512cea038b652ffa626b5ce9328c51acc51feb12c12d2b9727b72c434239c7",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-042",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c0e70b2f68ecfe38e605c956a63e92178ac9808ec871981fb5e64e589989ab45",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-043",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "822abb7b05f436a928839688a6bca158d3849895b969fc181aaee37257cc7abf",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-044",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ddd9d5a0859eca0a7ab650bec5077958a64315466c1eb44f7d0938c5ef4bcdbe",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-045",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "2fc156c275641f507d4c601dfc2face7774004b9f57abc8a4b1138944844639a",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-046",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "bf644965a515a163d7731885cc49e9779af5f3411a4a0c6e77295d8a75829cf8",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-047",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "df7c13f573910f2371a677e1838639bd0fa08cb29ec77bb9b1e8c99bb99aa135",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-048",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "44174c65d6da0176128368bae6abceb9c951fb1d71b0fec542f2d70a83e7a864",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-049",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "0fbf62062f2aa5c5e520d620ddbbd6fa6f6100a104d33d8307c4666d4d97bc3c",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-050",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "淘宝",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "fff7c50e588ddc0f6e0568ade79d0e9a6dbcfdba7c2706696fae0b663d9175bf",
+      "platform_url_available": true,
+      "raw_id": "TB-20260809-051",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "淘宝",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "7289b51a1158d8e9ccda111c98f2ed4e4d3f699ba7711b69e4f04efef1839d73",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0001",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8d167f0731b5ebb834582dd4bf5b16f4272990a1b9d0f313c6d5afbe0931f808",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0002",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "60094764dd7fee42b3cf7d51cf821bfc6c0c7c52e62b7c0f788f769b2ed4650f",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0003",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "5117d92fe4268c0f038dfad41145c6e1f24ae48260af5d42b59934159cb049e3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0004",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "fd21ebe472cabfc43118100edf13fd575f2258716795e260a80ee8d18440530e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0005",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "18a9b230363a634556dc9fb5abe92bcc8683c4410f4a417507cdf8b503acc9d3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0006",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "883c6f5b923a3944407c1b1672972fd7bc2403b7f3a44888c2b6be46da1cb42e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0007",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b1410b74ef7074e751dc0666d4ae26e4638a9951481adb2e1d08e5ca0c277c07",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0008",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "15c855d9fa962f59e903906aab6f748eb31ac196a89811d6222320dd21ae951f",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0010",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "6787b6b0f19968a5f5a1bc1f659d14091643988b8f4b68c86e7fe3834857ae8f",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0011",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "51750ef19d6ca6fe64f790e970d2a8b0298b1b7d2bd3a033543fd8ee07108e20",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0012",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e5efd395dc6c218829e5f80354b926e712806b8d70a8c88fe7e0b9e67a2f5d95",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0013",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c4bb746b0f82e5aa4139419832ee588a667ead6e76456b411f7142f6585cbb16",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0014",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "93fe96e9e7bf42cf4c9552d9ceed6fe238575f8a61d47e3a293e0cc80767758f",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0015",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "276fb3f67486b0ebbf76cd9334300cb3f21f18459b225a2ffa3da59d63e34250",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0016",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8cf4e3ed4aaea34011a2c48cb8bb69489394b4dd1f70eb51d6a5aed864510f82",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0017",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2ebb2b17f2ef688801fb84a0bbadc52e33e98e780083d47b017c496ea16630e2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0018",
+      "raw_sample_type": "社交关系与饮酒边界",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "b6f38cdd088c2d2234ec99699aab0abe8d5ce198135def6a8b1f6a6c937e5a11",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0019",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f891a5b21be6181c5c867a0c8fbe54a722b31a4903a2a3c01214bf769c4813ee",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0020",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "d041b222fb0f597ebf73d9a61dbd96685f41c7e30ca8724db563ee7e999553bf",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0021",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3beaf7f9b856d5c065cc3caaa16c712fa82e57a153fbd7cbb3658213857043fc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0022",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "888f31d439630799d8ce15b7213b44c06f4614e58170afbffaaa94afd557feaf",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0023",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "08e8fc7b30d16b0020790eaef3c065a91d0a2ce990814239944054fff08344df",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0024",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "0a40b8c423ba42dbe6183ba677bda18cc9622e207a16b5043505ba33e597dcd3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0025",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "fefbb896bccc35d12c81b2549db01304533c04b02c6e7ba368ccc5191604755b",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0026",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "e35067434039b3cce7c0750c98bcb3027fc7307fedd87cf919d9b3901fae49dc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0027",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "eac11acddb06dc0f0eb5a22c6affe0bcda8b012fd80b8790c6fe7725bf2d5589",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0028",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "03a559d60b7c7feddb9094f90927da6b719508f3c36fb18be3cee21d51f34212",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0029",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "49861f683ceb7f6d00833431b3097e2d776949047259d465279edf8bb449b68b",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0030",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "bfd1e0e6eae18e59b360285c2589c9b61673f88b3297f8c404d8fe0c7760f678",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0031",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5ecdb17de866b3e2c3b56accc9b91fb7a5a4eeb4c9ae78efa9085da43301acc8",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0032",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dbc09399d8222ed4217935a32d7eb76992e6d92c5e9d99e619516f7fb89a835a",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0033",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "17e9c94cbd64843328371e99bdb1d3022d29a4daa5e01dcb0c7c5516cc4ce77a",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0034",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b07d84e752bb2b04064b679e4e999394cb924c7e265692589e0d5dff91dc01bb",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0035",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "6b0ab5eea46abcfb936878fd23ee3ba1b9c7259f0d363f6518577a11ad51ecf0",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0036",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "9cf19ee0c3ca33047625ee127c678839aced98d5c3d398d6f2df5fb692d4ef46",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0037",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8ba2964f393666c907fcfe3078e2d231c100a950901421018bc1158f47c9a5ec",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0038",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "84e7557217be2617476faf873c47fc0945b0c8fa161f97d29f7161b968e57cfc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0039",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "3ef939726ee35cb44c2418f0b0e85c1693a36e1572ef54c5d7f91707962695e2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0040",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5abccc60921653fbd5e8f24dc9cea482057be2db4b044662bfb7ead68a4186a1",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0041",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4c0f2bcc752e15e6bd20eefc54130a4644cde46642259deddbde953f20907ffc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0042",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2d317e721fa2ffc52c9fc3f3332e0e5c5e7914acf1a5166b6b5529718b6733a7",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0043",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "2ba6243e19680557e4fa1d4c9d0c74fc219836053b3500e33a48a261f3182ca3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0044",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "5c05c3487e08aca6c0096704c49e704ca95131637e5c6ac076033c9fd070722a",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0045",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "7f643910354f4120d0b4b09521b8c82aa2418be8011acaf15fab06eb6f639c66",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0046",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e5abb0d6956ea25b524a0624cb93a46b0a51abb3e8c3150af4f3930ba264f84e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0047",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "e2e3a1c6879c92f9987ce8f1aeb7127d6d417a666797ab34d9f7b9ccca96c4b2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0176",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "13575da16231693de86bb38381d4e0115ffa9ea321a578136e08486d767cf990",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0177",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "6ac33a961afb2e18de9a74bc69b90accee587d9cb13719ebdb9fa674e6d3d3e2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0178",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "58da473e80e5306971ee41d732597e04c7428424e35e98339608a375e8945e0a",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0179",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4a50ee7b94524f7dbf4ee55b84b338c0c348ffdac20904e5967fa284aad98a99",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0180",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "396d384095736a517e05f25dc335be7afc58f119143ba2c9f11eeec91d14530d",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0181",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d08ccc3ca2f90f7d9a0469216ba67c1603ef02a56d20004636049071ebd161c0",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0182",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "72e46f89160159f0f6e8463038fee34deef56ea45449aaffa7aeddb584040a47",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0183",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "3e44401d0911aba2cfec062db3e45d72bf55680eabe960b1e791981f7802760d",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0184",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "57d629c14e233277f8219dede257504399d303ca9e396c0927401e7994c401bc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0185",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "097570529c594d1935eb4a92554e7757dfd623c7cf20769445574964dc79a709",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0186",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7cf2a85fb4319668ce61fb88db597413ee38efa6c287f8dcfbc2db11d0ded2dd",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0187",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ed751d86d7117747614955d02ea5a02eea910c26c6da18d01120844400148dc5",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0188",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "69fdb8d6c40fa01694814b7b1e303d1ff3849f969f5a145c46fbc916ad0af75d",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0189",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "2e4f2066d897ff84fbd0542639d3456cd22bf0d0666e90abf9bd60e51e63cd5c",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0190",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c45f2d6975ae6702963c68b7889777a74066590380dfaca394b9541aa886e955",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0191",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "a3ed60244d96ab0344ed49d2b8c08efa2010bae46d095156a41d0401acfddcde",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0192",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "7f155ebd787370276c2abb7042fdddcc638782457a4e7b000962bdeece8d4818",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0193",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "34be162972a05e68e6ab80a7a57445cf3e82d7d92b4203fbe4cbf7a5483bde0c",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0194",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "2933d43511f6b8a4ab743d9eece2c1ee3a3a2a8ce10a901ce8e99208de1567d9",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0195",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "688862a03e4bc23abe8973d61c44e576afa4cf69410202217a868a5c6344c459",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0196",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4dc82f4951c191bca231bf3a5a2b04671eb51148c985d4ea65ec9c0ec2025065",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0197",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "73fd0d8e82c226849fb02d043f9b0bb631980cb04739f222ccabf99d80174ce2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0198",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "6aa9d6c60e07b358af02270a0f928266762c918ca84cc20871c2582dd37fd7c4",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0199",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "f204f149293d824ceb82153413da4c7b871f84600f6f2533951bcc33df665e61",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0200",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "22f3047fcbf6353d79dc2002d4073a83125cfa9a6a3f4cd50056fc72cb3cb7ce",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0201",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "8397b53a04fd723ce0580601631552dbf38dd2405140d8570424616e568a0e86",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0202",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ac509ff69b6b6e87a33e389e5f848c1431fbf7553ef494e21c3de3b21def03cd",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0203",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "af9f3a3d1b87062f0aaff4b9ccf89edec8511bc15ff10107535d68389ff7a1dd",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0204",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "91a1de6f0ee03ee2c2e101511ca8a53d0098620732bfc9678038240995a631c3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0207",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "f1124429d1eb0ce65304f9d512e1afb05be444b2ad0f26a4ee9f6ad072414f37",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0208",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "aa098021e5d12c309670deaa1519688fe3e50873b91821f0756b0a190991dc33",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0209",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e244bd878bdaee59a9c7c65b23b83efdc724c8d59b1b4305be2995d0bd579f58",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0210",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "76ade95770222cbb687de9babaab46fff1a2429320526f5c9f483a544c2b6db3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0211",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "74da2f02f67f45ba67ef37ed1ee965e6be3506008b44542379a81b44ec6fbce0",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0212",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "d12c0818eb86b84f9e6fd59a29926658eb2941b6eae3b031dbd11bf3c68767b5",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0213",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e0a2ead9a98741f895d4105cf3a8b2faadd119e937dc5d6740bbea053ced0a66",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0214",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "cc59e4d15ea94b59c2081306387cb3bb49bc56aac0a81a93a86767230f769ed5",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0215",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "884cecacc7c8cb33d9c50a16f25d034f0f1f020d0c5eb0e11457d2239eb37d4c",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0216",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "66046f83ad045360d82acf08b1bff419aee750a38d5b3993447a6631eaf60bb9",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0217",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "148fe3881fc04d36cb08005a6e8be3fdd16f2e43136e011c19d511a412ee78d1",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0218",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "64594513f80bcbb563bc9d13d334a992602393921acc938c0e8280aaebc53281",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0219",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8eb62b99bd93bc20a7f0a885bf4975e2b0eee1962e816916ea169530b60f4b82",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0220",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "bc2ed11af851dd8c32261a115afb56855e943cf71c8ee6ba840d66c35a8137af",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0221",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "e1174c41dc847e4a58bfca20359e2c424e6e02ac1d696a6e41b16a6aff8c9664",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0222",
+      "raw_sample_type": "梅见品牌认知与传播反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a7d16335b88b1f19d806953a19cd0dc56def280efe2111568904837b93a9c679",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0223",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "1bb2d42854602f9e835a27922b23edf16dafc05eadf4aa5d71e7841b14747285",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0224",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7c1f0cc560ba18bc33f0109be48d725d92cfb017e2a21375e1973f22d7ec2565",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0225",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "5f8c0c435b92373125b804647eb6a458de810ef6e54ec1471e68e2fc3b680221",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0226",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c2d16f35f5c577dfe83fcc9995594c8b5c8df73b57341b9c2bd483ddc58479b7",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0227",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "c6ad348d381d2cf939e0d2f211a60a8f0b898297c1315db96cd4ffe0501366b0",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0228",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "e5e8140ef3ee32b0eeaf3768f0697d0fac0e06322463b1d8af07e77dfd11d652",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0229",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "3c3a92a0bc4c23e13f492ab8ff519d8d88b86ed1d942fbfaa8d336e2b67fd0c4",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0230",
+      "raw_sample_type": "竞品选择与替代理由",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "58b09503c4a576ef4b8750755f98926d6ff0a1b615edfe35a8bdc4f448e1bebd",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0231",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "0afdb3f4c4db6f88ab0c6c48618bbfb87f540400e452bbdf04ef95ce7d16f8c4",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0232",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9760698247d9f51c1f36de26097f63d34564a693cc625571b2d3a2b47ac1f65e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0233",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "60e842506bd0aae0aebb7cece792724558e81837e3985333b47e24a9e24d5315",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0234",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "186b594867975a7289f60ac1da5706e84d280ae4c95ce548c53b6fb267a98cfe",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0235",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "ebdca3b82c3e2ae3a5f2f7695a298fe22ae1b6e45ee0859c584cb91b5544e50e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0236",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "84827016deab79238aee32a7bb6467eee314ed8f974a77ff0cd71f94867de2a3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0237",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "b0c5e65c0200b251e30823a3034d0e76f082dca3b43505f9526f6f90b2c80550",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0238",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "d7075376089f6237a7a7b3c78117bfd0ce3d502e3e0700fe1ca071fb00dff20f",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0239",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "f2885f80b2871f69a514ce1a248ea05130c7cee3ebb49261de4cce158ca402ae",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0240",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "e19315ec874101f20a627c7eb4d36eb892a4c0651cde97e04a6315d8bfc5cf67",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0241",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "9f6c5f979b844aea83c390cdb6fcb85bd32e47fce971b80be74c2a0e475b0fcc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0242",
+      "raw_sample_type": "消费场景与使用行为",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "b30efb4bf88e9da55a44b44f45bcc2b5bef9e50c8eb146da3157fa7c949072ba",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0243",
+      "raw_sample_type": "购买决策与价格反馈",
+      "source_platform": "小红书",
+      "split_role": "GOLD"
+    },
+    {
+      "leakage_group": "c7ca5d90adae121128bbf9a3a40399d31fcc048fcf621c2245675dd23e72188e",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0244",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "390d8e77fc725dda3eb6308ed53eb2e80417b7ec5dcd662ecc17c1738cf97fb6",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0245",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "4606f2cc7c02a4210117e2e40a82a1db4c4db01c16d5e8ca807e1a7949b58c67",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0246",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "37df2d43b50310e2b7c953437484e420fc018dbf4b73b8f0234680032d42ed11",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0247",
+      "raw_sample_type": "饮法调配与内容共创",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "8f6abc6d7b2865c6b09e0c43f32ab0914f58013704791895342fe495f625cffc",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0248",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "da7ea3c550e893f28fac9d92e82172af91833370beaf8f3f26964bf96075b613",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0249",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "a4e20e745515153124e33794b29730ba7963ffa0ac11337346cad4742a4bdbbf",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0250",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "dd5db738dee871b1ce621ea39a8caec4d6447dddb34aae28fb11910763501939",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0251",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    },
+    {
+      "leakage_group": "15f162f080bd117ea2286e41483f1e426e50acfa7c731ffe91e452c7b79ede42",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0252",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "9e77932eea2161b254cd92aa6ea0d13096d4df0ca4373203ac279dce455ce4b3",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0253",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "08832654a69b31bae661eef533b364bcb27eb37e5f0d42fec7d22d95d5002ccf",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0254",
+      "raw_sample_type": "低度酒品类态度",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "a82da3fdffcf6a7772e58dfed12d932f455d2c1c7e836da4aafeee4d8bc92cd0",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0255",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "008cc67ac7b19fd2f00919df2fdff61ce6893748abbc259ea6e32da956bd6fa9",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0256",
+      "raw_sample_type": "竞品产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "HOLDOUT"
+    },
+    {
+      "leakage_group": "2fae4a957f64307593aa9eb142bac3c4b4c4a9e422455012a2c05457d3a228c2",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0257",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "7644e731f07dfe5cbf6718e2c4de8c4fed3ded641c1ac5b0bbcae0f1d07776a5",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0258",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "90db06b4492cd163cc8ec880d8b6e9d5c2745c9d1bf263aa84ecdcdd45b520bf",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0259",
+      "raw_sample_type": "梅见产品体验反馈",
+      "source_platform": "小红书",
+      "split_role": "ANALYSIS"
+    },
+    {
+      "leakage_group": "c003814e8c995e6a9de97ae7faad5296bc16e389f74c89f1dec918472871712a",
+      "platform_url_available": true,
+      "raw_id": "XHS-SOC-0260",
+      "raw_sample_type": "饮酒情绪与身体负担",
+      "source_platform": "小红书",
+      "split_role": "CHALLENGE_POOL"
+    }
+  ],
+  "dataset_sha256": "8be71070cc078c8f2f9994e7a412df85b04682b3a8af3009c0e5ce8c354a6214",
+  "dataset_version": "screened_v2",
+  "holdout_stratum_targets": {
+    "B站\u001f梅见产品体验反馈": 0,
+    "B站\u001f竞品产品体验反馈": 0,
+    "京东\u001f梅见产品体验反馈": 2,
+    "京东\u001f梅见品牌认知与传播反馈": 0,
+    "京东\u001f竞品产品体验反馈": 5,
+    "京东\u001f竞品选择与替代理由": 0,
+    "京东\u001f购买决策与价格反馈": 4,
+    "京东\u001f饮法调配与内容共创": 1,
+    "小红书\u001f低度酒品类态度": 5,
+    "小红书\u001f梅见产品体验反馈": 4,
+    "小红书\u001f梅见品牌认知与传播反馈": 1,
+    "小红书\u001f消费场景与使用行为": 2,
+    "小红书\u001f社交关系与饮酒边界": 1,
+    "小红书\u001f竞品产品体验反馈": 3,
+    "小红书\u001f竞品选择与替代理由": 0,
+    "小红书\u001f购买决策与价格反馈": 1,
+    "小红书\u001f饮法调配与内容共创": 1,
+    "小红书\u001f饮酒情绪与身体负担": 3,
+    "抖音\u001f低度酒品类态度": 3,
+    "抖音\u001f梅见产品体验反馈": 6,
+    "抖音\u001f梅见品牌认知与传播反馈": 1,
+    "抖音\u001f消费场景与使用行为": 1,
+    "抖音\u001f社交关系与饮酒边界": 1,
+    "抖音\u001f竞品产品体验反馈": 1,
+    "抖音\u001f购买决策与价格反馈": 1,
+    "抖音\u001f饮法调配与内容共创": 1,
+    "抖音\u001f饮酒情绪与身体负担": 3,
+    "淘宝\u001f梅见产品体验反馈": 3,
+    "淘宝\u001f梅见品牌认知与传播反馈": 0,
+    "淘宝\u001f竞品产品体验反馈": 3,
+    "淘宝\u001f竞品选择与替代理由": 0,
+    "淘宝\u001f购买决策与价格反馈": 2,
+    "淘宝\u001f饮法调配与内容共创": 1
+  },
+  "holdout_stratum_tolerance": 1,
+  "split_algorithm_version": "leakage_safe_stratified_v2"
+}

@@ -1,0 +1,293 @@
+{
+  "run_id": "official-20260814-three-opportunity-evolution-001",
+  "selected_candidate_ids": [
+    "EC-ADD-01-口味图鉴",
+    "EC-ADD-02-梅见溯源记",
+    "EC-03-双容量双剧本"
+  ],
+  "opportunities": [
+    {
+      "candidate_id": "EC-ADD-01-口味图鉴",
+      "ai_original_rank": 1,
+      "original_scores": {
+        "competitor_difference": {
+          "rationale": "Avoids claiming flavor variety as a difference and focuses on SKU/process mapping, but whether competitors already offer an equivalent official guide remains unverified.",
+          "score": 35
+        },
+        "emotional_tension": {
+          "rationale": "Choice overload, worry about wasting money, and contradictory taste reviews create solid emotional tension around choosing the right bottle.",
+          "score": 66
+        },
+        "evidence_strength": {
+          "rationale": "Direct user questions about flavors and detailed positive/negative flavor comments are highly relevant; counter-evidence about quality skepticism is also included, making this the most evidence-rich candidate.",
+          "score": 72
+        },
+        "meijian_fit_and_exclusivity": {
+          "rationale": "The pain point is tied directly to Meijian's multiple SKUs and users' first-purchase decisions; an official guide could be distinctive, but it is not built and competitors may offer similar flavor navigation.",
+          "score": 62
+        },
+        "scene_conversion": {
+          "rationale": "Concrete shelf-scanning and party-tasting moments can directly guide purchase and trial; conversion depends on unbuilt QR and per-SKU verified data.",
+          "score": 65
+        }
+      },
+      "candidate": {
+        "brand_opportunity": "拟制作官方口味图鉴：把可核验的配料/工艺与各在售 SKU 的酸度、甜度、烟熏感和兑饮建议并列说明，口感标签只作选购参考，不替代对品质疑虑的回应。",
+        "brand_role": "口味选择的‘翻译官’——在用户打开购买页或拿起瓶子时，用一张图告诉他每个口味到底什么味道、适合什么场景",
+        "candidate_id": "EC-ADD-01-口味图鉴",
+        "competitor_difference": "本提案的差异不在于“有口味”，而在于把梅见已核验的具体 SKU/工艺与用户可理解的口感标签逐项对应；竞品是否已有同类官方图鉴需先核查。",
+        "content_theme": "真实口味对照实验：在每个在售 SKU 的测量口径可核验时，把酸度、甜度与感官口味并列展示，由不同偏好的成年人试饮点评；数据仅作参考，最后落到“选对口味再举杯”。",
+        "counter_evidence": [
+          {
+            "comment_id": "MJ-RAW-0006",
+            "quote": "“梅见，兴冲冲的下单结果满载失望。这玩意入口就像是酒精跟青梅汁勾兑的一样，酒精是酒精青梅汁是青梅汁，啥也不是。\""
+          },
+          {
+            "comment_id": "XHS-SOC-0019",
+            "quote": "看了一下梅见的成分表，第1位带水的都不要买。还有放浓缩果汁的那些通通都是勾兑的。"
+          }
+        ],
+        "counter_evidence_note": "存在‘像酒精跟青梅汁勾兑’（MJ-RAW-0006）和成分怀疑（XHS-SOC-0019），说明部分用户对口感品质存疑；口味图鉴只能帮助选择，无法弥补口味主观差异，主张应限定在‘减少首次踩雷’而非‘保证好喝’",
+        "draft_proposition": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸、桂花写清楚，先看标签再下单，理性饮酒",
+        "main_scenes": [
+          "周末逛超市，站在梅见货架前掏出手机扫瓶身口味码，对照‘烟熏—乌梅味重、适合加冰’的标注，决定买超酸还是原味（仅限法定饮酒年龄成年人，适量饮酒）",
+          "朋友带了两瓶不同口味到饭局，用口味图鉴卡片猜口味、交换试饮，喝到微醺就停手"
+        ],
+        "primary_conflict_id": "EC-01",
+        "risks": [
+          "口味标签是主观描述的标准化，不同批次可能口感不同，需标注为参考非承诺",
+          "个别反馈（如止咳糖浆味）显示部分口味接受度分化，图鉴不能替代个人试饮",
+          "只面向法定饮酒年龄成年人，口味引导不鼓励尝遍所有口味而忽视饮酒量",
+          "公开证据存在当前与待复核层级，未完成复核的配料、工艺或产品信息不得进入图鉴，也不得表述为已核验事实"
+        ],
+        "supporting_conflict_ids": [
+          "EC-01"
+        ],
+        "supporting_evidence": [
+          {
+            "comment_id": "MJ-RAW-0003",
+            "quote": "“梅见酒后劲大吗”“梅见喝了第二天头疼吗”“梅见兑什么喝”“梅见哪个口味最好喝”“梅见青梅酒喝完容易上头吗”"
+          },
+          {
+            "comment_id": "DY-SOC-0158",
+            "quote": "烟熏梅见好喝吗求真实口感"
+          },
+          {
+            "comment_id": "TB-20260809-049",
+            "quote": "烟熏乌梅风味儿青梅酒非常好喝，喝青梅酒就选梅见，好喝不贵，5分好评！"
+          },
+          {
+            "comment_id": "JD-20260809-062",
+            "quote": "超酸版本很不错，原果原酿很干净，梅香正、酸度适口，加冰超好喝。微醺不头疼，颜值高、包装精致，自饮送礼都可，无限回购。赞一个"
+          },
+          {
+            "comment_id": "XHS-SOC-0021",
+            "quote": "你相信我姐妹，这个比原味好喝太多"
+          },
+          {
+            "comment_id": "XHS-SOC-0043",
+            "quote": "喝过很多款梅子酒，感觉还是梅见最专业了，不过我个人原因不喜欢太甜的酒"
+          }
+        ],
+        "target_audience": "对梅见口味好奇、第一次购买或想尝试多种口味，但怕选错浪费钱和心情的法定饮酒年龄成年人",
+        "title": "梅见口味多到选不过来？官方口味图鉴把烟熏、超酸写明白",
+        "user_conflict": "想要喝到顺口的微醺，但梅见口味多、评价两极，担心选错又酸又涩或酒味太重，白白浪费一瓶",
+        "why_meijian": "输入中有用户直接问“梅见哪个口味最好喝”（MJ-RAW-0003）、“烟熏梅见好喝吗求真实口感”（DY-SOC-0158），也有用户反馈“烟熏乌梅风味儿青梅酒非常好喝”（TB-20260809-049）、“超酸版本很不错”（JD-20260809-062），同时存在“这个比原味好喝太多”（XHS-SOC-0021）等对比，说明口味选择是真实且未被官方解答的门槛"
+      }
+    },
+    {
+      "candidate_id": "EC-ADD-02-梅见溯源记",
+      "ai_original_rank": 2,
+      "original_scores": {
+        "competitor_difference": {
+          "rationale": "Traceability is a plausible proof-point, but similar craft-transparency claims exist among competitors and the candidate explicitly acknowledges the differentiation is not yet established.",
+          "score": 28
+        },
+        "emotional_tension": {
+          "rationale": "The 'is it blended?' distrust and worry about safety/health create high emotional stakes and the strongest tension in the set.",
+          "score": 80
+        },
+        "evidence_strength": {
+          "rationale": "Direct distrust comments and some positive craft references establish a real concern, but the core promise of batch-level traceability is not supported by verifiable production records.",
+          "score": 58
+        },
+        "meijian_fit_and_exclusivity": {
+          "rationale": "Directly targets a core Meijian suspicion and leverages wine-cellar/craft imagery that could feel distinctive; exclusivity is limited because competitors can also use craft-transparency narratives and the traceability is unverified.",
+          "score": 68
+        },
+        "scene_conversion": {
+          "rationale": "A documentary and scan-to-verify route could be compelling, but scenes are gated on verified batch records, approvals, and event logistics, delaying actual user engagement.",
+          "score": 55
+        }
+      },
+      "candidate": {
+        "brand_opportunity": "先核验可公开的配料表、青梅入库、陶坛浸泡、灌装记录及其与批次码的对应关系，再试点一批一码溯源；只展示可逐批次复核的事实，不承诺纯天然、健康或口感结果",
+        "brand_role": "品质自证的‘证言提供者’——在用户怀疑勾兑时，用一瓶一码的溯源信息把酿造事实摆出来，让用户自己判断",
+        "candidate_id": "EC-ADD-02-梅见溯源记",
+        "competitor_difference": "当前证据仅支持把批次可溯源作为回应梅见用户成分与工艺疑虑的执行提案，尚不能声称竞品没有类似工艺透明能力；完成同品类溯源机制对照后再主张差异化",
+        "content_theme": "溯源纪录片《一坛梅酒的时间》：记录同一天进厂的一批青梅，如何被分入不同陶坛，3个月后、6个月后开坛试饮，用时间轴回答‘勾兑’疑问",
+        "counter_evidence": [
+          {
+            "comment_id": "MJ-RAW-0011",
+            "quote": "有点像喝止咳糖浆加酒"
+          },
+          {
+            "comment_id": "XHS-SOC-0029",
+            "quote": "有点像喝止咳糖浆加酒"
+          },
+          {
+            "comment_id": "XHS-SOC-0184",
+            "quote": "打开闻到味道我以为是藿香正气水。。。"
+          }
+        ],
+        "counter_evidence_note": "存在‘像止咳糖浆加酒’（MJ-RAW-0011、XHS-SOC-0029）和‘闻到以为是藿香正气水’（XHS-SOC-0184）的口感反馈，说明即使证明工艺，也无法保证所有人喜欢；主张应收窄为‘回应成分质疑’，不承诺口感或健康",
+        "draft_proposition": "梅见到底是不是勾兑的？打开批次码看陶坛浸泡记录，用可验证的信息代替猜测，理性饮酒",
+        "main_scenes": [
+          "在批次码与青梅入库、陶坛浸泡、灌装记录完成逐批次核验并可公开后，扫描瓶身查看对应的已核验记录；未完成核验前不把扫码作为传播承诺（仅限法定饮酒年龄成年人，理性饮酒）",
+          "在酒庄开放日、跨批次记录和试饮流程均可公开复核后，拍摄陶坛与时间轴；试饮只作为法定饮酒年龄成年人的体验展示，不把结果写成普遍口感或健康保证"
+        ],
+        "primary_conflict_id": "EC-01",
+        "risks": [
+          "‘原果原酿’仅来自个别用户与超酸版本反馈，不能代表全部口味；公开工艺需先获得证实的生产事实，不能在内容中虚构细节",
+          "批次码溯源需要技术投入，若执行不到位反而放大不信任",
+          "只面向法定饮酒年龄成年人，溯源内容应避免把梅见塑造成‘健康饮品’"
+        ],
+        "supporting_conflict_ids": [
+          "EC-01"
+        ],
+        "supporting_evidence": [
+          {
+            "comment_id": "MJ-RAW-0006",
+            "quote": "“梅见，兴冲冲的下单结果满载失望。这玩意入口就像是酒精跟青梅汁勾兑的一样，酒精是酒精青梅汁是青梅汁，啥也不是。\""
+          },
+          {
+            "comment_id": "XHS-SOC-0019",
+            "quote": "看了一下梅见的成分表，第1位带水的都不要买。还有放浓缩果汁的那些通通都是勾兑的。"
+          },
+          {
+            "comment_id": "JD-20260809-062",
+            "quote": "超酸版本很不错，原果原酿很干净，梅香正、酸度适口，加冰超好喝。微醺不头疼，颜值高、包装精致，自饮送礼都可，无限回购。赞一个"
+          },
+          {
+            "comment_id": "DY-SOC-0146",
+            "quote": "那5000个陶坛的酒库也太壮观了"
+          },
+          {
+            "comment_id": "XHS-SOC-0020",
+            "quote": "自己泡的梅酒、国外的梅酒、梅见都试过，梅见我的口粮酒了。入口很顺，高粱酒的香味也够"
+          }
+        ],
+        "target_audience": "看到‘原果原酿’想了解真相、担心喝到勾兑酒影响口感和身体的法定饮酒年龄成年人",
+        "title": "梅见是勾兑的吗？用陶坛浸泡实拍回答“酒精+青梅汁”的疑虑",
+        "user_conflict": "想要找一款放心的青梅酒，但担心梅见只是酒精+果汁勾兑，喝起来有‘止咳糖浆’味，不敢多喝，也不知道该不该回购",
+        "why_meijian": "输入中有用户直接批评‘入口就像是酒精跟青梅汁勾兑的一样’（MJ-RAW-0006），也有用户提醒‘看了成分表第1位带水的都不要买’（XHS-SOC-0019）；同时其他用户提到‘原果原酿很干净’（JD-20260809-062）、‘5000个陶坛的酒库也太壮观了’（DY-SOC-0146），说明梅见有可展示的工艺资产，但尚未被用于回答质疑"
+      }
+    },
+    {
+      "candidate_id": "EC-03-双容量双剧本",
+      "ai_original_rank": 3,
+      "original_scores": {
+        "competitor_difference": {
+          "rationale": "Honestly avoids claiming solo drinking as a difference; the dual-capacity short-video concept is a plausible differentiation action but is conditional on actual SKU supply and is easily copied.",
+          "score": 30
+        },
+        "emotional_tension": {
+          "rationale": "Real tension between wanting private micro-drinking and avoiding social judgement or pressure, but expressed in a lighter, everyday tone rather than high-stakes conflict.",
+          "score": 58
+        },
+        "evidence_strength": {
+          "rationale": "Users explicitly mention both 150ml and 330ml uses, solo relaxation, and small-group drinking; evidence is concrete though actual ongoing availability of both capacities is not verified.",
+          "score": 63
+        },
+        "meijian_fit_and_exclusivity": {
+          "rationale": "Both capacities and usage contexts appear in Meijian user feedback, making brand fit strong; exclusivity is limited by the acknowledged RIO ownership of solo-drinking occasions and unverified product availability.",
+          "score": 60
+        },
+        "scene_conversion": {
+          "rationale": "Strongly filmable solo and gathering scripts can support content conversion, but scenes are framed as conditional proposals and cannot be reliably delivered until capacity availability is confirmed.",
+          "score": 58
+        }
+      },
+      "candidate": {
+        "brand_opportunity": "把 150ml 与 330ml 两个规格分别做成“独处版”和“小聚版”的内容：独处版强调一次喝完不浪费，小聚版强调一人一瓶不劝酒；用容量先把边界划好，再谈喝法。",
+        "brand_role": "在 150ml/330ml 以实际在售规格为准的前提下，内容里做“场景容量翻译官”：看到用户是一个人的居家微醺还是两个人的轻社交，建议他试试对应容量、怎么倒、喝到哪停，而不是声称梅见固定拥有这两款 SKU。",
+        "candidate_id": "EC-03-双容量双剧本",
+        "competitor_difference": "RIO 微醺已把“一个人的小酒”和宅家追剧、独处放松、睡前小酌作为既有品牌资产（公开竞品事实），因此“独自微醺也是正常需求”不能作为梅见的差异点；本提案的差异是用 150ml/330ml 双容量把独饮与小聚分别翻译成可拍摄动作，且容量规格以实际在售信息为准。",
+        "content_theme": "双剧本短视频：同一瓶梅见，独处版拍一个人安静喝完 150ml，小聚版拍两个人一人一瓶 330ml，结尾都回到“按自己的节奏喝”。",
+        "counter_evidence": [],
+        "counter_evidence_note": "当前语料未发现直接反面证据，但独饮偏好来自少量用户，不能据此推断“孤独饮酒”已获广泛认同；主张应保持为多样选择而非替代社交。",
+        "draft_proposition": "如果 150ml/330ml 规格实际在售，可以讲“两种容量、两种自洽喝法”：150ml 小瓶适合一次喝完不浪费，330ml 适合一人一瓶不劝酒；这是饮用建议而非普遍结论，理性饮酒。",
+        "main_scenes": [
+          "独处场景执行建议：若 150ml 小瓶实际在售，可拍一个人在家拿一瓶、倒一杯、打开剧集，按自己的节奏慢慢喝到收住（仅限法定饮酒年龄成年人，理性饮酒）",
+          "小聚场景执行建议：若 330ml 规格实际在售，可拍和闺蜜吃火锅时一人一瓶、碰杯但不劝酒、各喝各的节奏"
+        ],
+        "primary_conflict_id": "EC-03",
+        "risks": [
+          "独饮偏好样本量小，不能外推为普遍趋势，也不能暗示独饮优于社交",
+          "150ml/330ml 规格的可得性、价格（有反馈涨价）因渠道而异，需以实际在售信息为准",
+          "只面向法定饮酒年龄成年人，独处饮酒同样需有边界，不鼓励借独饮逃避现实"
+        ],
+        "supporting_conflict_ids": [
+          "EC-03"
+        ],
+        "supporting_evidence": [
+          {
+            "comment_id": "XHS-SOC-0232",
+            "quote": "一个人的微醺才是最放松的"
+          },
+          {
+            "comment_id": "XHS-SOC-0239",
+            "quote": "一个人喝酒可爽了"
+          },
+          {
+            "comment_id": "XHS-SOC-0241",
+            "quote": "一个人才叫喝酒 几个人那叫吹牛逼大会"
+          },
+          {
+            "comment_id": "DY-SOC-0063",
+            "quote": "看着真惬意和朋友一起小酌一杯心情都变好了"
+          },
+          {
+            "comment_id": "MJ-RAW-0021",
+            "quote": "这款150毫升的小瓶梅见实在是太可爱啦，对于一个梅见迷来说，小瓶刚刚好，一次喝完，不怕会变味，7种味道，本人最喜欢烟熏风味的，超酸的也不错，送的山岩杯颜值也很高！"
+          },
+          {
+            "comment_id": "TB-20260809-044",
+            "quote": "小资产阶级，跟闺蜜吃饭时一人一瓶正好，酒量不好就是喝着开心，一瓶下肚微醺"
+          },
+          {
+            "comment_id": "JD-20260809-051",
+            "quote": "梅见这款原味青梅酒真是太适合女生小聚了！12度微醺刚刚好，不会醉却很有氛围。开瓶就是清新的青梅香气，入口酸甜柔顺，不涩不辣，加冰喝简直绝配。330ml小瓶装一人一瓶刚刚好，整箱囤货聚会随时开。冰镇后配火锅或烧烤特别解腻，比普通饮料更有仪式感。已经回购好几次了，闺蜜们都夸好喝。想找一款不踩雷的微醺甜酒，选梅见准没错！"
+          }
+        ],
+        "target_audience": "既想一个人在家自在微醺、又不想缺席闺蜜小聚的法定饮酒年龄成年人",
+        "title": "150ml 一次喝完、330ml 一人一瓶：梅见双容量接住独饮与小聚",
+        "user_conflict": "想要独处时不被评价的微醺时光，也想和朋友轻松共饮；但担心独饮被看成孤僻，小聚变成劝酒大会，一瓶酒很难同时适配两种节奏",
+        "why_meijian": "用户反馈中梅见 150ml 小瓶“刚刚好，一次喝完，不怕会变味”（MJ-RAW-0021），330ml 被描述为“闺蜜吃饭时一人一瓶正好，一瓶下肚微醺”（TB-20260809-044、JD-20260809-051）；同时独饮用户说“一个人的微醺才是最放松的”“一个人喝酒可爽了”（XHS-SOC-0232、XHS-SOC-0239）。梅见已经通过规格同时出现在两种场景里，缺的是把它们讲清楚的内容。"
+      }
+    }
+  ],
+  "initial_scenes": [
+    {
+      "scene_id": "TWO_PERSON_DAILY_MEAL",
+      "tier": "PRIMARY",
+      "label": "两个人日常便饭",
+      "support_summary": "Q11=25/51",
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "SMALL_GROUP_HEAVY_MEAL",
+      "tier": "SECONDARY",
+      "label": "三五人重口味小聚",
+      "support_summary": "Q11=14/51",
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "SOLO_CHINESE_MEAL",
+      "tier": "EXTENSION",
+      "label": "一个人吃中餐",
+      "support_summary": "Q11=7/51",
+      "evidence_refs": []
+    }
+  ]
+}
