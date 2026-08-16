@@ -26,7 +26,10 @@ from src.ui.demo_notification_control import (
     sync_preprocessing_notification,
     sync_pressure_notifications,
 )
-from src.ui.custom_decision_workspace import render_custom_decision_workspace
+from src.ui.custom_decision_workspace import (
+    render_custom_evolution_dashboard,
+    render_custom_pressure_test,
+)
 from src.ui.pressure_test_workspace import render_pressure_test_workspace
 from src.ui.realtime_decision_dashboard import render_realtime_decision_dashboard
 from src.ui.system_gateway import (
@@ -36,11 +39,7 @@ from src.ui.system_gateway import (
     resolve_runtime_capabilities,
 )
 from src.ui.ui_theme import build_theme_css
-from src.ui.workspace_shell import (
-    Workspace,
-    complete_workspace,
-    render_workspace_navigator,
-)
+from src.ui.workspace_shell import Workspace, render_workspace_navigator
 from tools.run_feishu_bot import REQUIRED_CONFIG_KEYS, load_bot_config
 
 
@@ -189,36 +188,36 @@ if active_workspace is Workspace.PREPROCESSING:
     st.stop()
 
 if active_workspace is Workspace.STRESS_TEST:
-    render_pressure_test_workspace(
-        VALIDATION_ROOT,
-        EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
-    )
-    sync_pressure_notifications(
-        st.session_state,
-        notification_store,
-        _demo_notification_snapshots(),
-    )
+    if entry is SystemEntry.CUSTOM:
+        render_custom_pressure_test(
+            prepared_root=ROOT / "data" / "prepared_corpora",
+            online_enabled=capabilities.online_ai_enabled,
+            dotenv_path=ROOT / ".env",
+        )
+    else:
+        render_pressure_test_workspace(
+            VALIDATION_ROOT,
+            EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
+        )
+        sync_pressure_notifications(
+            st.session_state,
+            notification_store,
+            _demo_notification_snapshots(),
+        )
     st.stop()
 
 if active_workspace is Workspace.REALTIME_DECISION:
-    render_realtime_decision_dashboard(EVOLUTION_ROOT)
-    sync_evolution_notifications(
-        st.session_state,
-        notification_store,
-        _demo_notification_snapshots(),
-    )
-    completed = [Workspace(value) for value in st.session_state.get("completed_workspaces", [])]
-    if Workspace.REALTIME_DECISION not in completed:
-        if st.button("完成回放 · 解锁自由决策实验", key="realtime_complete_replay"):
-            complete_workspace(st.session_state, Workspace.REALTIME_DECISION)
-            st.rerun()
-    st.stop()
-
-if active_workspace is Workspace.FREE_DECISION:
-    render_custom_decision_workspace(
-        prepared_root=ROOT / "data" / "prepared_corpora",
-        entry=entry,
-        online_enabled=capabilities.online_ai_enabled,
-        dotenv_path=ROOT / ".env",
-    )
+    if entry is SystemEntry.CUSTOM:
+        render_custom_evolution_dashboard(
+            prepared_root=ROOT / "data" / "prepared_corpora",
+            online_enabled=capabilities.online_ai_enabled,
+            dotenv_path=ROOT / ".env",
+        )
+    else:
+        render_realtime_decision_dashboard(EVOLUTION_ROOT)
+        sync_evolution_notifications(
+            st.session_state,
+            notification_store,
+            _demo_notification_snapshots(),
+        )
     st.stop()

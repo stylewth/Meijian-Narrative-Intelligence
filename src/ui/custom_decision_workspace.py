@@ -1,13 +1,13 @@
-"""自由决策工作区：自定义语料在本地模型配置下实时运行完整决策链。
+"""自定义使用入口的自由链路渲染：压力测试与实时决策两个工作区。
 
-线上公开部署只回放冻结案例；本工作区面向本地配置了 ``.env`` 模型密钥的
-使用者，从已发布的 PreparedCorpusPackage 出发，驱动 DecisionRunner 走完
-基线 → 挑战 → 选线 → holdout → 冻结 → 增量批 的真实推理链路。
+线上公开部署（梅见案例展示）只回放冻结产物，不经过本模块；本地配置了
+``.env`` 模型密钥的自定义使用入口，由本模块驱动 DecisionRunner 在三个
+既有工作区中跑真实推理：预处理（导入+在线标注+发布）→ 叙事压力测试
+（基线+五维压力检查+挑战修订）→ 实时决策看板（选线→holdout→冻结→增量批）。
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -17,7 +17,6 @@ import streamlit as st
 from src.config import Settings
 from src.llm_client import LLMClient
 from src.schemas import (
-    BrandFact,
     CommentRecord,
     DecisionEvolutionCheckpoint,
     DecisionFoundationState,
@@ -25,7 +24,7 @@ from src.schemas import (
 )
 from src.services.decision_runner import DecisionRunner
 from src.services.prepared_corpus import list_prepared_corpora
-from src.ui import SystemEntry
+from src.ui.workspace_shell import Workspace, activate_workspace, complete_workspace
 
 _RUNNER_KEY = "custom_decision_runner"
 _FOUNDATION_KEY = "custom_decision_foundation"
@@ -79,10 +78,27 @@ def _render_ranking_table(foundation: DecisionFoundationState) -> None:
                 "候选": ranked.candidate.candidate_id,
                 "标题": ranked.candidate.title,
                 "加权分": ranked.weighted_score,
-                "压力检查通过": passed,
+                "压力检查通过": f"{passed} / 5",
             }
         )
     st.dataframe(rows, use_container_width=True)
+
+
+def _render_stress_details(foundation: DecisionFoundationState) -> None:
+    for stress in foundation.stress_results:
+        with st.expander(f"压力检查 · {stress.candidate_id}", expanded=False):
+            st.dataframe(
+                [
+                    {
+                        "检查": check.check_type.value,
+                        "状态": check.execution_status.value,
+                        "结论": check.decision.value if check.decision else "—",
+                        "依据": check.rationale,
+                    }
+                    for check in stress.checks
+                ],
+                use_container_width=True,
+            )
 
 
 def _render_checkpoint(checkpoint: DecisionEvolutionCheckpoint) -> None:
@@ -115,9 +131,115 @@ def _render_checkpoint(checkpoint: DecisionEvolutionCheckpoint) -> None:
             )
 
 
-def _stage(foundation: DecisionFoundationState) -> str:
+def _render_package_selection(prepared_root: Path) -> dict[str, Any] | None:
+    packages = list_prepared_corpora(prepared_root)
+    if not packages:
+        st.warning(
+            "尚未发布任何自定义语料包：请先完成『数据预处理』工作区的导入、在线标注与发布。"
+        )
+        return None
+    options = {published.manifest.package_id: published for published in packages}
+    label = lambda package_id: (  # noqa: E731
+        f"{package_id} · {len(options[package_id].package.records)} 条评论 / "
+        f"{len(options[package_id].package.evidence_atoms)} 条证据"
+    )
+    baseline_id = st.selectbox("基线语料包", list(options), format_func=label)
+    other_ids = [package_id for package_id in options if package_id != baseline_id]
+    if len(other_ids) < 2:
+        st.warning(
+            "完整自由链路要求挑战批与 holdout 批语料：请再发布至少两个语料包"
+            "（可在预处理工作区导入不同批次数据后分别发布）。"
+        )
+        return None
+    challenge_id = st.selectbox("挑战批语料包", other_ids)
+    holdout_candidates = [pid for pid in other_ids if pid != challenge_id]
+    holdout_id = st.selectbox("holdout 语料包", holdout_candidates)
+    release_ids = st.multiselect(
+        "增量批语料包（按顺序释放，可选）",
+        [pid for pid in other_ids if pid not in {challenge_id, holdout_id}],
+    )
+    return {
+        "baseline": baseline_id,
+        "challenge": challenge_id,
+        "holdout": holdout_id,
+        "releases": list(release_ids),
+    }
+
+
+def _render_log() -> None:
+    log = st.session_state.get(_LOG_KEY, [])
+    if log:
+        with st.expander("运行日志", expanded=False):
+            for line in log:
+                st.write(line)
+
+
+def render_custom_pressure_test(
+    *,
+    prepared_root: Path,
+    online_enabled: bool,
+    dotenv_path: Path,
+) -> None:
+    st.subheader("叙事压力测试 · 自定义语料真实链路")
+    if not online_enabled:
+        st.info(
+            "自由链路需要本地 .env 配置 LLM_API_KEY 与 LLM_MODEL；"
+            "公开部署不使用团队模型密钥，因此此模块在线上不可运行。"
+        )
+        return
+
+    foundation: DecisionFoundationState | None = st.session_state.get(_FOUNDATION_KEY)
+    if foundation is None:
+        sources = _render_package_selection(prepared_root)
+        if sources is None:
+            return
+        if st.button("启动基线分析与压力测试", type="primary"):
+            records, atoms = _load_package(prepared_root, sources["baseline"])
+            client = LLMClient(Settings.from_sources(dotenv_path=dotenv_path))
+            runner = DecisionRunner(client=client, brand_facts=[])
+            with st.spinner("基线分析进行中：语料 → 候选 → 评分 → 五维压力检查…"):
+                built = runner.build_baseline(CustomRunInputs(records, atoms))
+            st.session_state[_RUNNER_KEY] = runner
+            st.session_state[_FOUNDATION_KEY] = built
+            st.session_state[_CHECKPOINTS_KEY] = []
+            st.session_state[_SOURCES_KEY] = sources
+            _log(f"基线完成：{len(records)} 条评论 → {len(built.candidates)} 个候选")
+            st.rerun()
+        return
+
+    sources: dict[str, Any] = st.session_state.get(_SOURCES_KEY, {})
+    runner: DecisionRunner | None = st.session_state.get(_RUNNER_KEY)
+    if runner is None:
+        st.error("运行状态缺失，请重新启动基线分析。")
+        return
+    st.caption(
+        f"run_id={foundation.run_id} · 基线包 {sources.get('baseline')} · "
+        f"可见证据 {len(foundation.visible_atoms)} 条"
+    )
+    _render_ranking_table(foundation)
+    _render_stress_details(foundation)
+
     if not foundation.challenge_applied:
-        return "challenge"
+        if st.button(f"应用挑战批并完成压力测试（{sources['challenge']}）"):
+            _, challenge_atoms = _load_package(prepared_root, sources["challenge"])
+            with st.spinner("挑战批评估与候选修订进行中…"):
+                challenged = runner.apply_challenge(foundation, challenge_atoms)
+            st.session_state[_FOUNDATION_KEY] = challenged
+            complete_workspace(st.session_state, Workspace.PRESSURE_TEST)
+            _log(f"挑战批完成：{len(challenge_atoms)} 条证据进入评估")
+            st.rerun()
+        return
+
+    st.success("挑战批已应用，候选修订如下；确认后进入实时决策看板。")
+    for ranked in foundation.ranking.ranked_candidates:
+        st.markdown(f"**{ranked.candidate.candidate_id}** · {ranked.candidate.draft_proposition}")
+    if st.button("进入实时决策看板", type="primary", key="custom_enter_realtime"):
+        activate_workspace(st.session_state, Workspace.REALTIME_DECISION)
+        st.rerun()
+    _render_log()
+
+
+def _stage(foundation: DecisionFoundationState) -> str:
     if not foundation.selected_ids:
         return "select"
     if not foundation.holdout_validated:
@@ -127,108 +249,36 @@ def _stage(foundation: DecisionFoundationState) -> str:
     return "release"
 
 
-def render_custom_decision_workspace(
+def render_custom_evolution_dashboard(
     *,
     prepared_root: Path,
-    entry: Any,
     online_enabled: bool,
     dotenv_path: Path,
 ) -> None:
-    st.subheader("自由决策实验")
-    if entry is not SystemEntry.CUSTOM:
-        st.info(
-            "自由决策实验面向自定义语料：请从入口选择『进入 · 自定义使用』，"
-            "并在本地配置模型密钥后运行完整推理链路。"
-        )
-        return
+    st.subheader("实时决策看板 · 自定义语料真实链路")
     if not online_enabled:
         st.info(
-            "自由决策需要本地 .env 配置 LLM_API_KEY 与 LLM_MODEL；"
+            "自由链路需要本地 .env 配置 LLM_API_KEY 与 LLM_MODEL；"
             "公开部署不使用团队模型密钥，因此此模块在线上不可运行。"
         )
         return
 
-    packages = list_prepared_corpora(prepared_root)
-    if not packages:
-        st.warning(
-            "尚未发布任何自定义语料包：请先在『数据预处理』工作区完成导入、"
-            "标注导入与发布，再回到此处运行决策链。"
-        )
-        return
-    options = {published.manifest.package_id: published for published in packages}
-    label = lambda package_id: (  # noqa: E731
-        f"{package_id} · {len(options[package_id].package.records)} 条评论 / "
-        f"{len(options[package_id].package.evidence_atoms)} 条证据"
-    )
-
-    st.markdown("#### 第 1 步 · 装载语料")
-    baseline_id = st.selectbox("基线语料包", list(options), format_func=label)
-    other_ids = [package_id for package_id in options if package_id != baseline_id]
-    if len(other_ids) < 2:
-        st.warning(
-            "完整决策链要求挑战批与 holdout 批语料：请再发布至少两个语料包"
-            "（可在预处理工作区导入不同批次数据后分别发布）。"
-        )
-        return
-    challenge_id = st.selectbox("挑战批语料包", other_ids)
-    holdout_candidates = [pid for pid in other_ids if pid != challenge_id]
-    holdout_id = st.selectbox("holdout 语料包", holdout_candidates)
-    release_ids = st.multiselect(
-        "增量批语料包（按顺序释放，可选）",
-        [pid for pid in other_ids if pid not in {challenge_id, holdout_id}],
-    )
-
-    brand_facts_text = st.text_area(
-        "品牌事实 BrandFact 列表（JSON 数组，可选；留空则不注入接地约束）",
-        height=120,
-    )
-
-    if st.button("装载语料并启动基线分析", type="primary"):
-        records, atoms = _load_package(prepared_root, baseline_id)
-        brand_facts: list[BrandFact] = []
-        if brand_facts_text.strip():
-            brand_facts = [
-                BrandFact.model_validate(item) for item in json.loads(brand_facts_text)
-            ]
-        client = LLMClient(Settings.from_sources(dotenv_path=dotenv_path))
-        runner = DecisionRunner(client=client, brand_facts=brand_facts)
-        foundation = runner.build_baseline(CustomRunInputs(records, atoms))
-        st.session_state[_RUNNER_KEY] = runner
-        st.session_state[_FOUNDATION_KEY] = foundation
-        st.session_state[_CHECKPOINTS_KEY] = []
-        st.session_state[_SOURCES_KEY] = {
-            "baseline": baseline_id,
-            "challenge": challenge_id,
-            "holdout": holdout_id,
-            "releases": list(release_ids),
-        }
-        _log(f"基线完成：{len(records)} 条评论 → {len(foundation.candidates)} 个候选")
-        st.rerun()
-
-    runner: DecisionRunner | None = st.session_state.get(_RUNNER_KEY)
     foundation: DecisionFoundationState | None = st.session_state.get(_FOUNDATION_KEY)
-    if runner is None or foundation is None:
+    runner: DecisionRunner | None = st.session_state.get(_RUNNER_KEY)
+    if foundation is None or runner is None:
+        st.warning("尚未开始自由链路：请先在『叙事压力测试』工作区完成基线与挑战批。")
         return
 
     sources: dict[str, Any] = st.session_state.get(_SOURCES_KEY, {})
     st.caption(
-        f"运行中 run_id={foundation.run_id} · 基线包 {sources.get('baseline')} · "
-        f"可见证据 {len(foundation.visible_atoms)} 条"
+        f"run_id={foundation.run_id} · 可见证据 {len(foundation.visible_atoms)} 条"
     )
     _render_ranking_table(foundation)
 
     stage = _stage(foundation)
-    st.markdown(f"#### 第 2 步 · 决策链推进（当前阶段：{stage}）")
+    st.markdown(f"#### 决策链推进（当前阶段：{stage}）")
 
-    if stage == "challenge":
-        if st.button(f"应用挑战批（{sources['challenge']}）"):
-            _, challenge_atoms = _load_package(prepared_root, sources["challenge"])
-            st.session_state[_FOUNDATION_KEY] = runner.apply_challenge(
-                foundation, challenge_atoms
-            )
-            _log(f"挑战批完成：{len(challenge_atoms)} 条证据进入评估")
-            st.rerun()
-    elif stage == "select":
+    if stage == "select":
         ranked = foundation.ranking.ranked_candidates
         selected = [item.candidate.candidate_id for item in ranked[:3]]
         st.write(f"自动入围（按当前排名前三）：{selected}")
@@ -241,9 +291,10 @@ def render_custom_decision_workspace(
     elif stage == "holdout":
         if st.button(f"运行 holdout 验证（{sources['holdout']}）"):
             _, holdout_atoms = _load_package(prepared_root, sources["holdout"])
-            st.session_state[_FOUNDATION_KEY] = runner.validate_holdout(
-                foundation, holdout_atoms
-            )
+            with st.spinner("holdout 验证进行中…"):
+                st.session_state[_FOUNDATION_KEY] = runner.validate_holdout(
+                    foundation, holdout_atoms
+                )
             _log(f"holdout 完成：{len(holdout_atoms)} 条留出证据")
             st.rerun()
     elif stage == "freeze":
@@ -264,11 +315,12 @@ def render_custom_decision_workspace(
                 _, batch_atoms = _load_package(
                     prepared_root, release_plan[next_index - 1]
                 )
-                checkpoint = runner.release_batch(
-                    st.session_state[_FOUNDATION_KEY],
-                    batch_index=next_index,
-                    atoms=batch_atoms,
-                )
+                with st.spinner("增量批评估进行中…"):
+                    checkpoint = runner.release_batch(
+                        st.session_state[_FOUNDATION_KEY],
+                        batch_index=next_index,
+                        atoms=batch_atoms,
+                    )
                 checkpoints.append(checkpoint)
                 st.session_state[_CHECKPOINTS_KEY] = checkpoints
                 _log(f"增量批 {next_index} 完成，新增 {len(batch_atoms)} 条证据")
@@ -278,9 +330,4 @@ def render_custom_decision_workspace(
 
     for checkpoint in st.session_state.get(_CHECKPOINTS_KEY, []):
         _render_checkpoint(checkpoint)
-
-    log = st.session_state.get(_LOG_KEY, [])
-    if log:
-        with st.expander("运行日志", expanded=False):
-            for line in log:
-                st.write(line)
+    _render_log()

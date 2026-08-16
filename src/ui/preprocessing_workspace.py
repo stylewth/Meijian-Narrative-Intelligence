@@ -1275,9 +1275,10 @@ def _render_real() -> None:
                 )
                 state["preprocessing_published_path"] = str(published.path)
                 state["preprocessing_error"] = None
+                complete_workspace(state, Workspace.PREPROCESSING)
                 st.success(
                     "已发布 PreparedCorpusPackage；状态：PIPELINE_VALIDATED_ONLY；"
-                    "实验数据·未经 Gold 校准。"
+                    "实验数据·未经 Gold 校准。叙事压力测试工作区已解锁。"
                 )
                 st.caption(f"文件交接路径：{published.path}")
             except Exception as exc:
