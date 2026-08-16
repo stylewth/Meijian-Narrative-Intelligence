@@ -1,4 +1,4 @@
-"""Shared navigation shell for the three ordered workspaces."""
+"""Shared navigation shell for the ordered workspaces."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ class Workspace(str, Enum):
     PREPROCESSING = "数据预处理"
     STRESS_TEST = "叙事压力测试"
     REALTIME_DECISION = "实时决策看板"
+    FREE_DECISION = "自由决策实验"
 
     # Descriptive aliases keep call sites readable without creating new values.
     PRESSURE_TEST = STRESS_TEST
