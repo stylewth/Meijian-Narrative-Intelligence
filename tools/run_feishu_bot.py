@@ -108,8 +108,12 @@ def load_bot_config(
     if database_path.exists() and database_path.is_dir():
         raise ValueError("FEISHU_NOTIFICATION_DB must be a file path")
     parent = database_path.parent
-    if not parent.exists() or not parent.is_dir():
-        raise ValueError("FEISHU_NOTIFICATION_DB parent directory must exist")
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ValueError("FEISHU_NOTIFICATION_DB 父目录无法创建") from exc
+    if not parent.is_dir():
+        raise ValueError("FEISHU_NOTIFICATION_DB parent directory must be a directory")
     if not os.access(parent, os.W_OK):
         raise ValueError("FEISHU_NOTIFICATION_DB parent directory is not writable")
     if database_path.exists() and not os.access(database_path, os.W_OK):

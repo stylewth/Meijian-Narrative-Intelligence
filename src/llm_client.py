@@ -77,6 +77,7 @@ class LLMClient:
         self._model = cast(str, settings.llm_model)
         self._response_format = settings.llm_response_format
         self._thinking_enabled = settings.llm_thinking_enabled
+        self._reasoning_effort = settings.llm_reasoning_effort or "max"
         if client is None:
             client_kwargs: dict[str, Any] = {
                 "api_key": settings.llm_api_key,
@@ -139,7 +140,7 @@ class LLMClient:
             "response_format": response_format,
         }
         if self._thinking_enabled:
-            request_kwargs["reasoning_effort"] = "max"
+            request_kwargs["reasoning_effort"] = self._reasoning_effort
             request_kwargs["extra_body"] = {"thinking": {"type": "enabled"}}
 
         response = self._client.chat.completions.create(**request_kwargs)
