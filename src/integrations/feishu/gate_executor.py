@@ -22,6 +22,7 @@ from src.services.prepared_corpus import sha256_bytes
 
 from .decision_gate_store import GateJob
 from .decision_gates import _GATE_LABELS, available_gates, resolve_result_path
+from .gate_cards import parameterized_gate_elements
 from .notification_cards import _button, _button_elements, _text_element, validate_card
 from .result_projection import (
     candidate_rows,
@@ -46,11 +47,17 @@ _ZERO_ARG_GATES = frozenset(
 )
 
 
-def next_gate_elements(run_id: str, stage: str, *, prefix: str) -> list[dict]:
-    """当前阶段可推进门的按钮行；带参数门只提示，不生成假按钮。"""
+def next_gate_elements(
+    run_id: str,
+    stage: str,
+    *,
+    prefix: str,
+    run_root: Path | None = None,
+) -> list[dict]:
+    """当前阶段可推进门的元素；提供 run_root 时带参数门从冻结产物生成真按钮。"""
 
     buttons: list[dict] = []
-    hints: list[str] = []
+    parameter_labels: list[str] = []
     for index, action in enumerate(available_gates(stage)):
         label = _GATE_LABELS.get(action, action)
         if action in _ZERO_ARG_GATES:
@@ -63,12 +70,25 @@ def next_gate_elements(run_id: str, stage: str, *, prefix: str) -> list[dict]:
                 )
             )
         else:
-            hints.append(f"{label}（需参数，暂由本地 CLI 或后续卡片输入提供）")
+            parameter_labels.append(label)
     elements: list[dict] = []
     if buttons:
         elements.extend(_button_elements(buttons))
-    if hints:
-        elements.append(_text_element(f"{prefix}_gate_hint", "\n".join(hints)))
+    if parameter_labels:
+        built = (
+            parameterized_gate_elements(run_id, stage, run_root, prefix=prefix)
+            if run_root is not None
+            else []
+        )
+        if built:
+            elements.extend(built)
+        else:
+            elements.append(
+                _text_element(
+                    f"{prefix}_gate_hint",
+                    "、".join(parameter_labels) + "（需参数，暂由本地 CLI 提供）",
+                )
+            )
     return elements
 
 
@@ -277,7 +297,11 @@ class DecisionGateExecutor:
             }
         ]
         if success and new_stage is not None:
-            elements.extend(next_gate_elements(job.run_id, new_stage, prefix="gtx"))
+            elements.extend(
+                next_gate_elements(
+                    job.run_id, new_stage, prefix="gtx", run_root=self._run_root
+                )
+            )
         card = {
             "schema": "2.0",
             "config": {"update_multi": True, "summary": {"content": title}},

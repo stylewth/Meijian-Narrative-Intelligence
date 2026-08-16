@@ -37,6 +37,7 @@ class FakeCoordinator:
     def submit_selection(self, run_id, selected_ids, primary_id):
         self.calls.append(("submit_selection", tuple(selected_ids), primary_id))
         self._maybe_fail()
+        self.stage = "SPECIFICITY_FINAL_RANK"
 
     def run_next_release(self):
         self.calls.append(("run_next_release",))

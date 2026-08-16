@@ -775,7 +775,10 @@ def _reply_decision_status(
             from src.integrations.feishu.gate_executor import next_gate_elements
 
             gate_elements = next_gate_elements(
-                state["run_id"], state["stage"], prefix="status"
+                state["run_id"],
+                state["stage"],
+                prefix="status",
+                run_root=config.decision_run_root,
             )
     _reply_plain_card(
         client,
