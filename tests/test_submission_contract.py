@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,20 +36,19 @@ SECRET_PATTERNS = (
 
 
 def tracked_candidate_files() -> list[Path]:
-    return [
-        path
-        for path in ROOT.rglob("*")
-        if path.is_file() and ".git" not in path.parts and "__pycache__" not in path.parts
-    ]
+    """发布合同检查 git 跟踪文件；本地 .env 与 outputs/ 运行产物不属于提交范围。"""
+
+    result = subprocess.run(
+        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
+    )
+    return [ROOT / line for line in result.stdout.splitlines() if line.strip()]
 
 
 def test_release_tree_uses_the_approved_allowlist() -> None:
     assert (ROOT / "app.py").is_file(), "release app.py has not been created"
-    actual = {
-        path.name
-        for path in ROOT.iterdir()
-        if path.name not in {".git", ".pytest_cache"}
-    }
+    tracked = tracked_candidate_files()
+    assert tracked, "git ls-files returned no tracked files"
+    actual = {path.relative_to(ROOT).parts[0] for path in tracked}
     assert actual <= ALLOWED_TOP_LEVEL
     assert {"app.py", "src", "data", "README.md", "requirements.txt"} <= actual
 
@@ -56,7 +56,7 @@ def test_release_tree_uses_the_approved_allowlist() -> None:
 def test_release_tree_excludes_credentials_and_development_artifacts() -> None:
     files = tracked_candidate_files()
     assert not [path for path in files if path.name in FORBIDDEN_NAMES]
-    assert not [path for path in files if path.suffix.lower() in {".log", ".sqlite", ".db"}]
+    assert not [path for path in files if path.suffix.lower() in {".log", ".sqlite", ".db", ".sqlite3", ".sqlite3-wal", ".sqlite3-shm"}]
     assert not [path for path in files if "superpowers" in path.parts]
     for path in files:
         if path.suffix.lower() not in {".py", ".md", ".toml", ".txt", ".json", ".example"}:

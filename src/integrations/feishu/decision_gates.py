@@ -27,7 +27,8 @@ _STAGE_GATES: dict[str, tuple[str, ...]] = {
     "AWAITING_SELECTION": ("SUBMIT_SELECTION",),
     "HOLDOUT": ("RUN_HOLDOUT",),
     "AWAITING_PRIMARY_RESELECTION": ("RESELECT_PRIMARY",),
-    "AWAITING_BLIND_EVIDENCE": ("FREEZE_BLIND",),
+    # FREEZE_BLIND 需要盲测素材文件，仅本地 CLI 可执行，机器人不排队。
+    "AWAITING_BLIND_EVIDENCE": (),
     "READY_REASSESS": ("RUN_BLIND_REASSESSMENT",),
     "CHECKPOINT_00": ("RUN_NEXT_RELEASE",),
     "CHECKPOINT_01": ("RUN_NEXT_RELEASE",),
@@ -50,7 +51,6 @@ _GATE_LABELS = {
     "SUBMIT_SELECTION": "提交人工选线",
     "RUN_HOLDOUT": "执行 HOLDOUT 验证",
     "RESELECT_PRIMARY": "更换主叙事",
-    "FREEZE_BLIND": "冻结盲测证据",
     "RUN_BLIND_REASSESSMENT": "执行盲测后重评",
     "RUN_NEXT_RELEASE": "释放下一批增量",
     "SUBMIT_FINAL_SELECTION": "提交最终选择",
@@ -116,9 +116,21 @@ def _validate_payload(gate_action: str, payload: Mapping[str, Any] | None) -> No
             raise GateRejection("主叙事候选必须位于选线集合内。")
 
     elif gate_action == "SUBMIT_FINAL_SELECTION":
+        shortlisted = payload.get("shortlisted_candidate_ids")
         selected = payload.get("selected_candidate_id")
-        if not isinstance(selected, str) or not selected.strip():
-            raise GateRejection("最终选择必须携带候选 ID。")
+        recommended = payload.get("recommended_candidate_id")
+        if (
+            not isinstance(shortlisted, list)
+            or not shortlisted
+            or len(shortlisted) > 3
+            or not all(isinstance(item, str) and item.strip() for item in shortlisted)
+            or len(set(shortlisted)) != len(shortlisted)
+        ):
+            raise GateRejection("最终选择必须携带 1-3 个不重复的入围候选 ID。")
+        if recommended not in shortlisted:
+            raise GateRejection("推荐候选必须位于入围集合内。")
+        if selected not in shortlisted:
+            raise GateRejection("最终选择候选必须位于入围集合内。")
 
     elif gate_action == "RESELECT_PRIMARY":
         primary = payload.get("primary_candidate_id")

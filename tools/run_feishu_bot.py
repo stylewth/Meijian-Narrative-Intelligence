@@ -395,7 +395,7 @@ def build_event_handler(
 
 def _build_runtime(
     config: BotConfig, *, lark: Any | None = None
-) -> tuple[Any, NotificationWorker, WritebackWorker | None]:
+) -> tuple[Any, NotificationWorker, WritebackWorker | None, Any | None, DecisionGateStore | None]:
     lark = _import_lark_oapi() if lark is None else lark
     store = NotificationStore(config.notification_db)
     client = FeishuMessageClient(config.app_id, config.app_secret)
@@ -412,6 +412,12 @@ def _build_runtime(
         if config.gate_db is not None
         else None
     )
+    writeback_store_for_gates = (
+        WritebackStore(config.writeback_db)
+        if config.writeback_db is not None and writeback_worker is not None
+        else None
+    )
+    gate_executor = _build_gate_executor(config, client, writeback_store_for_gates)
     handler = build_event_handler(
         config,
         lark=lark,
@@ -419,9 +425,28 @@ def _build_runtime(
         client=client,
         worker=worker,
         gate_store=gate_store,
-        gate_enabled=False,
+        gate_enabled=gate_executor is not None,
     )
-    return handler, worker, writeback_worker
+    return handler, worker, writeback_worker, gate_executor, gate_store
+
+
+def _build_gate_executor(
+    config: BotConfig, client: Any, writeback_store: Any
+) -> Any | None:
+    """决策门执行器仅在配置了 run 根目录后启用；LLM 栈延迟导入。"""
+
+    if config.decision_run_root is None:
+        return None
+    from src.integrations.feishu.gate_executor import DecisionGateExecutor
+    from tools.run_official_decision import build_gate_coordinator
+
+    return DecisionGateExecutor(
+        run_root=config.decision_run_root,
+        message_client=client,
+        chat_id=config.demo_chat_id,
+        writeback_store=writeback_store,
+        coordinator_factory=build_gate_coordinator,
+    )
 
 
 def _build_writeback_worker(config: BotConfig) -> WritebackWorker | None:
@@ -445,7 +470,7 @@ def _build_writeback_worker(config: BotConfig) -> WritebackWorker | None:
 
 def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     lark = _import_lark_oapi() if lark is None else lark
-    event_handler, worker, writeback_worker = _build_runtime(config, lark=lark)
+    event_handler, worker, writeback_worker, gate_executor, gate_store = _build_runtime(config, lark=lark)
     stop_event = threading.Event()
     worker_errors: list[BaseException] = []
 
@@ -467,22 +492,26 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     )
     thread.start()
 
-    writeback_thread: threading.Thread | None = None
+    extra_threads: list[tuple[str, Any]] = []
     if writeback_worker is not None:
-        def run_writeback() -> None:
+        extra_threads.append(("feishu-writeback-worker", writeback_worker))
+    if gate_executor is not None and gate_store is not None:
+        from src.integrations.feishu.decision_gate_store import DecisionGateRunner
+
+        extra_threads.append(
+            ("feishu-gate-runner", DecisionGateRunner(gate_store, gate_executor))
+        )
+
+    for name, runnable in extra_threads:
+        def run_extra(runnable=runnable) -> None:
             try:
-                writeback_worker.run_forever(stop_event)
+                runnable.run_forever(stop_event)
             except BaseException as exc:
                 worker_errors.append(exc)
             finally:
                 stop_event.set()
 
-        writeback_thread = threading.Thread(
-            target=run_writeback,
-            name="feishu-writeback-worker",
-            daemon=True,
-        )
-        writeback_thread.start()
+        threading.Thread(target=run_extra, name=name, daemon=True).start()
 
     try:
         lark.ws.Client(
@@ -494,10 +523,13 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     finally:
         stop_event.set()
         thread.join(timeout=5)
-        if writeback_thread is not None:
-            writeback_thread.join(timeout=5)
 
-    if thread.is_alive() or (writeback_thread is not None and writeback_thread.is_alive()):
+    live_extras = False
+    for name, _runnable in extra_threads:
+        for item in threading.enumerate():
+            if item.name == name and item.is_alive():
+                live_extras = True
+    if thread.is_alive() or live_extras:
         raise RuntimeError("background worker did not stop")
     if worker_errors:
         raise RuntimeError(
@@ -731,15 +763,20 @@ def _reply_help(client: Any, source_message_id: str, chat_id: Any, *, content: s
 def _reply_decision_status(
     config: BotConfig, client: Any, source_message_id: str, chat_id: Any
 ) -> None:
+    gate_elements: list[dict[str, Any]] = []
     if config.decision_run_root is None:
         content = "决策推进未启用：本机未配置 FEISHU_DECISION_RUN_ROOT。"
     else:
         state = read_active_decision_state(config.decision_run_root)
-        content = (
-            "当前没有活动决策 run。"
-            if state is None
-            else stage_status_text(state)
-        )
+        if state is None:
+            content = "当前没有活动决策 run。"
+        else:
+            content = stage_status_text(state)
+            from src.integrations.feishu.gate_executor import next_gate_elements
+
+            gate_elements = next_gate_elements(
+                state["run_id"], state["stage"], prefix="status"
+            )
     _reply_plain_card(
         client,
         source_message_id,
@@ -747,6 +784,7 @@ def _reply_decision_status(
         title="决策进度",
         content=content,
         summary="决策进度",
+        extra_elements=gate_elements,
     )
 
 
@@ -758,9 +796,18 @@ def _reply_plain_card(
     title: str,
     content: str,
     summary: str,
+    extra_elements: list[dict[str, Any]] | None = None,
 ) -> None:
     if not isinstance(chat_id, str) or not chat_id.strip():
         raise ValueError("message.chat_id is required")
+    elements = [
+        {
+            "tag": "div",
+            "element_id": "plain_content",
+            "text": {"tag": "lark_md", "content": content},
+        }
+    ]
+    elements.extend(extra_elements or [])
     card = {
         "schema": "2.0",
         "config": {"update_multi": True, "summary": {"content": summary}},
@@ -768,15 +815,7 @@ def _reply_plain_card(
             "title": {"tag": "plain_text", "content": title},
             "template": "turquoise",
         },
-        "body": {
-            "elements": [
-                {
-                    "tag": "div",
-                    "element_id": "plain_content",
-                    "text": {"tag": "lark_md", "content": content},
-                }
-            ]
-        },
+        "body": {"elements": elements},
     }
     validate_card(card)
     card_id = client.create_card_entity(card)
