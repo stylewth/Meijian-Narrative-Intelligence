@@ -35,6 +35,11 @@ from src.services.evidence_assessment import (
     _EvidenceAssessmentResult,
     _HoldoutAssessmentResult,
 )
+from src.services.evidence_routing import (
+    _EvidenceAtomDraft,
+    _EvidenceRoutingResponse,
+    _SourceReferenceDraft,
+)
 from src.services.narrative_revision import (
     NarrativeRevisionProposal,
     _NarrativeRevisionResult,
@@ -163,8 +168,29 @@ class ScriptedLLMClient:
             "_EvidenceAssessmentResult": self._incremental,
             "_HoldoutAssessmentResult": self._holdout,
             "_NarrativeRevisionResult": self._revision,
+            "_EvidenceRoutingResponse": self._routing,
         }[name]
         return builder(payload)
+
+    def _routing(self, payload: Any) -> _EvidenceRoutingResponse:
+        comments = payload if isinstance(payload, list) else payload["comments"]
+        drafts = [
+            _EvidenceAtomDraft(
+                comment_id=comment["comment_id"],
+                route="BRAND",
+                experience_scope="ACTUAL_USE",
+                evidence_grade="A",
+                ai_confidence=0.9,
+                explanation="核心对象：青梅酒；体验：真实饮用；证据强度：直接表述。",
+                source=_SourceReferenceDraft(
+                    source_id=comment["source"]["source_id"],
+                    source_type=comment["source"]["source_type"],
+                    source_ref=comment["source"]["source_ref"],
+                ),
+            )
+            for comment in comments
+        ]
+        return _EvidenceRoutingResponse(atoms=drafts)
 
     def _corpus_analysis(self, payload: Any) -> CorpusAnalysisResult:
         comments = payload if isinstance(payload, list) else payload["comments"]
@@ -350,3 +376,84 @@ def test_free_decision_chain_runs_end_to_end() -> None:
         "checkpoint-01",
         "checkpoint-02",
     ]
+
+
+def test_free_pipeline_from_import_to_decision() -> None:
+    """自定义语料从导入到决策基线的自由全链：拆分 → 在线标注 → 发布 → 装载 → 基线。"""
+
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from src.dataset_split import DATASET_VERSION
+    from src.services.prepared_corpus import (
+        load_prepared_corpus,
+        publish_prepared_corpus,
+    )
+    from src.ui.custom_decision_workspace import CustomRunInputs
+    from src.ui.preprocessing_workspace import (
+        _build_custom_split_manifest,
+        _build_prepared_package_online,
+        _make_annotation_manifest,
+        _normalize_imported_records,
+        annotate_records_online,
+    )
+
+    workspace = Path(tempfile.mkdtemp(prefix="free-pipeline-"))
+    try:
+        published_dir = workspace / "prepared_corpora"
+        published_dir.mkdir(parents=True, exist_ok=True)
+        import_records = [
+            *BASELINE_RECORDS,
+            *CHALLENGE_RECORDS,
+            *HOLDOUT_RECORDS,
+            *RELEASE_RECORDS,
+            *RELEASE_2_RECORDS,
+        ]
+        raw_records = [comment.model_copy(update={"source": None}) for comment in import_records]
+        records = _normalize_imported_records(raw_records)
+        assert all(record.source is not None for record in records)
+        assert all(record.screening_status is not None for record in records)
+
+        dataset_sha256 = "a" * 64
+        split_manifest = _build_custom_split_manifest(
+            records,
+            dataset_sha256=dataset_sha256,
+            dataset_version=DATASET_VERSION,
+        )
+        assert {item.split_role.value for item in split_manifest.assignments} == {"ANALYSIS"}
+
+        atoms, batch_ids = annotate_records_online(
+            client=ScriptedLLMClient(), analysis_records=records
+        )
+        assert {atom.comment_id for atom in atoms} == {record.comment_id for record in records}
+        assert batch_ids == ["online-batch-01"]
+
+        annotation_manifest = _make_annotation_manifest(
+            dataset_sha256=dataset_sha256,
+            dataset_version=DATASET_VERSION,
+            batch_ids=batch_ids,
+            result_sha256="b" * 64,
+            model_id="scripted-model",
+            reasoning_effort="none",
+        )
+        package = _build_prepared_package_online(
+            records=records,
+            split_manifest=split_manifest,
+            annotation_manifest=annotation_manifest,
+            evidence_atoms=atoms,
+        )
+        published = publish_prepared_corpus(published_dir, package)
+        reloaded = load_prepared_corpus(published_dir, published.manifest.package_id)
+        assert len(reloaded.package.evidence_atoms) == len(records)
+
+        runner = DecisionRunner(client=ScriptedLLMClient(), brand_facts=[])
+        foundation = runner.build_baseline(
+            CustomRunInputs(
+                list(reloaded.package.records), list(reloaded.package.evidence_atoms)
+            )
+        )
+        assert len(foundation.candidates) == 2
+        assert foundation.ranking.recommended_candidate_id is not None
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)

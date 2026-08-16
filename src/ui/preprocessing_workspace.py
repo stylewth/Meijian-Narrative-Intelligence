@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import tempfile
 import time
 from typing import Any, Literal, Mapping, MutableMapping
 from types import MappingProxyType
@@ -16,16 +15,18 @@ from types import MappingProxyType
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 import streamlit as st
 
-from src.data_sources.competition_workbook_source import load_competition_workbook
+from src.config import Settings
 from src.data_sources.file_source import load_tabular_file
 from src.data_sources.feishu_bitable_source import load_feishu_bitable
 from src.data_validator import validate_dataframe
-from src.dataset_split import DATASET_VERSION, build_split_manifest, validate_split_manifest
+from src.dataset_split import DATASET_VERSION, leakage_group
 from src.dataset_fingerprint import calculate_runtime_dataset_fingerprint
+from src.llm_client import LLMClient
 from src.prompt_loader import load_prompt_metadata
 from src.schemas import (
     AnnotationRunManifest,
     CommentRecord,
+    DatasetSplitAssignment,
     DatasetSplitManifest,
     DatasetSplitRole,
     EvidenceAtom,
@@ -37,12 +38,14 @@ from src.schemas import (
     PreparedCorpusManifest,
     PreparedCorpusPackage,
     SampleType,
+    ScreeningStatus,
+    SourceReference,
     SourceType,
 )
-from src.services.offline_annotation_import import (
-    OfflineAnnotationImportResult,
-    build_annotation_batches,
-    import_offline_annotations,
+from src.services.evidence_routing import (
+    partition_evidence_batches,
+    route_evidence_batch,
+    select_routable_comments,
 )
 from src.services.prepared_corpus import (
     canonical_json_bytes,
@@ -106,9 +109,6 @@ PREPROCESSING_MODES = (OFFICIAL_REPLAY_MODE, NEW_DATA_MODE)
 _ROUTING_PROMPT_METADATA = load_prompt_metadata("evidence_routing")
 PROMPT_VERSION = _ROUTING_PROMPT_METADATA.version
 PROMPT_SHA256 = _ROUTING_PROMPT_METADATA.sha256
-ANNOTATION_VERSION = "annotation_sol_high_v1"
-ANNOTATION_MODEL_ID = "gpt-5.6-sol"
-ANNOTATION_REASONING_EFFORT = "high"
 _PREPROCESSING_STATE_PREFIX = "preprocessing_"
 _REAL_STATE_KEYS = (
     "preprocessing_records",
@@ -116,12 +116,8 @@ _REAL_STATE_KEYS = (
     "preprocessing_dataset_version",
     "preprocessing_source_name",
     "preprocessing_split_manifest",
-    "preprocessing_batches",
-    "preprocessing_batch_index",
-    "preprocessing_exported_batch_ids",
-    "preprocessing_last_export_payload",
     "preprocessing_annotation_manifest",
-    "preprocessing_import_result",
+    "preprocessing_online_atoms",
     "preprocessing_error",
     "preprocessing_published_path",
 )
@@ -610,15 +606,10 @@ def derive_processing_stage(state: Mapping[str, Any]) -> ProcessingStageView:
         if not state.get("preprocessing_records"):
             return ProcessingStageView("validate", "waiting", False, False, labels["validate"], "等待 Excel/CSV 或飞书数据")
         return ProcessingStageView("clean", "waiting", False, False, labels["clean"], "等待字段校验与清洗")
-    batches = list(state.get("preprocessing_batches") or [])
-    exported = set(state.get("preprocessing_exported_batch_ids") or [])
-    batch_ids = {str(batch.get("batch_id")) for batch in batches if isinstance(batch, dict)}
-    if not batches or exported != batch_ids:
-        return ProcessingStageView("split", "waiting", False, False, labels["split"], "等待拆分并导出全部任务包")
-    imported = state.get("preprocessing_import_result")
+    online_atoms = state.get("preprocessing_online_atoms")
     annotation_manifest = state.get("preprocessing_annotation_manifest")
-    if not isinstance(imported, OfflineAnnotationImportResult) or not isinstance(annotation_manifest, AnnotationRunManifest):
-        return ProcessingStageView("annotate", "waiting", False, False, labels["annotate"], "等待严格校验通过的 annotation import")
+    if not isinstance(online_atoms, list) or not online_atoms or not isinstance(annotation_manifest, AnnotationRunManifest):
+        return ProcessingStageView("annotate", "waiting", False, False, labels["annotate"], "等待本地模型在线标注")
     published_path = state.get("preprocessing_published_path")
     if not published_path or not Path(str(published_path)).is_dir():
         return ProcessingStageView("freeze", "waiting", False, False, labels["freeze"], "等待发布 PreparedCorpusPackage")
@@ -708,36 +699,52 @@ def _as_manifest(value: object) -> DatasetSplitManifest | None:
     )
 
 
+def _analysis_expected_ids(
+    manifest: DatasetSplitManifest, records: list[CommentRecord]
+) -> set[str]:
+    analysis_raw_ids = {
+        assignment.raw_id
+        for assignment in manifest.assignments
+        if assignment.split_role is DatasetSplitRole.ANALYSIS
+    }
+    return {
+        record.comment_id
+        for record in records
+        if (record.raw_id or record.comment_id) in analysis_raw_ids
+    }
+
+
 def build_workspace_view(
     state: MutableMapping[str, Any], *, mode: str | None = None
 ) -> PreprocessingWorkspaceView:
     active_manifest = _as_manifest(state.get("preprocessing_split_manifest"))
-    batches = list(state.get("preprocessing_batches") or [])
-    batch_index = int(state.get("preprocessing_batch_index", 0) or 0)
-    exported_ids = set(state.get("preprocessing_exported_batch_ids") or [])
-    batch_rows = list(batches[batch_index]["items"]) if batch_index < len(batches) else []
-    can_export = active_manifest is not None and batch_index < len(batches)
-    can_import = bool(batches) and len(exported_ids) == len(batches)
-    imported = state.get("preprocessing_import_result")
-    can_publish = can_import and isinstance(imported, OfflineAnnotationImportResult)
+    records = list(state.get("preprocessing_records") or [])
+    online_atoms = list(state.get("preprocessing_online_atoms") or [])
+    can_annotate = active_manifest is not None and bool(records)
+    annotated_ids = {atom.comment_id for atom in online_atoms if isinstance(atom, EvidenceAtom)}
+    can_publish = (
+        can_annotate
+        and bool(online_atoms)
+        and annotated_ids == _analysis_expected_ids(active_manifest, records)
+    )
 
     blocking_reason = state.get("preprocessing_error")
     if blocking_reason is None:
         if active_manifest is None:
-            blocking_reason = "请先导入有效的 484 条比赛语料并生成 split manifest。"
-        elif not batches:
-            blocking_reason = "当前 split manifest 没有可导出的 ANALYSIS 任务包。"
-        elif not can_import:
-            blocking_reason = "请先导出全部当前允许集合任务包，再导入严格 JSON 结果。"
+            blocking_reason = "请先导入自定义语料并生成 split manifest。"
+        elif not can_annotate:
+            blocking_reason = "导入语料为空，无法在线标注。"
+        elif not online_atoms:
+            blocking_reason = "请先运行本地模型在线标注，再发布语料包。"
         elif not can_publish:
-            blocking_reason = "等待完整、严格校验通过的 AI 标注 JSON；当前不可发布。"
+            blocking_reason = "在线标注尚未覆盖全部 ANALYSIS 记录，不能发布。"
 
     return PreprocessingWorkspaceView(
         mode=mode or str(state.get("preprocessing_mode") or DEMO_MODE),
         active_manifest=active_manifest,
-        batch_rows=batch_rows,
-        can_export_next_batch=can_export,
-        can_import_annotations=can_import,
+        batch_rows=[],
+        can_export_next_batch=can_annotate,
+        can_import_annotations=bool(online_atoms),
         can_publish=can_publish,
         blocking_reason=blocking_reason if mode == REAL_MODE or mode is None else None,
     )
@@ -756,17 +763,66 @@ def _load_uploaded_dataset(uploaded_file: Any):
     filename = str(getattr(uploaded_file, "name", "uploaded.csv"))
     content = _source_bytes(uploaded_file)
     suffix = Path(filename).suffix.lower()
-    if suffix == ".xlsx":
-        with tempfile.NamedTemporaryFile(suffix=".xlsx") as temporary_file:
-            temporary_file.write(content)
-            temporary_file.flush()
-            imported = load_competition_workbook(temporary_file.name)
-        return imported.dataset, imported.source_manifest.source_sha256, imported.source_manifest.dataset_version
-    if suffix == ".csv":
-        frame = load_tabular_file(BytesIO(content), filename)
-        dataset = validate_dataframe(frame)
-        return dataset, hashlib.sha256(content).hexdigest(), DATASET_VERSION
-    raise ValueError("只支持 .xlsx 或 .csv；.xlsx 必须符合比赛原始语料合同")
+    if suffix not in {".xlsx", ".csv"}:
+        raise ValueError("只支持 .xlsx 或 .csv 自定义语料表")
+    frame = load_tabular_file(BytesIO(content), filename)
+    dataset = validate_dataframe(frame)
+    return dataset, hashlib.sha256(content).hexdigest(), DATASET_VERSION
+
+
+def _normalize_imported_records(records: list[CommentRecord]) -> list[CommentRecord]:
+    """通用入口语料默认整表保留，并补齐在线标注与拆分合同必需的字段。"""
+
+    normalized: list[CommentRecord] = []
+    for record in records:
+        updates: dict[str, Any] = {}
+        if record.screening_status is None:
+            updates["screening_status"] = ScreeningStatus.KEEP
+        if record.source is None:
+            reference_id = record.raw_id or record.comment_id
+            updates["source"] = SourceReference(
+                source_id=reference_id,
+                source_type=SourceType.USER_COMMENT,
+                source_ref=reference_id,
+            )
+        if record.raw_id is None:
+            updates["raw_id"] = record.comment_id
+        if record.raw_sample_type is None:
+            updates["raw_sample_type"] = str(record.sample_type.value)
+        if record.source_platform is None:
+            updates["source_platform"] = "未注明"
+        if record.platform_url_available is None:
+            updates["platform_url_available"] = bool(record.original_url)
+        normalized.append(record.model_copy(update=updates) if updates else record)
+    return normalized
+
+
+def _build_custom_split_manifest(
+    records: list[CommentRecord],
+    *,
+    dataset_sha256: str,
+    dataset_version: str,
+) -> DatasetSplitManifest:
+    """自由链路拆分：全部记录进入 ANALYSIS，供自由决策工作区按需组合角色。"""
+
+    return DatasetSplitManifest(
+        dataset_version=dataset_version,
+        dataset_sha256=dataset_sha256,
+        split_algorithm_version="custom_all_analysis_v1",
+        holdout_stratum_targets={"__custom__": 0},
+        holdout_stratum_tolerance=0,
+        assignments=[
+            DatasetSplitAssignment(
+                raw_id=record.raw_id,
+                split_role=DatasetSplitRole.ANALYSIS,
+                source_platform=record.source_platform,
+                raw_sample_type=record.raw_sample_type,
+                platform_url_available=record.platform_url_available,
+                leakage_group=leakage_group(record),
+            )
+            for record in records
+        ],
+    )
 
 
 def _store_new_dataset(
@@ -776,32 +832,22 @@ def _store_new_dataset(
     dataset_sha256: str,
     dataset_version: str,
     source_name: str,
-) -> tuple[int, int]:
-    records = list(dataset.comments)
-    split_manifest = build_split_manifest(
+) -> int:
+    records = _normalize_imported_records(list(dataset.comments))
+    split_manifest = _build_custom_split_manifest(
         records,
         dataset_sha256=dataset_sha256,
         dataset_version=dataset_version,
-    )
-    analysis_records = _analysis_records(records, split_manifest)
-    batches = build_annotation_batches(
-        analysis_records,
-        dataset_sha256=dataset_sha256,
-        batch_prefix="analysis",
     )
     state["preprocessing_records"] = records
     state["preprocessing_dataset_sha256"] = dataset_sha256
     state["preprocessing_dataset_version"] = dataset_version
     state["preprocessing_source_name"] = source_name
     state["preprocessing_split_manifest"] = split_manifest
-    state["preprocessing_batches"] = batches
-    state["preprocessing_batch_index"] = 0
-    state["preprocessing_exported_batch_ids"] = []
-    state["preprocessing_last_export_payload"] = None
     state["preprocessing_annotation_manifest"] = None
-    state["preprocessing_import_result"] = None
+    state["preprocessing_online_atoms"] = None
     state["preprocessing_error"] = None
-    return len(records), len(batches)
+    return len(records)
 
 
 def _analysis_records(
@@ -820,12 +866,14 @@ def _make_annotation_manifest(
     dataset_sha256: str,
     dataset_version: str,
     batch_ids: list[str],
-    result_sha256: str = "0" * 64,
+    result_sha256: str,
+    model_id: str,
+    reasoning_effort: str,
 ) -> AnnotationRunManifest:
     return AnnotationRunManifest(
-        annotation_version=ANNOTATION_VERSION,
-        model_id=ANNOTATION_MODEL_ID,
-        reasoning_effort=ANNOTATION_REASONING_EFFORT,
+        annotation_version="annotation_online_v1",
+        model_id=model_id,
+        reasoning_effort=reasoning_effort,
         dataset_version=dataset_version,
         dataset_sha256=dataset_sha256,
         prompt_version=PROMPT_VERSION,
@@ -836,80 +884,25 @@ def _make_annotation_manifest(
     )
 
 
-def _task_package_bytes(
-    batch: dict[str, object], manifest: AnnotationRunManifest
-) -> bytes:
-    payload = {
-        "contract": "OFFLINE_ANNOTATION_TASK_PACKAGE",
-        "manifest": manifest.model_dump(mode="json"),
-        "batch": batch,
-        "instructions": "仅填写 annotations 的 AI 字段；不得修改 input 中的原始字段。导入时必须提供完整结果包及真实 result_sha256。",
-    }
-    return canonical_json_bytes(payload)
-
-
-def _annotation_payload(uploaded_file: Any) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    raw = _source_bytes(uploaded_file)
-    try:
-        payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError("AI 标注 JSON 必须是 UTF-8 且为合法 JSON") from exc
-    if not isinstance(payload, dict):
-        raise ValueError("AI 标注 JSON 顶层必须是对象")
-    manifest = payload.get("manifest")
-    results = payload.get("results")
-    if not isinstance(manifest, dict):
-        raise ValueError("AI 标注 JSON 缺少 manifest 对象")
-    if not isinstance(results, list) or not results:
-        raise ValueError("AI 标注 JSON 缺少非空 results 数组")
-    if not all(isinstance(item, dict) for item in results):
-        raise ValueError("AI 标注 JSON results 必须全部是对象")
-    return manifest, results
-
-
-def _build_evidence_atoms(
-    records: list[CommentRecord], imported: OfflineAnnotationImportResult
-) -> list[EvidenceAtom]:
-    records_by_id = {record.raw_id or record.comment_id: record for record in records}
-    atoms: list[EvidenceAtom] = []
-    for annotation in imported.annotations:
-        record = records_by_id.get(annotation.raw_id)
-        if record is None or record.source is None:
-            raise ValueError(f"AI 标注引用了缺少来源的原始记录: {annotation.raw_id}")
-        atoms.append(
-            EvidenceAtom(
-                evidence_id=f"EVIDENCE-{annotation.raw_id}",
-                comment_id=record.comment_id,
-                route=EvidenceRoute(annotation.route),
-                experience_scope=ExperienceScope(annotation.experience_scope),
-                evidence_grade=EvidenceGrade(annotation.evidence_grade),
-                ai_confidence=annotation.ai_confidence,
-                explanation=annotation.explanation,
-                source=record.source,
-                source_platform=record.source_platform,
-                duplicate_group=record.duplicate_group,
-                actual_use=record.actual_use,
-            )
-        )
-    return atoms
-
-
-def _build_prepared_package(
+def _build_prepared_package_online(
     *,
     records: list[CommentRecord],
     split_manifest: DatasetSplitManifest,
     annotation_manifest: AnnotationRunManifest,
-    imported: OfflineAnnotationImportResult,
+    evidence_atoms: list[EvidenceAtom],
 ) -> PreparedCorpusPackage:
-    validate_split_manifest(
-        split_manifest,
-        records,
-        dataset_sha256=split_manifest.dataset_sha256,
-    )
-    evidence_atoms = _build_evidence_atoms(records, imported)
+    analysis_raw_ids = {
+        assignment.raw_id
+        for assignment in split_manifest.assignments
+        if assignment.split_role is DatasetSplitRole.ANALYSIS
+    }
+    if analysis_raw_ids != {
+        record.raw_id or record.comment_id for record in records
+    }:
+        raise ValueError("自由语料包的 split manifest 必须与导入记录一一对应")
     package_id = (
         f"{split_manifest.dataset_version}-{split_manifest.dataset_sha256[:12]}-"
-        f"{imported.result_sha256[:12]}"
+        f"{annotation_manifest.result_sha256[:12]}"
     )
     artifact_values = {
         "records.json": canonical_json_bytes(records),
@@ -942,6 +935,61 @@ def _build_prepared_package(
         split_manifest=split_manifest,
         annotation_run_manifests=[annotation_manifest],
     )
+
+
+def annotate_records_online(
+    *, client: Any, analysis_records: list[CommentRecord]
+) -> tuple[list[EvidenceAtom], list[str]]:
+    """对 ANALYSIS 允许集合执行在线证据标注；client 由调用方装配。"""
+
+    routable = select_routable_comments(analysis_records)
+    batches = partition_evidence_batches(routable)
+    atoms: list[EvidenceAtom] = []
+    batch_ids: list[str] = []
+    for index, batch in enumerate(batches, start=1):
+        atoms.extend(route_evidence_batch(client=client, comments=batch))
+        batch_ids.append(f"online-batch-{index:02d}")
+    expected_ids = {record.comment_id for record in routable}
+    if {atom.comment_id for atom in atoms} != expected_ids:
+        raise ValueError("在线标注结果必须恰好覆盖全部待标注记录")
+    return atoms, batch_ids
+
+
+def run_online_annotation(
+    state: MutableMapping[str, Any],
+    *,
+    dotenv_path: Path,
+) -> int:
+    """对 ANALYSIS 允许集合运行本地模型在线标注，并落盘会话状态。"""
+
+    split_manifest = _as_manifest(state.get("preprocessing_split_manifest"))
+    if split_manifest is None:
+        raise ValueError("请先导入自定义语料并生成 split manifest")
+    records = list(state.get("preprocessing_records") or [])
+    analysis_records = _analysis_records(records, split_manifest)
+    if not analysis_records:
+        raise ValueError("当前 split manifest 没有 ANALYSIS 记录可标注")
+
+    settings = Settings.from_sources(dotenv_path=dotenv_path)
+    client = LLMClient(settings)
+    atoms, batch_ids = annotate_records_online(
+        client=client, analysis_records=analysis_records
+    )
+
+    result_sha256 = sha256_bytes(canonical_json_bytes(atoms))
+    annotation_manifest = _make_annotation_manifest(
+        dataset_sha256=split_manifest.dataset_sha256,
+        dataset_version=split_manifest.dataset_version,
+        batch_ids=batch_ids,
+        result_sha256=result_sha256,
+        model_id=str(settings.llm_model),
+        reasoning_effort=str(settings.llm_reasoning_effort or "none"),
+    )
+    state["preprocessing_online_atoms"] = atoms
+    state["preprocessing_annotation_manifest"] = annotation_manifest
+    state["preprocessing_error"] = None
+    return len(atoms)
+
 
 
 def _demo_audit_bytes(split_manifest: DatasetSplitManifest, prepared_root: Path) -> bytes:
@@ -1091,7 +1139,8 @@ def _render_official_replay(split_manifest_path: Path) -> None:
 
 def _render_real() -> None:
     state = st.session_state
-    st.caption("真实链路：导入 → 拆分 → 导出 → 导入 → 发布")
+    workspace_root = Path(__file__).resolve().parents[2]
+    st.caption("真实链路：导入 → 拆分 → 在线标注（本地模型）→ 发布")
     entry = st.radio(
         "数据入口",
         ["Excel/CSV", "飞书多维表格"],
@@ -1101,7 +1150,7 @@ def _render_real() -> None:
     if entry == "Excel/CSV":
         st.markdown("#### 1. 导入原始语料")
         uploaded_file = st.file_uploader(
-            "上传比赛原始语料（XLSX / CSV）",
+            "上传自定义语料（XLSX / CSV）",
             type=["xlsx", "csv"],
             key="preprocessing_source_file",
         )
@@ -1113,14 +1162,14 @@ def _render_real() -> None:
             clear_preprocessing_ui_state(state)
             try:
                 dataset, dataset_sha256, dataset_version = _load_uploaded_dataset(uploaded_file)
-                record_count, batch_count = _store_new_dataset(
+                record_count = _store_new_dataset(
                     state,
                     dataset=dataset,
                     dataset_sha256=dataset_sha256,
                     dataset_version=dataset_version,
                     source_name=str(getattr(uploaded_file, "name", "uploaded")),
                 )
-                st.success(f"已导入 {record_count} 条记录并生成真实 split manifest（{batch_count} 个批次）。")
+                st.success(f"已导入 {record_count} 条记录并生成 split manifest。")
             except Exception as exc:
                 state["preprocessing_error"] = str(exc)
                 st.error(f"原始语料导入或拆分失败：{exc}")
@@ -1147,109 +1196,57 @@ def _render_real() -> None:
                     app_secret=app_secret,
                 )
                 dataset_sha256 = calculate_runtime_dataset_fingerprint(dataset.comments)
-                record_count, batch_count = _store_new_dataset(
+                record_count = _store_new_dataset(
                     state,
                     dataset=dataset,
                     dataset_sha256=dataset_sha256,
                     dataset_version=DATASET_VERSION,
                     source_name=feishu_url,
                 )
-                st.success(f"已读取飞书真实记录 {record_count} 条并生成 split manifest（{batch_count} 个批次）。")
+                st.success(f"已读取飞书真实记录 {record_count} 条并生成 split manifest。")
             except Exception as exc:
                 state["preprocessing_error"] = str(exc)
                 st.error(f"飞书多维表格导入失败：{exc}")
 
     split_manifest = _as_manifest(state.get("preprocessing_split_manifest"))
     if split_manifest is not None:
-        batches = list(state.get("preprocessing_batches") or [])
-        batch_index = int(state.get("preprocessing_batch_index", 0) or 0)
-        exported_ids = set(state.get("preprocessing_exported_batch_ids") or [])
+        analysis_count = sum(
+            1
+            for item in split_manifest.assignments
+            if item.split_role is DatasetSplitRole.ANALYSIS
+        )
         st.markdown("#### 2. 拆分 split manifest")
         st.caption(
             f"dataset_version={split_manifest.dataset_version}；"
             f"dataset_sha256={split_manifest.dataset_sha256}；"
-            f"当前允许集合=ANALYSIS，共 {sum(1 for item in split_manifest.assignments if item.split_role is DatasetSplitRole.ANALYSIS)} 条"
+            f"当前允许集合=ANALYSIS，共 {analysis_count} 条"
         )
-        st.markdown("#### 3. 导出当前允许集合任务包")
-        annotation_manifest = _make_annotation_manifest(
-            dataset_sha256=split_manifest.dataset_sha256,
-            dataset_version=split_manifest.dataset_version,
-            batch_ids=[str(batch["batch_id"]) for batch in batches],
-        )
-        if batch_index < len(batches):
-            current_batch = batches[batch_index]
-            if st.button(
-                "导出下一批 Codex 任务包",
-                key="export_next_codex_batch",
-                disabled=not build_workspace_view(state, mode=REAL_MODE).can_export_next_batch,
-            ):
-                state["preprocessing_exported_batch_ids"] = [
-                    *state.get("preprocessing_exported_batch_ids", []),
-                    current_batch["batch_id"],
-                ]
-                state["preprocessing_last_export_payload"] = _task_package_bytes(
-                    current_batch, annotation_manifest
-                )
-                state["preprocessing_batch_index"] = batch_index + 1
-                st.success(f"已生成任务包 {current_batch['batch_id']}，请下载后离线处理。")
-        else:
-            st.button("导出下一批 Codex 任务包", key="export_next_codex_batch", disabled=True)
-        if state.get("preprocessing_last_export_payload"):
-            st.download_button(
-                "下载当前 Codex 任务包",
-                data=state["preprocessing_last_export_payload"],
-                file_name="codex_annotation_task.json",
-                mime="application/json",
-                key="download_codex_task",
-            )
-        st.caption(f"已导出批次：{len(exported_ids)} / {len(batches)}")
 
-        st.markdown("#### 4. 导入 AI 标注 JSON")
-        view = build_workspace_view(state, mode=REAL_MODE)
-        result_file = st.file_uploader(
-            "上传完整 AI 标注结果包（UTF-8 JSON）",
-            type=["json"],
-            key="preprocessing_annotation_file",
-            disabled=not view.can_import_annotations,
+        st.markdown("#### 3. 在线标注（本地模型）")
+        st.caption(
+            "使用 .env 配置的模型对 ANALYSIS 记录逐批评注（每批 10–20 条）；"
+            "公开部署未配置密钥，此步骤仅本地可用。"
         )
+        online_atoms = list(state.get("preprocessing_online_atoms") or [])
+        if online_atoms:
+            st.success(f"已完成在线标注：{len(online_atoms)} 条证据原子就绪。")
         if st.button(
-            "导入 AI 标注 JSON",
-            key="import_ai_annotation_json",
-            disabled=not view.can_import_annotations or result_file is None,
+            "运行在线标注",
+            key="run_online_annotation",
+            disabled=not build_workspace_view(state, mode=REAL_MODE).can_export_next_batch,
         ):
-            state["preprocessing_import_result"] = None
             state["preprocessing_error"] = None
             try:
-                manifest_payload, results = _annotation_payload(result_file)
-                imported = import_offline_annotations(
-                    manifest_payload,
-                    results,
-                    dataset_sha256=split_manifest.dataset_sha256,
-                    dataset_version=split_manifest.dataset_version,
-                    prompt_metadata=_ROUTING_PROMPT_METADATA,
-                    trusted_batch_inputs={
-                        str(batch["batch_id"]): batch["items"]
-                        for batch in batches
-                    },
-                )
-                annotation_manifest = AnnotationRunManifest.model_validate_json(
-                    canonical_json_bytes(manifest_payload), strict=True
-                )
-                expected_ids = {
-                    assignment.raw_id
-                    for assignment in split_manifest.assignments
-                    if assignment.split_role is DatasetSplitRole.ANALYSIS
-                }
-                if set(imported.input_ids) != expected_ids:
-                    raise ValueError("AI 标注结果必须恰好覆盖当前 ANALYSIS 允许集合")
-                state["preprocessing_annotation_manifest"] = annotation_manifest
-                state["preprocessing_import_result"] = imported
-                st.success(f"严格 JSON 校验通过：已导入 {imported.input_count} 条 AI 标注。")
+                with st.spinner("本地模型标注进行中…"):
+                    atom_count = run_online_annotation(
+                        state, dotenv_path=workspace_root / ".env"
+                    )
+                st.success(f"在线标注完成：{atom_count} 条证据原子。")
             except Exception as exc:
                 state["preprocessing_error"] = str(exc)
-                st.error(f"AI 标注 JSON 导入失败：{exc}")
+                st.error(f"在线标注失败：{exc}")
 
-        st.markdown("#### 5. 发布 PreparedCorpusPackage")
+        st.markdown("#### 4. 发布 PreparedCorpusPackage")
         view = build_workspace_view(state, mode=REAL_MODE)
         if view.blocking_reason:
             st.warning(f"阻断原因：{view.blocking_reason}")
@@ -1260,20 +1257,20 @@ def _render_real() -> None:
         ):
             try:
                 annotation_manifest = state.get("preprocessing_annotation_manifest")
-                imported = state.get("preprocessing_import_result")
+                evidence_atoms = list(state.get("preprocessing_online_atoms") or [])
                 records = list(state.get("preprocessing_records") or [])
                 if not isinstance(annotation_manifest, AnnotationRunManifest):
-                    raise ValueError("缺少已校验的 annotation run manifest")
-                if not isinstance(imported, OfflineAnnotationImportResult):
-                    raise ValueError("缺少已校验的 AI 标注结果")
-                package = _build_prepared_package(
+                    raise ValueError("缺少在线标注生成的 annotation run manifest")
+                if not evidence_atoms:
+                    raise ValueError("缺少在线标注结果")
+                package = _build_prepared_package_online(
                     records=records,
                     split_manifest=split_manifest,
                     annotation_manifest=annotation_manifest,
-                    imported=imported,
+                    evidence_atoms=evidence_atoms,
                 )
                 published = publish_prepared_corpus(
-                    Path(__file__).resolve().parents[2] / "data" / "prepared_corpora",
+                    workspace_root / "data" / "prepared_corpora",
                     package,
                 )
                 state["preprocessing_published_path"] = str(published.path)
@@ -1288,11 +1285,9 @@ def _render_real() -> None:
                 st.error(f"PreparedCorpusPackage 发布失败：{exc}")
     else:
         st.markdown("#### 2. 拆分 split manifest")
-        st.markdown("#### 3. 导出当前允许集合任务包")
-        st.button("导出下一批 Codex 任务包", disabled=True, key="empty_export_next_codex_batch")
-        st.markdown("#### 4. 导入 AI 标注 JSON")
-        st.button("导入 AI 标注 JSON", disabled=True, key="empty_import_ai_annotation_json")
-        st.markdown("#### 5. 发布 PreparedCorpusPackage")
+        st.markdown("#### 3. 在线标注（本地模型）")
+        st.button("运行在线标注", disabled=True, key="empty_run_online_annotation")
+        st.markdown("#### 4. 发布 PreparedCorpusPackage")
         view = build_workspace_view(state, mode=REAL_MODE)
         if view.blocking_reason:
             st.warning(f"阻断原因：{view.blocking_reason}")
