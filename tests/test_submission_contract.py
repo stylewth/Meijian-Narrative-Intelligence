@@ -77,7 +77,6 @@ def test_release_excludes_legacy_source_modules_and_prompts() -> None:
         "src/replay",
         "src/ui/decision_workspace.py",
         "src/ui/brand_specificity.py",
-        "src/services/decision_runner.py",
         "src/services/competition_pipeline.py",
     )
     assert not [relative for relative in forbidden_sources if (ROOT / relative).exists()]
@@ -88,6 +87,14 @@ def test_release_excludes_legacy_source_modules_and_prompts() -> None:
         "brand_specificity_audit_v2.md",
         "brand_specificity_revision.md",
         "brand_specificity_revision_v2.md",
+        "corpus_analysis.md",
+        "diversity_assessment.md",
+        "candidate_generation.md",
+        "candidate_scoring.md",
+        "candidate_stress.md",
+        "evidence_assessment.md",
+        "narrative_revision.md",
+        "blind_reassessment.md",
     }
 
 

@@ -26,6 +26,10 @@ from src.ui.demo_notification_control import (
     sync_preprocessing_notification,
     sync_pressure_notifications,
 )
+from src.ui.custom_decision_workspace import (
+    render_custom_evolution_dashboard,
+    render_custom_pressure_test,
+)
 from src.ui.pressure_test_workspace import render_pressure_test_workspace
 from src.ui.realtime_decision_dashboard import render_realtime_decision_dashboard
 from src.ui.system_gateway import (
@@ -184,22 +188,36 @@ if active_workspace is Workspace.PREPROCESSING:
     st.stop()
 
 if active_workspace is Workspace.STRESS_TEST:
-    render_pressure_test_workspace(
-        VALIDATION_ROOT,
-        EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
-    )
-    sync_pressure_notifications(
-        st.session_state,
-        notification_store,
-        _demo_notification_snapshots(),
-    )
+    if entry is SystemEntry.CUSTOM:
+        render_custom_pressure_test(
+            prepared_root=ROOT / "data" / "prepared_corpora",
+            online_enabled=capabilities.online_ai_enabled,
+            dotenv_path=ROOT / ".env",
+        )
+    else:
+        render_pressure_test_workspace(
+            VALIDATION_ROOT,
+            EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
+        )
+        sync_pressure_notifications(
+            st.session_state,
+            notification_store,
+            _demo_notification_snapshots(),
+        )
     st.stop()
 
 if active_workspace is Workspace.REALTIME_DECISION:
-    render_realtime_decision_dashboard(EVOLUTION_ROOT)
-    sync_evolution_notifications(
-        st.session_state,
-        notification_store,
-        _demo_notification_snapshots(),
-    )
+    if entry is SystemEntry.CUSTOM:
+        render_custom_evolution_dashboard(
+            prepared_root=ROOT / "data" / "prepared_corpora",
+            online_enabled=capabilities.online_ai_enabled,
+            dotenv_path=ROOT / ".env",
+        )
+    else:
+        render_realtime_decision_dashboard(EVOLUTION_ROOT)
+        sync_evolution_notifications(
+            st.session_state,
+            notification_store,
+            _demo_notification_snapshots(),
+        )
     st.stop()

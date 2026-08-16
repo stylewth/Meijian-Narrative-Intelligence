@@ -1,4 +1,4 @@
-"""Shared navigation shell for the three ordered workspaces."""
+"""Shared navigation shell for the ordered workspaces."""
 
 from __future__ import annotations
 
