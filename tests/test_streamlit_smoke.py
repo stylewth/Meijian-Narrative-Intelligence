@@ -2,11 +2,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_PATH = str(ROOT / "app.py")
+
+
+@pytest.fixture(autouse=True)
+def _public_no_key_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """冒烟测试验证的是公开无密钥行为，必须与本机 .env 隔离。"""
+
+    for key in (
+        "LLM_API_KEY",
+        "LLM_MODEL",
+        "FEISHU_APP_ID",
+        "FEISHU_APP_SECRET",
+        "FEISHU_DEMO_CHAT_ID",
+        "FEISHU_BOT_OPEN_ID",
+        "FEISHU_OPERATOR_OPEN_IDS",
+        "FEISHU_NOTIFICATION_DB",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr("dotenv.dotenv_values", lambda *args, **kwargs: {})
 
 
 def button(app: AppTest, label: str):

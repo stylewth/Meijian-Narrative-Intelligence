@@ -953,10 +953,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _run_cli_gate_command(arguments: argparse.Namespace) -> dict[str, object]:
-    """Run one persisted coordinator gate and emit only immutable state metadata."""
+def build_gate_coordinator(
+    run_root: str | Path, run_id: str
+) -> tuple[DecisionRunCoordinator, DecisionRunStore]:
+    """按正式 CLI 合同构建单个 run 的 coordinator（机器人门执行器复用同一入口）。"""
 
-    store = DecisionRunStore.load(arguments.run_root, arguments.run_id)
+    store = DecisionRunStore.load(run_root, run_id)
     input_sha256, prompt_name, prompt_version, prompt_sha256 = _cli_audit_binding(store)
     settings = Settings.from_env()
     raw_client = LLMClient(settings)
@@ -968,12 +970,20 @@ def _run_cli_gate_command(arguments: argparse.Namespace) -> dict[str, object]:
         prompt_version=prompt_version,
         prompt_sha256=prompt_sha256,
     )
-    runner = DecisionRunner(client=audited, brand_facts=[], run_id=arguments.run_id)
+    runner = DecisionRunner(client=audited, brand_facts=[], run_id=run_id)
     coordinator = DecisionRunCoordinator(
         run_store=store,
         runner=runner,
         audited_client=audited,
     )
+    return coordinator, store
+
+
+def _run_cli_gate_command(arguments: argparse.Namespace) -> dict[str, object]:
+    """Run one persisted coordinator gate and emit only immutable state metadata."""
+
+    coordinator, _store = build_gate_coordinator(arguments.run_root, arguments.run_id)
+    store = _store
     command = arguments.command
     result: object
     if command == "export-specificity":

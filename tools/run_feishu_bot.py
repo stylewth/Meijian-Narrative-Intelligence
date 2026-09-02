@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import threading
 from typing import Any, Mapping
@@ -18,6 +19,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from dotenv import load_dotenv
 
+from src.integrations.feishu.client import FeishuBitableClient
+from src.integrations.feishu.decision_gate_store import DecisionGateStore
+from src.integrations.feishu.decision_gates import (
+    DECISION_GATE_ACTION_TYPE,
+    handle_decision_gate_action,
+    stage_status_text,
+)
 from src.integrations.feishu.message_client import FeishuMessageClient
 from src.integrations.feishu.notification_bot import (
     CallbackResult,
@@ -32,6 +40,9 @@ from src.integrations.feishu.streamlit_url import (
     AUTO_STREAMLIT_URL,
     resolve_streamlit_public_url,
 )
+from src.integrations.feishu.writeback_store import WritebackStore
+from src.integrations.feishu.writeback_targets import inventory_writeback_targets
+from src.integrations.feishu.writeback_worker import WritebackWorker
 from src.services.demo_notifications import DemoNotificationSnapshot
 
 
@@ -55,6 +66,11 @@ class BotConfig:
     operator_open_ids: frozenset[str]
     notification_db: Path
     feishu_wiki_url: str | None = None
+    writeback_run_log_url: str | None = None
+    writeback_results_url: str | None = None
+    writeback_db: Path | None = None
+    gate_db: Path | None = None
+    decision_run_root: Path | None = None
 
 
 def load_bot_config(
@@ -108,12 +124,57 @@ def load_bot_config(
     if database_path.exists() and database_path.is_dir():
         raise ValueError("FEISHU_NOTIFICATION_DB must be a file path")
     parent = database_path.parent
-    if not parent.exists() or not parent.is_dir():
-        raise ValueError("FEISHU_NOTIFICATION_DB parent directory must exist")
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ValueError("FEISHU_NOTIFICATION_DB 父目录无法创建") from exc
+    if not parent.is_dir():
+        raise ValueError("FEISHU_NOTIFICATION_DB parent directory must be a directory")
     if not os.access(parent, os.W_OK):
         raise ValueError("FEISHU_NOTIFICATION_DB parent directory is not writable")
     if database_path.exists() and not os.access(database_path, os.W_OK):
         raise ValueError("FEISHU_NOTIFICATION_DB is not writable")
+
+    def optional_text(key: str) -> str | None:
+        value = mapping.get(key)
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be text")
+        return value.strip() or None
+
+    def workspace_db_path(key: str, default_name: str) -> Path:
+        configured = optional_text(key)
+        if configured is None:
+            return database_path.parent / default_name
+        candidate = Path(configured)
+        path = (workspace / candidate if not candidate.is_absolute() else candidate).resolve()
+        try:
+            path.relative_to(workspace)
+        except ValueError as exc:
+            raise ValueError(f"{key} must stay inside the workspace") from exc
+        if path == workspace:
+            raise ValueError(f"{key} must be a file path")
+        return path
+
+    writeback_run_log_url = optional_text("FEISHU_RUNLOG_URL")
+    writeback_results_url = optional_text("FEISHU_RESULTS_URL")
+    writeback_db = workspace_db_path(
+        "FEISHU_WRITEBACK_DB", "feishu_writeback.sqlite3"
+    )
+    gate_db = workspace_db_path("FEISHU_GATE_DB", "feishu_gate_jobs.sqlite3")
+
+    decision_run_root = None
+    raw_decision_root = optional_text("FEISHU_DECISION_RUN_ROOT")
+    if raw_decision_root is not None:
+        root_candidate = Path(raw_decision_root)
+        decision_run_root = (
+            workspace / root_candidate
+            if not root_candidate.is_absolute()
+            else root_candidate
+        ).resolve()
+        if not decision_run_root.is_dir():
+            raise ValueError("FEISHU_DECISION_RUN_ROOT must be an existing directory")
 
     return BotConfig(
         app_id=values["FEISHU_APP_ID"],
@@ -124,7 +185,49 @@ def load_bot_config(
         operator_open_ids=operator_ids,
         notification_db=database_path,
         feishu_wiki_url=feishu_wiki_url,
+        writeback_run_log_url=writeback_run_log_url,
+        writeback_results_url=writeback_results_url,
+        writeback_db=writeback_db,
+        gate_db=gate_db,
+        decision_run_root=decision_run_root,
     )
+
+
+DECISION_STATUS_COMMANDS = frozenset({"决策进度"})
+_RUN_ID_PATTERN = re.compile(r"^[^/\\]+$")
+
+
+def read_active_decision_state(decision_run_root: Path) -> dict[str, Any] | None:
+    """读取活动 run 的 coordinator 状态；没有活动 run 时返回 None。"""
+
+    active_path = decision_run_root / "active.json"
+    if not active_path.is_file():
+        return None
+    active = json.loads(active_path.read_text(encoding="utf-8"))
+    run_id = active.get("run_id") if isinstance(active, dict) else None
+    if not isinstance(run_id, str) or not _RUN_ID_PATTERN.match(run_id):
+        raise ValueError("active.json 中的 run_id 无效")
+    state_path = decision_run_root / run_id / "coordinator" / "state.json"
+    if not state_path.is_file():
+        raise ValueError(f"活动 run 缺少 coordinator/state.json：{run_id}")
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    if not isinstance(state, dict):
+        raise ValueError(f"coordinator/state.json 必须是对象：{run_id}")
+    return state
+
+
+def read_decision_run_state(decision_run_root: Path, run_id: str) -> dict[str, Any] | None:
+    """读取指定 run 的 coordinator 状态。"""
+
+    if not isinstance(run_id, str) or not _RUN_ID_PATTERN.match(run_id):
+        return None
+    state_path = decision_run_root / run_id / "coordinator" / "state.json"
+    if not state_path.is_file():
+        return None
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    if not isinstance(state, dict):
+        raise ValueError(f"coordinator/state.json 必须是对象：{run_id}")
+    return state
 
 
 def normalize_message_event(raw_dict: Mapping[str, Any]) -> dict[str, Any]:
@@ -183,6 +286,8 @@ def build_event_handler(
     store: NotificationStore | None = None,
     client: Any | None = None,
     worker: NotificationWorker | None = None,
+    gate_store: DecisionGateStore | None = None,
+    gate_enabled: bool = False,
 ) -> Any:
     """Build the SDK dispatcher while keeping all business decisions pure."""
 
@@ -201,6 +306,8 @@ def build_event_handler(
             web_url=config.streamlit_public_url,
             feishu_wiki_url=config.feishu_wiki_url,
         )
+    if gate_store is None:
+        gate_store = DecisionGateStore(config.gate_db or (config.notification_db.parent / "feishu_gate_jobs.sqlite3"))
 
     def on_message(event: Any) -> None:
         event_dict = _event_to_mapping(event, lark)
@@ -241,6 +348,10 @@ def build_event_handler(
             )
             return
 
+        if _is_decision_status_command(normalized, config.bot_open_id):
+            _reply_decision_status(config, client, message_id, message.get("chat_id"))
+            return
+
         if _help_is_allowed(normalized, config.bot_open_id):
             content = decision.toast_content if isinstance(decision, CallbackResult) else None
             _reply_help(client, message_id, message.get("chat_id"), content=content)
@@ -248,12 +359,26 @@ def build_event_handler(
     def on_card_action(event: Any) -> Any:
         event_dict = _event_to_mapping(event, lark)
         payload = _extract_card_action_payload(event_dict)
-        result = handle_replay_action(
-            payload,
-            operator_open_id=_extract_operator_open_id(event_dict),
-            allowed_operator_ids=config.operator_open_ids,
-            store=store,
-        )
+        if isinstance(payload, Mapping) and payload.get("type") == DECISION_GATE_ACTION_TYPE:
+            result = handle_decision_gate_action(
+                payload,
+                operator_open_id=_extract_operator_open_id(event_dict),
+                allowed_operator_ids=config.operator_open_ids,
+                load_state=lambda run_id: (
+                    read_decision_run_state(config.decision_run_root, run_id)
+                    if config.decision_run_root is not None
+                    else None
+                ),
+                gate_store=gate_store,
+                gate_enabled=gate_enabled,
+            )
+        else:
+            result = handle_replay_action(
+                payload,
+                operator_open_id=_extract_operator_open_id(event_dict),
+                allowed_operator_ids=config.operator_open_ids,
+                store=store,
+            )
         return _adapt_card_action_response(lark, result)
 
     return (
@@ -268,7 +393,9 @@ def build_event_handler(
     )
 
 
-def _build_runtime(config: BotConfig, *, lark: Any | None = None) -> tuple[Any, NotificationWorker]:
+def _build_runtime(
+    config: BotConfig, *, lark: Any | None = None
+) -> tuple[Any, NotificationWorker, WritebackWorker | None, Any | None, DecisionGateStore | None]:
     lark = _import_lark_oapi() if lark is None else lark
     store = NotificationStore(config.notification_db)
     client = FeishuMessageClient(config.app_id, config.app_secret)
@@ -279,19 +406,71 @@ def _build_runtime(config: BotConfig, *, lark: Any | None = None) -> tuple[Any, 
         web_url=config.streamlit_public_url,
         feishu_wiki_url=config.feishu_wiki_url,
     )
+    writeback_worker = _build_writeback_worker(config)
+    gate_store = (
+        DecisionGateStore(config.gate_db)
+        if config.gate_db is not None
+        else None
+    )
+    writeback_store_for_gates = (
+        WritebackStore(config.writeback_db)
+        if config.writeback_db is not None and writeback_worker is not None
+        else None
+    )
+    gate_executor = _build_gate_executor(config, client, writeback_store_for_gates)
     handler = build_event_handler(
         config,
         lark=lark,
         store=store,
         client=client,
         worker=worker,
+        gate_store=gate_store,
+        gate_enabled=gate_executor is not None,
     )
-    return handler, worker
+    return handler, worker, writeback_worker, gate_executor, gate_store
+
+
+def _build_gate_executor(
+    config: BotConfig, client: Any, writeback_store: Any
+) -> Any | None:
+    """决策门执行器仅在配置了 run 根目录后启用；LLM 栈延迟导入。"""
+
+    if config.decision_run_root is None:
+        return None
+    from src.integrations.feishu.gate_executor import DecisionGateExecutor
+    from tools.run_official_decision import build_gate_coordinator
+
+    return DecisionGateExecutor(
+        run_root=config.decision_run_root,
+        message_client=client,
+        chat_id=config.demo_chat_id,
+        writeback_store=writeback_store,
+        coordinator_factory=build_gate_coordinator,
+    )
+
+
+def _build_writeback_worker(config: BotConfig) -> WritebackWorker | None:
+    """配置了任一写回 URL 才启用；盘点失败直接抛错，不降级。"""
+
+    if config.writeback_run_log_url is None and config.writeback_results_url is None:
+        return None
+    if config.writeback_db is None:
+        raise ValueError("writeback database path is required")
+    bitable = FeishuBitableClient(config.app_id, config.app_secret)
+    targets = inventory_writeback_targets(
+        bitable,
+        run_log_url=config.writeback_run_log_url,
+        results_url=config.writeback_results_url,
+    )
+    if not targets:
+        raise RuntimeError("写回已配置但没有任何可用目标表")
+    store = WritebackStore(config.writeback_db)
+    return WritebackWorker(store, bitable, targets)
 
 
 def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     lark = _import_lark_oapi() if lark is None else lark
-    event_handler, worker = _build_runtime(config, lark=lark)
+    event_handler, worker, writeback_worker, gate_executor, gate_store = _build_runtime(config, lark=lark)
     stop_event = threading.Event()
     worker_errors: list[BaseException] = []
 
@@ -312,6 +491,28 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
         daemon=True,
     )
     thread.start()
+
+    extra_threads: list[tuple[str, Any]] = []
+    if writeback_worker is not None:
+        extra_threads.append(("feishu-writeback-worker", writeback_worker))
+    if gate_executor is not None and gate_store is not None:
+        from src.integrations.feishu.decision_gate_store import DecisionGateRunner
+
+        extra_threads.append(
+            ("feishu-gate-runner", DecisionGateRunner(gate_store, gate_executor))
+        )
+
+    for name, runnable in extra_threads:
+        def run_extra(runnable=runnable) -> None:
+            try:
+                runnable.run_forever(stop_event)
+            except BaseException as exc:
+                worker_errors.append(exc)
+            finally:
+                stop_event.set()
+
+        threading.Thread(target=run_extra, name=name, daemon=True).start()
+
     try:
         lark.ws.Client(
             config.app_id,
@@ -323,11 +524,16 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
         stop_event.set()
         thread.join(timeout=5)
 
-    if thread.is_alive():
-        raise RuntimeError("notification worker did not stop")
+    live_extras = False
+    for name, _runnable in extra_threads:
+        for item in threading.enumerate():
+            if item.name == name and item.is_alive():
+                live_extras = True
+    if thread.is_alive() or live_extras:
+        raise RuntimeError("background worker did not stop")
     if worker_errors:
         raise RuntimeError(
-            f"notification worker exited unexpectedly: {worker_errors[0]}"
+            f"background worker exited unexpectedly: {worker_errors[0]}"
         ) from worker_errors[0]
 
 
@@ -544,33 +750,113 @@ def _reply_existing_replay(
 
 
 def _reply_help(client: Any, source_message_id: str, chat_id: Any, *, content: str | None) -> None:
+    _reply_plain_card(
+        client,
+        source_message_id,
+        chat_id,
+        title="梅见演示机器人",
+        content=content or "支持的命令：查看叙事、查看叙事变化、决策进度",
+        summary="帮助",
+    )
+
+
+def _reply_decision_status(
+    config: BotConfig, client: Any, source_message_id: str, chat_id: Any
+) -> None:
+    gate_elements: list[dict[str, Any]] = []
+    if config.decision_run_root is None:
+        content = "决策推进未启用：本机未配置 FEISHU_DECISION_RUN_ROOT。"
+    else:
+        state = read_active_decision_state(config.decision_run_root)
+        if state is None:
+            content = "当前没有活动决策 run。"
+        else:
+            content = stage_status_text(state)
+            from src.integrations.feishu.gate_executor import next_gate_elements
+
+            gate_elements = next_gate_elements(
+                state["run_id"],
+                state["stage"],
+                prefix="status",
+                run_root=config.decision_run_root,
+            )
+    _reply_plain_card(
+        client,
+        source_message_id,
+        chat_id,
+        title="决策进度",
+        content=content,
+        summary="决策进度",
+        extra_elements=gate_elements,
+    )
+
+
+def _reply_plain_card(
+    client: Any,
+    source_message_id: str,
+    chat_id: Any,
+    *,
+    title: str,
+    content: str,
+    summary: str,
+    extra_elements: list[dict[str, Any]] | None = None,
+) -> None:
     if not isinstance(chat_id, str) or not chat_id.strip():
         raise ValueError("message.chat_id is required")
-    help_text = content or "支持的命令：查看叙事、查看叙事变化"
+    elements = [
+        {
+            "tag": "div",
+            "element_id": "plain_content",
+            "text": {"tag": "lark_md", "content": content},
+        }
+    ]
+    elements.extend(extra_elements or [])
     card = {
         "schema": "2.0",
-        "config": {"update_multi": True, "summary": {"content": "帮助"}},
+        "config": {"update_multi": True, "summary": {"content": summary}},
         "header": {
-            "title": {"tag": "plain_text", "content": "梅见演示机器人"},
+            "title": {"tag": "plain_text", "content": title},
             "template": "turquoise",
         },
-        "body": {
-            "elements": [
-                {
-                    "tag": "div",
-                    "element_id": "help_content",
-                    "text": {"tag": "lark_md", "content": help_text},
-                }
-            ]
-        },
+        "body": {"elements": elements},
     }
     validate_card(card)
     card_id = client.create_card_entity(card)
     client.reply_card_entity(
         source_message_id,
         card_id,
-        uuid=_reply_uuid("help", source_message_id),
+        uuid=_reply_uuid(summary, source_message_id),
     )
+
+
+def _is_decision_status_command(event: Mapping[str, Any], bot_open_id: str) -> bool:
+    if not _help_is_allowed(event, bot_open_id):
+        return False
+    text = _plain_command_text(event, bot_open_id)
+    return text in DECISION_STATUS_COMMANDS
+
+
+def _plain_command_text(event: Mapping[str, Any], bot_open_id: str) -> str | None:
+    message = event.get("message")
+    if not isinstance(message, Mapping):
+        return None
+    content = message.get("content")
+    if isinstance(content, str):
+        try:
+            content = json.loads(content)
+        except ValueError:
+            return None
+    if not isinstance(content, Mapping) or not isinstance(content.get("text"), str):
+        return None
+    text = content["text"]
+    mentions = message.get("mentions")
+    if isinstance(mentions, list):
+        for mention in mentions:
+            if _mention_open_id(mention) == bot_open_id:
+                key = mention.get("key") if isinstance(mention, Mapping) else None
+                if isinstance(key, str) and key:
+                    text = text.replace(key, "", 1)
+    return text.strip() or None
 
 
 def _help_is_allowed(event: Mapping[str, Any], bot_open_id: str) -> bool:

@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import requests
 
-from .auth import get_tenant_access_token
+from .auth import TOKEN_INVALID_CODE, TenantAccessTokenProvider
 
 
 OPEN_API_ROOT = "https://open.feishu.cn/open-apis"
@@ -26,11 +26,14 @@ class FeishuBitableClient:
         session: Any | None = None,
         timeout: float = 10.0,
     ) -> None:
-        self._app_id = app_id
-        self._app_secret = app_secret
         self._session = session or requests.Session()
         self._timeout = timeout
-        self._tenant_access_token: str | None = None
+        self._tokens = TenantAccessTokenProvider(
+            app_id,
+            app_secret,
+            session=self._session,
+            timeout=timeout,
+        )
 
     def get_tables(
         self, app_token: str, *, page_size: int = 100
@@ -125,9 +128,31 @@ class FeishuBitableClient:
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        payload = self._send(method, path, params=params, json=json)
+        if payload.get("code") == TOKEN_INVALID_CODE:
+            self._tokens.get_token(force_refresh=True)
+            payload = self._send(method, path, params=params, json=json)
+        if payload.get("code") != 0:
+            raise FeishuAPIError(
+                f"飞书 API 请求失败（code={payload.get('code')}）：{payload.get('msg', '未知错误')}"
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FeishuAPIError("飞书 API 响应缺少 data")
+        return data
+
+    def _send(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        force_refresh: bool = False,
+    ) -> dict[str, Any]:
         request_kwargs: dict[str, Any] = {
             "headers": {
-                "Authorization": f"Bearer {self._access_token()}",
+                "Authorization": f"Bearer {self._tokens.get_token(force_refresh=force_refresh)}",
                 "Content-Type": "application/json; charset=utf-8",
             },
             "params": params,
@@ -151,21 +176,4 @@ class FeishuBitableClient:
 
         if not isinstance(payload, dict):
             raise FeishuAPIError("飞书 API 响应格式错误，顶层必须是对象")
-        if payload.get("code") != 0:
-            raise FeishuAPIError(
-                f"飞书 API 请求失败（code={payload.get('code')}）：{payload.get('msg', '未知错误')}"
-            )
-        data = payload.get("data")
-        if not isinstance(data, dict):
-            raise FeishuAPIError("飞书 API 响应缺少 data")
-        return data
-
-    def _access_token(self) -> str:
-        if self._tenant_access_token is None:
-            self._tenant_access_token = get_tenant_access_token(
-                self._app_id,
-                self._app_secret,
-                session=self._session,
-                timeout=self._timeout,
-            )
-        return self._tenant_access_token
+        return payload

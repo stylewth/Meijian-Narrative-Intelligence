@@ -10,13 +10,10 @@ PROMPT_VERSION = "v1"
 PROMPT_NAMES = frozenset(
     {
         "system",
-        "single_comment",
         "corpus_analysis",
         "diversity_assessment",
         "candidate_generation",
         "candidate_scoring",
-        "template_check",
-        "final_refinement",
         "evidence_routing",
         "candidate_stress",
         "evidence_assessment",
@@ -29,15 +26,15 @@ PROMPT_VERSIONS = {
         "v3"
         if name == "candidate_generation"
         else "v2"
-        if name in {"template_check", "evidence_routing"}
+        if name == "evidence_routing"
         else PROMPT_VERSION
     )
     for name in PROMPT_NAMES
 }
 
 # Replay v2 was captured before the pre-data routing and stress prompts existed.
-# Its sealed manifests must keep this exact historical set; runtime prompt loading
-# deliberately continues to use the larger ``PROMPT_VERSIONS`` mapping above.
+# Its sealed manifests must keep this exact historical set; the versions are
+# written out literally because those prompt files no longer exist in runtime.
 REPLAY_V2_PROMPT_NAMES = frozenset(
     {
         "system",
@@ -51,7 +48,14 @@ REPLAY_V2_PROMPT_NAMES = frozenset(
     }
 )
 REPLAY_V2_PROMPT_VERSIONS = {
-    name: PROMPT_VERSIONS[name] for name in REPLAY_V2_PROMPT_NAMES
+    "system": "v1",
+    "single_comment": "v1",
+    "corpus_analysis": "v1",
+    "diversity_assessment": "v1",
+    "candidate_generation": "v3",
+    "candidate_scoring": "v1",
+    "template_check": "v2",
+    "final_refinement": "v1",
 }
 
 

@@ -8,12 +8,12 @@ from typing import Any
 
 import requests
 
-from .auth import FeishuAuthError, get_tenant_access_token
+from .auth import FeishuAuthError, TenantAccessTokenProvider, TOKEN_INVALID_CODE
 from .notification_cards import validate_card
 
 
 OPEN_API_ROOT = "https://open.feishu.cn/open-apis"
-REQUEST_TIMEOUT = (0.75, 1.5)
+REQUEST_TIMEOUT = (3.0, 10.0)
 
 
 class FeishuMessageError(RuntimeError):
@@ -32,10 +32,13 @@ class FeishuMessageClient:
         *,
         session: Any = requests,
     ) -> None:
-        self._app_id = app_id
-        self._app_secret = app_secret
         self._session = session
-        self._token: str | None = None
+        self._tokens = TenantAccessTokenProvider(
+            app_id,
+            app_secret,
+            session=session,
+            timeout=REQUEST_TIMEOUT[1],
+        )
 
     def send_card(self, chat_id: str, card: Mapping[str, Any], *, uuid: str) -> str:
         validate_card(card)
@@ -94,8 +97,30 @@ class FeishuMessageClient:
         )
 
     def _request(self, method: str, path: str, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        decoded = self._send(method, path, payload)
+        if decoded.get("code") == TOKEN_INVALID_CODE:
+            decoded = self._send(method, path, payload, force_refresh=True)
+        code = decoded.get("code")
+        if code != 0:
+            raise FeishuMessageError(
+                f"飞书 API 请求失败（code={code}）：{decoded.get('msg', '未知错误')}",
+                code=code,
+            )
+        data = decoded.get("data")
+        if not isinstance(data, Mapping):
+            raise FeishuMessageError("飞书 API 响应缺少 data", code="MISSING_DATA")
+        return data
+
+    def _send(
+        self,
+        method: str,
+        path: str,
+        payload: Mapping[str, Any],
+        *,
+        force_refresh: bool = False,
+    ) -> Mapping[str, Any]:
         try:
-            token = self._get_token()
+            token = self._tokens.get_token(force_refresh=force_refresh)
             response = self._session.request(
                 method,
                 f"{OPEN_API_ROOT}{path}",
@@ -115,29 +140,7 @@ class FeishuMessageClient:
             raise FeishuMessageError("飞书 API 未返回合法 JSON", code="INVALID_JSON") from exc
         if not isinstance(decoded, Mapping):
             raise FeishuMessageError("飞书 API 响应顶层必须是对象", code="INVALID_RESPONSE")
-        code = decoded.get("code")
-        if code != 0:
-            raise FeishuMessageError(
-                f"飞书 API 请求失败（code={code}）：{decoded.get('msg', '未知错误')}",
-                code=code,
-            )
-        data = decoded.get("data")
-        if not isinstance(data, Mapping):
-            raise FeishuMessageError("飞书 API 响应缺少 data", code="MISSING_DATA")
-        return data
-
-    def _get_token(self) -> str:
-        if self._token is None:
-            try:
-                self._token = get_tenant_access_token(
-                    self._app_id,
-                    self._app_secret,
-                    session=self._session,
-                    timeout=REQUEST_TIMEOUT,
-                )
-            except FeishuAuthError as exc:
-                raise FeishuMessageError(str(exc)) from exc
-        return self._token
+        return decoded
 
 
 def _serialize(value: Mapping[str, Any]) -> str:

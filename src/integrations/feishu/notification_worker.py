@@ -20,7 +20,7 @@ from .result_links import resolve_result_url
 from .notification_store import NotificationJob, NotificationStore, ReplayCard
 
 
-RETRY_DELAYS_SECONDS = (0.5, 1.5)
+RETRY_DELAYS_SECONDS = (1.0, 5.0)
 
 
 def _utc_now() -> datetime:
