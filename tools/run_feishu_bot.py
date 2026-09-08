@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+import traceback
 import hashlib
 import json
 import os
@@ -71,6 +72,8 @@ class BotConfig:
     writeback_db: Path | None = None
     gate_db: Path | None = None
     decision_run_root: Path | None = None
+    gate_mode: str = "coordinator"
+    replay_state_path: Path | None = None
 
 
 def load_bot_config(
@@ -176,6 +179,46 @@ def load_bot_config(
         if not decision_run_root.is_dir():
             raise ValueError("FEISHU_DECISION_RUN_ROOT must be an existing directory")
 
+    gate_mode = (optional_text("FEISHU_GATE_MODE") or "coordinator").strip().lower()
+    if gate_mode not in ("coordinator", "replay"):
+        raise ValueError("FEISHU_GATE_MODE must be coordinator or replay")
+    if gate_mode == "replay":
+        if decision_run_root is None:
+            raise ValueError(
+                "FEISHU_GATE_MODE=replay 需要同时配置 FEISHU_DECISION_RUN_ROOT "
+                "指向演化 run 冻结目录（含 run_manifest.json）"
+            )
+        if not (decision_run_root / "run_manifest.json").is_file():
+            raise ValueError(
+                "FEISHU_GATE_MODE=replay 的 run 目录缺少 run_manifest.json；"
+                "请指向 official 演化 run 冻结目录"
+            )
+    elif decision_run_root is not None and not (
+        decision_run_root / "active.json"
+    ).is_file():
+        raise ValueError(
+            "FEISHU_GATE_MODE=coordinator 需要 run 根目录包含 active.json "
+            "（活动 run）；没有活动 run 时请移除 FEISHU_DECISION_RUN_ROOT 或改用 replay"
+        )
+
+    replay_state_path: Path | None = None
+    if gate_mode == "replay":
+        configured_state = optional_text("FEISHU_REPLAY_STATE_PATH")
+        candidate = Path(configured_state) if configured_state else Path(
+            "outputs/feishu_replay_state.json"
+        )
+        replay_state_path = (
+            workspace / candidate if not candidate.is_absolute() else candidate
+        ).resolve()
+        try:
+            replay_state_path.relative_to(workspace)
+        except ValueError as exc:
+            raise ValueError(
+                "FEISHU_REPLAY_STATE_PATH must stay inside the workspace"
+            ) from exc
+        if replay_state_path == workspace:
+            raise ValueError("FEISHU_REPLAY_STATE_PATH must be a file path")
+
     return BotConfig(
         app_id=values["FEISHU_APP_ID"],
         app_secret=values["FEISHU_APP_SECRET"],
@@ -190,6 +233,8 @@ def load_bot_config(
         writeback_db=writeback_db,
         gate_db=gate_db,
         decision_run_root=decision_run_root,
+        gate_mode=gate_mode,
+        replay_state_path=replay_state_path,
     )
 
 
@@ -288,6 +333,7 @@ def build_event_handler(
     worker: NotificationWorker | None = None,
     gate_store: DecisionGateStore | None = None,
     gate_enabled: bool = False,
+    replay_state_loader: Any | None = None,
 ) -> Any:
     """Build the SDK dispatcher while keeping all business decisions pure."""
 
@@ -308,8 +354,17 @@ def build_event_handler(
         )
     if gate_store is None:
         gate_store = DecisionGateStore(config.gate_db or (config.notification_db.parent / "feishu_gate_jobs.sqlite3"))
+    if replay_state_loader is None:
+        replay_state_loader = _default_replay_state_loader(config)
 
     def on_message(event: Any) -> None:
+        try:
+            _on_message_inner(event)
+        except Exception:
+            traceback.print_exc()
+            print("[handler] on_message failed; exception printed above", flush=True)
+
+    def _on_message_inner(event: Any) -> None:
         event_dict = _event_to_mapping(event, lark)
         normalized = normalize_message_event(event_dict)
         message = normalized["message"]
@@ -357,6 +412,20 @@ def build_event_handler(
             _reply_help(client, message_id, message.get("chat_id"), content=content)
 
     def on_card_action(event: Any) -> Any:
+        try:
+            return _on_card_action_inner(event)
+        except Exception:
+            traceback.print_exc()
+            print("[handler] on_card_action failed; exception printed above", flush=True)
+            return _adapt_card_action_response(
+                lark,
+                CallbackResult(
+                    toast_type="error",
+                    toast_content="机器人内部错误，请查看本机日志。",
+                ),
+            )
+
+    def _on_card_action_inner(event: Any) -> Any:
         event_dict = _event_to_mapping(event, lark)
         payload = _extract_card_action_payload(event_dict)
         if isinstance(payload, Mapping) and payload.get("type") == DECISION_GATE_ACTION_TYPE:
@@ -364,7 +433,9 @@ def build_event_handler(
                 payload,
                 operator_open_id=_extract_operator_open_id(event_dict),
                 allowed_operator_ids=config.operator_open_ids,
-                load_state=lambda run_id: (
+                load_state=replay_state_loader
+                if config.gate_mode == "replay"
+                else lambda run_id: (
                     read_decision_run_state(config.decision_run_root, run_id)
                     if config.decision_run_root is not None
                     else None
@@ -412,12 +483,29 @@ def _build_runtime(
         if config.gate_db is not None
         else None
     )
-    writeback_store_for_gates = (
-        WritebackStore(config.writeback_db)
-        if config.writeback_db is not None and writeback_worker is not None
-        else None
-    )
-    gate_executor = _build_gate_executor(config, client, writeback_store_for_gates)
+    if config.gate_mode == "replay":
+        from src.integrations.feishu.replay_gate_executor import ReplayGateExecutor
+
+        writeback_store_for_replay = (
+            WritebackStore(config.writeback_db)
+            if config.writeback_db is not None and writeback_worker is not None
+            else None
+        )
+        gate_executor = ReplayGateExecutor(
+            run_root=config.decision_run_root,
+            state_path=config.replay_state_path,
+            message_client=client,
+            chat_id=config.demo_chat_id,
+            writeback_store=writeback_store_for_replay,
+            notification_store=store,
+        )
+    else:
+        writeback_store_for_gates = (
+            WritebackStore(config.writeback_db)
+            if config.writeback_db is not None and writeback_worker is not None
+            else None
+        )
+        gate_executor = _build_gate_executor(config, client, writeback_store_for_gates)
     handler = build_event_handler(
         config,
         lark=lark,
@@ -468,6 +556,123 @@ def _build_writeback_worker(config: BotConfig) -> WritebackWorker | None:
     return WritebackWorker(store, bitable, targets)
 
 
+class ReplayFeedbackLoop:
+    """推送远端推进反馈、门入口卡，并自动前翻已解锁的叙事回放卡。"""
+
+    def __init__(self, config: BotConfig, store: NotificationStore, client: Any) -> None:
+        self._config = config
+        self._store = store
+        self._client = client
+
+    def run_forever(self, stop_event: Any) -> None:
+        from threading import Event
+
+        if not isinstance(stop_event, Event):
+            raise TypeError("stop_event must be a threading.Event")
+        while not stop_event.is_set():
+            try:
+                self._tick()
+            except Exception:
+                traceback.print_exc()
+                print("[worker] feishu-replay-feedback tick failed; printed above", flush=True)
+            stop_event.wait(0.6)
+
+    def _tick(self) -> None:
+        session = self._store.active_session()
+        if session is None:
+            return
+        for command in self._store.commands_pending_feedback(session.session_id):
+            self._send_plain_card(
+                title="系统推进",
+                content=str(command.result_text),
+                summary="系统推进",
+                uuid=self._uuid("mj-stepfb", command.command_id),
+            )
+            self._store.mark_feedback_sent(command.command_id)
+
+        ordinals = [
+            job.ordinal
+            for job in self._store.jobs_for_session(session.session_id)
+        ]
+        available = set(ordinals)
+        cursor = max(ordinals) if ordinals else 0
+        if cursor >= 3:
+            self._maybe_send_gate_entry(session.session_id)
+
+        from src.integrations.feishu.notification_bot import _replay_update_uuid
+
+        for card in self._store.replay_cards_for_session(session.session_id):
+            target = card.current_ordinal + 1
+            if card.update_status in ("IDLE", "FAILED") and target in available:
+                try:
+                    self._store.request_replay_update(
+                        card.replay_id,
+                        target_ordinal=target,
+                        update_uuid=_replay_update_uuid(card.replay_id, card.sequence, target),
+                    )
+                except ValueError:
+                    pass
+
+    def _maybe_send_gate_entry(self, session_id: str) -> None:
+        from src.services.replay_gate_timeline import (
+            initial_replay_state,
+            read_replay_state,
+        )
+
+        timeline = _load_replay_timeline_cached(self._config)
+        state = read_replay_state(self._config.replay_state_path, timeline.run_id)
+        if state is None:
+            state = initial_replay_state(timeline.run_id)
+        if state.get("stage") != "AWAITING_SELECTION":
+            return
+        if not self._store.record_processed_event(
+            f"gate_entry:{session_id}", _now()
+        ):
+            return
+        from src.integrations.feishu.replay_gate_executor import replay_gate_elements
+
+        elements = replay_gate_elements(
+            timeline, timeline.run_id, "AWAITING_SELECTION", prefix="gentry"
+        )
+        card = {
+            "schema": "2.0",
+            "config": {"update_multi": True, "summary": {"content": "决策门已解锁"}},
+            "header": {
+                "title": {"tag": "plain_text", "content": "决策门已解锁：提交人工选线"},
+                "template": "turquoise",
+            },
+            "body": {"elements": elements},
+        }
+        validate_card(card)
+        self._client.send_card(self._config.demo_chat_id, card, uuid=self._uuid("mj-gentry", session_id))
+
+    def _send_plain_card(self, *, title: str, content: str, summary: str, uuid: str) -> None:
+        card = {
+            "schema": "2.0",
+            "config": {"update_multi": True, "summary": {"content": summary}},
+            "header": {
+                "title": {"tag": "plain_text", "content": title},
+                "template": "turquoise",
+            },
+            "body": {
+                "elements": [
+                    {
+                        "tag": "div",
+                        "element_id": "feedback_content",
+                        "text": {"tag": "lark_md", "content": content},
+                    }
+                ]
+            },
+        }
+        validate_card(card)
+        self._client.send_card(self._config.demo_chat_id, card, uuid=uuid)
+
+    @staticmethod
+    def _uuid(prefix: str, identifier: Any) -> str:
+        raw = f"{prefix}:{identifier}".encode("utf-8")
+        return ("mj-fb-" + hashlib.sha256(raw).hexdigest())[:48]
+
+
 def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     lark = _import_lark_oapi() if lark is None else lark
     event_handler, worker, writeback_worker, gate_executor, gate_store = _build_runtime(config, lark=lark)
@@ -478,9 +683,11 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
         try:
             worker.run_forever(stop_event)
         except BaseException as exc:
+            print(f"[worker] notification worker crashed: {exc!r}", flush=True)
             worker_errors.append(exc)
         else:
             if not stop_event.is_set():
+                print("[worker] notification worker exited unexpectedly", flush=True)
                 worker_errors.append(RuntimeError("notification worker exited unexpectedly"))
         finally:
             stop_event.set()
@@ -495,6 +702,17 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     extra_threads: list[tuple[str, Any]] = []
     if writeback_worker is not None:
         extra_threads.append(("feishu-writeback-worker", writeback_worker))
+    if config.gate_mode == "replay":
+        extra_threads.append(
+            (
+                "feishu-replay-feedback",
+                ReplayFeedbackLoop(
+                    config,
+                    NotificationStore(config.notification_db),
+                    FeishuMessageClient(config.app_id, config.app_secret),
+                ),
+            )
+        )
     if gate_executor is not None and gate_store is not None:
         from src.integrations.feishu.decision_gate_store import DecisionGateRunner
 
@@ -507,6 +725,7 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
             try:
                 runnable.run_forever(stop_event)
             except BaseException as exc:
+                print(f"[worker] {name} crashed: {exc!r}", flush=True)
                 worker_errors.append(exc)
             finally:
                 stop_event.set()
@@ -755,16 +974,64 @@ def _reply_help(client: Any, source_message_id: str, chat_id: Any, *, content: s
         source_message_id,
         chat_id,
         title="梅见演示机器人",
-        content=content or "支持的命令：查看叙事、查看叙事变化、决策进度",
+        content=content or "支持的命令：远程操控（远端单步推进网页演示）、决策进度",
         summary="帮助",
     )
+
+
+def _default_replay_state_loader(config: BotConfig) -> Any:
+    """replay 模式的 load_state：读回放状态文件，校验 run 一致。"""
+
+    from src.services.replay_gate_timeline import (
+        initial_replay_state,
+        load_replay_timeline,
+        read_replay_state,
+    )
+
+    timeline = load_replay_timeline(config.decision_run_root)
+
+    def load_state(run_id: str) -> dict[str, Any] | None:
+        if run_id != timeline.run_id:
+            return None
+        state = read_replay_state(config.replay_state_path, timeline.run_id)
+        if state is None:
+            return initial_replay_state(timeline.run_id)
+        return state
+
+    return load_state
 
 
 def _reply_decision_status(
     config: BotConfig, client: Any, source_message_id: str, chat_id: Any
 ) -> None:
     gate_elements: list[dict[str, Any]] = []
-    if config.decision_run_root is None:
+    gate_elements: list[dict[str, Any]] = []
+    gate_elements: list[dict[str, Any]] = []
+    if config.gate_mode == "replay":
+        timeline = _load_replay_timeline_cached(config)
+        state = _default_replay_state_loader(config)(timeline.run_id)
+        stage = state.get("stage") if isinstance(state, dict) else None
+        history = state.get("history") if isinstance(state, dict) else []
+        done = len(history) if isinstance(history, list) else 0
+        progress_store = NotificationStore(config.notification_db)
+        session = progress_store.active_session()
+        if session is None:
+            content = (
+                "当前没有活动演示会话：请先在网页端「开始新的案例会话」。\n"
+                "会话开始后，可用叙事卡片「下一步」远端单步推进网页演示，"
+                "每步都会推送反馈卡片。"
+            )
+        else:
+            progress = progress_store.get_demo_progress(session.session_id)
+            content = (
+                f"决策 run：{timeline.run_id}\n"
+                f"模式：冻结回放（读取官方演化 run 冻结产物，零模型调用）\n"
+                f"系统当前进度：{progress or '尚未同步（等待网页首次推进）'}\n"
+                f"决策阶段：{stage}（已推进 {done} 个门）\n"
+                "提示：叙事卡片「下一步」= 远端单步推进网页；"
+                "选线门卡片会在盲选里程碑自动推送。"
+            )
+    elif config.decision_run_root is None:
         content = "决策推进未启用：本机未配置 FEISHU_DECISION_RUN_ROOT。"
     else:
         state = read_active_decision_state(config.decision_run_root)
@@ -789,6 +1056,12 @@ def _reply_decision_status(
         summary="决策进度",
         extra_elements=gate_elements,
     )
+
+
+def _load_replay_timeline_cached(config: BotConfig) -> Any:
+    from src.services.replay_gate_timeline import load_replay_timeline
+
+    return load_replay_timeline(config.decision_run_root)
 
 
 def _reply_plain_card(

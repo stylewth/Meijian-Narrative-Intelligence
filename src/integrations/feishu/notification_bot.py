@@ -31,7 +31,7 @@ class CallbackResult(StrictBaseModel):
     toast_content: str
 
 
-_COMMANDS = frozenset({"查看叙事", "查看叙事变化"})
+_COMMANDS = frozenset({"远程操控", "查看叙事", "查看叙事变化"})
 _REPLAY_ACTIONS = frozenset({"REPLAY_PREVIOUS", "REPLAY_NEXT"})
 
 
@@ -161,6 +161,23 @@ def handle_replay_action(
     )
     if not 1 <= expected_target <= 8 or target_ordinal != expected_target:
         return CallbackResult(toast_type="error", toast_content="回放目标不是相邻节点。")
+
+    available_ordinals = {
+        job.ordinal for job in store.jobs_for_session(replay.session_id)
+    }
+    try:
+        store.enqueue_demo_command(
+            replay.session_id,
+            command="ADVANCE_STEP",
+            target_node=expected_target,
+            requested_by=operator_open_id,
+        )
+    except ValueError as exc:
+        return CallbackResult(toast_type="warning", toast_content=str(exc))
+    return CallbackResult(
+        toast_type="success",
+        toast_content="已发送单步推进指令；网页执行后会推送本步反馈卡片。",
+    )
 
     update_uuid = _replay_update_uuid(
         replay_id, replay.sequence, target_ordinal

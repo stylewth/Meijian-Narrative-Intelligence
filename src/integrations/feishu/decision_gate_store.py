@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 from contextlib import contextmanager
+from threading import Event
 from typing import Any, Mapping
 
 from src.services.prepared_corpus import canonical_json_bytes, sha256_bytes
@@ -271,6 +272,17 @@ class DecisionGateRunner:
             return True
         self._store.mark_done(job.job_id, finished_at=now)
         return True
+
+    def run_forever(self, stop_event: Any) -> None:
+        """持续消费门队列；空闲时短暂等待，stop_event 置位即退出。"""
+
+        from threading import Event
+
+        if not isinstance(stop_event, Event):
+            raise TypeError("stop_event must be a threading.Event")
+        while not stop_event.is_set():
+            if not self.run_once():
+                stop_event.wait(0.5)
 
     def _now(self) -> datetime:
         value = self._clock()

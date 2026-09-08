@@ -101,7 +101,42 @@ class ReplayCard:
     updated_at: str
 
 
+@dataclass(frozen=True)
+class DemoCommand:
+    command_id: int
+    session_id: str
+    command: str
+    target_node: int
+    requested_by: str
+    status: str
+    created_at: str
+    consumed_at: str | None
+    result_text: str | None = None
+    feedback_status: str | None = None
+
+
 _SCHEMA = """
+CREATE TABLE IF NOT EXISTS demo_commands (
+  command_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT NOT NULL REFERENCES demo_sessions(session_id),
+  command TEXT NOT NULL CHECK (command IN ('ADVANCE_TO_NODE','ADVANCE_STEP')),
+  result_text TEXT,
+  feedback_status TEXT CHECK (feedback_status IN ('PENDING','SENT') OR feedback_status IS NULL),
+  target_node INTEGER NOT NULL CHECK (target_node BETWEEN 1 AND 8),
+  requested_by TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('PENDING','CONSUMED')),
+  created_at TEXT NOT NULL,
+  consumed_at TEXT,
+  session_node_key TEXT NOT NULL,
+  UNIQUE(session_node_key)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS demo_progress (
+  session_id TEXT PRIMARY KEY REFERENCES demo_sessions(session_id),
+  progress_text TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS demo_sessions (
   session_id TEXT PRIMARY KEY,
   source_run_id TEXT NOT NULL,
@@ -199,6 +234,11 @@ class NotificationStore:
 
     def _initialize(self) -> None:
         with self._operation() as connection:
+            row = connection.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='demo_commands'"
+            ).fetchone()
+            if row is not None and "ADVANCE_STEP" not in str(row["sql"]):
+                connection.execute("DROP TABLE demo_commands")
             connection.executescript(_SCHEMA)
 
     @staticmethod
@@ -252,6 +292,165 @@ class NotificationStore:
             update_uuid=row["update_uuid"],
             last_error=row["last_error"],
             updated_at=row["updated_at"],
+        )
+
+
+    def enqueue_demo_command(
+        self,
+        session_id: str,
+        *,
+        command: str,
+        target_node: int,
+        requested_by: str,
+    ) -> "DemoCommand":
+        """登记一条远端推进指令；同会话同节点的未消费指令幂等返回。"""
+
+        if command not in ("ADVANCE_TO_NODE", "ADVANCE_STEP"):
+            raise ValueError("command must be ADVANCE_TO_NODE or ADVANCE_STEP")
+        if not isinstance(target_node, int) or isinstance(target_node, bool) or not 1 <= target_node <= 8:
+            raise ValueError("target_node must be between 1 and 8")
+        for name, value in (("session_id", session_id), ("requested_by", requested_by)):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} must be non-empty")
+        if command == "ADVANCE_STEP":
+            import uuid as _uuid
+
+            session_node_key = f"{session_id}:ADVANCE_STEP:{_uuid.uuid4().hex[:12]}"
+        else:
+            session_node_key = f"{session_id}:ADVANCE_TO_NODE:{target_node}:PENDING"
+        created_at = _now_iso()
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            existing = connection.execute(
+                "SELECT * FROM demo_commands WHERE session_node_key = ?",
+                (session_node_key,),
+            ).fetchone()
+            if existing is not None:
+                return self._demo_command(existing)
+            connection.execute(
+                "INSERT INTO demo_commands(session_id, command, target_node, "
+                "requested_by, status, created_at, session_node_key) "
+                "VALUES (?, ?, ?, ?, 'PENDING', ?, ?)",
+                (session_id, command, target_node, requested_by, created_at, session_node_key),
+            )
+            row = connection.execute(
+                "SELECT * FROM demo_commands WHERE session_node_key = ?",
+                (session_node_key,),
+            ).fetchone()
+            assert row is not None
+            return self._demo_command(row)
+
+    def pending_demo_commands(self, session_id: str) -> list["DemoCommand"]:
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT * FROM demo_commands WHERE session_id = ? AND status = 'PENDING' "
+                "ORDER BY target_node, command_id",
+                (session_id,),
+            ).fetchall()
+            return [self._demo_command(row) for row in rows]
+
+    def consume_demo_command(
+        self, command_id: int, *, result_text: str | None = None
+    ) -> "DemoCommand":
+        if not isinstance(command_id, int) or isinstance(command_id, bool):
+            raise ValueError("command_id must be an integer")
+        if result_text is not None and (
+            not isinstance(result_text, str) or not result_text.strip()
+        ):
+            raise ValueError("result_text must be non-empty text")
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            row = connection.execute(
+                "SELECT * FROM demo_commands WHERE command_id = ?", (command_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"unknown demo command: {command_id}")
+            if row["status"] != "PENDING":
+                raise ValueError(f"demo command {command_id} is not PENDING")
+            connection.execute(
+                "UPDATE demo_commands SET status = 'CONSUMED', consumed_at = ?, "
+                "result_text = ?, feedback_status = 'PENDING', "
+                "session_node_key = session_node_key || ':done' WHERE command_id = ?",
+                (_now_iso(), result_text, command_id),
+            )
+            updated = connection.execute(
+                "SELECT * FROM demo_commands WHERE command_id = ?", (command_id,)
+            ).fetchone()
+            assert updated is not None
+            return self._demo_command(updated)
+
+    def commands_pending_feedback(self, session_id: str) -> list["DemoCommand"]:
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT * FROM demo_commands WHERE session_id = ? "
+                "AND status = 'CONSUMED' AND feedback_status = 'PENDING' "
+                "ORDER BY command_id",
+                (session_id,),
+            ).fetchall()
+            return [self._demo_command(row) for row in rows]
+
+    def mark_feedback_sent(self, command_id: int) -> None:
+        if not isinstance(command_id, int) or isinstance(command_id, bool):
+            raise ValueError("command_id must be an integer")
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            result = connection.execute(
+                "UPDATE demo_commands SET feedback_status = 'SENT' "
+                "WHERE command_id = ? AND feedback_status = 'PENDING'",
+                (command_id,),
+            )
+            if result.rowcount != 1:
+                raise ValueError(f"demo command {command_id} has no pending feedback")
+
+    def upsert_demo_progress(self, session_id: str, progress_text: str) -> None:
+        for name, value in (("session_id", session_id), ("progress_text", progress_text)):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} must be non-empty")
+        with self._operation() as connection:
+            connection.execute(
+                "INSERT INTO demo_progress(session_id, progress_text, updated_at) "
+                "VALUES (?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET "
+                "progress_text = excluded.progress_text, updated_at = excluded.updated_at",
+                (session_id, progress_text, _now_iso()),
+            )
+
+    def get_demo_progress(self, session_id: str) -> str | None:
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        with self._operation() as connection:
+            row = connection.execute(
+                "SELECT progress_text FROM demo_progress WHERE session_id = ?",
+                (session_id,),
+            ).fetchone()
+            return None if row is None else str(row["progress_text"])
+
+    def replay_cards_for_session(self, session_id: str) -> list["ReplayCard"]:
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT * FROM replay_cards WHERE session_id = ? ORDER BY current_ordinal DESC",
+                (session_id,),
+            ).fetchall()
+            return [self._replay(row) for row in rows]
+
+    @staticmethod
+    def _demo_command(row: sqlite3.Row) -> "DemoCommand":
+        return DemoCommand(
+            command_id=row["command_id"],
+            session_id=row["session_id"],
+            command=row["command"],
+            target_node=row["target_node"],
+            requested_by=row["requested_by"],
+            status=row["status"],
+            created_at=row["created_at"],
+            consumed_at=row["consumed_at"],
+            result_text=row["result_text"],
+            feedback_status=row["feedback_status"],
         )
 
     def create_session(self, source_run_id: str, *, created_by: str) -> DemoSession:

@@ -112,7 +112,7 @@ def build_replay_card(
     elements.append(
         _text_element(f"{prefix}_source", f"当前节点 {current_ordinal}/8 · {web_url}")
     )
-    card = _card(f"叙事回放 · {title}", elements)
+    card = _card(f"远程操控 · {title}", elements)
     validate_card(card)
     return card
 

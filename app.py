@@ -22,6 +22,7 @@ from src.ui import (
 )
 from src.ui.demo_notification_control import (
     render_demo_notification_control,
+    render_remote_command_listener,
     sync_evolution_notifications,
     sync_preprocessing_notification,
     sync_pressure_notifications,
@@ -157,6 +158,9 @@ st.markdown(
 )
 if entry is SystemEntry.CUSTOM and not capabilities.online_ai_enabled:
     st.info("在线 AI 仅在本地配置后可用；公开站不会使用团队模型密钥。")
+
+if entry is SystemEntry.CASE:
+    render_remote_command_listener(st.session_state, notification_store)
 
 with st.expander("飞书机器人助手", expanded=False):
     render_demo_notification_control(

@@ -560,6 +560,7 @@ def test_load_bot_config_optional_writeback_settings(tmp_path: Path) -> None:
         }
     )
     (tmp_path / "runs").mkdir()
+    (tmp_path / "runs" / "active.json").write_text("{}", encoding="utf-8")
     config = load_bot_config(mapping, workspace_root=tmp_path)
     assert config.writeback_run_log_url is not None
     assert config.decision_run_root == (tmp_path / "runs").resolve()
