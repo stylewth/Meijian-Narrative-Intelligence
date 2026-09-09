@@ -6,7 +6,7 @@
 
 > 比赛提交版本：`competition-2026-08-15`。在线站点完整开放“梅见案例展示”；在线 AI 与飞书机器人仅在本地配置后启用，公开部署不使用团队密钥。
 
-![系统入口](assets/gateway.png)
+![系统入口（当前 Web UI）](assets/gateway.png)
 
 ## 最新功能
 
@@ -25,11 +25,11 @@
 | 数据预处理 | 多平台市场评论 | 校验、筛选、分层拆分、AI 标注、证据冻结 | 五条基础品牌叙事机会 |
 | 叙事压力测试 | 五条候选与冻结证据 | 五维检查、Luna 审查、DeepSeek 修订、HOLDOUT 与真人盲评 | 三条进入演化的候选 |
 | 实时决策看板 | 229 条基线与四批增量证据 | 逐批更新分数、风险、排名和叙事文本 | 三支柱核心叙事与分层场景 |
-![数据预处理](assets/preprocessing.png)
+![数据预处理（当前 Web UI）](assets/preprocessing.png)
 
-![叙事压力测试](assets/pressure-test.png)
+![叙事压力测试（当前 Web UI）](assets/pressure-test.png)
 
-![实时叙事演化](assets/evolution.png)
+![实时叙事演化（当前 Web UI）](assets/evolution.png)
 
 ## 数据与证据边界
 
