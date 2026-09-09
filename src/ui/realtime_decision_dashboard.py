@@ -10,13 +10,14 @@ from enum import Enum
 from html import escape
 from math import ceil
 from collections.abc import Mapping, MutableMapping
-from typing import Any
+from typing import Any, Callable
 
 import plotly.graph_objects as go
 import streamlit as _streamlit
 
 from src.services.evolution_presentation import load_official_evolution_run
 from src.ui.narrative_evolution import narrative_change
+from src.ui.scroll_continuity import render_scroll_continuity
 
 
 _CANDIDATES = (
@@ -65,28 +66,78 @@ LIVE_PAGE_CSS = """
 .mj-live-kicker{color:#9FE0D1;font-size:.62rem;font-weight:700;letter-spacing:.16em;}
 .mj-live-heading{grid-row:2;margin:0!important;font-family:STZhongsong,"华文中宋",serif;font-size:clamp(1.4rem,2vw,2rem)!important;font-weight:500;}
 .mj-live-subtitle{grid-column:2;grid-row:1/3;align-self:center;margin:0;color:#94A3A7;font-size:.7rem;line-height:1.55;}
-.mj-opportunity-selector{gap:.35rem;margin:.15rem 0 .25rem}.mj-opportunity-switch{gap:.4rem;padding:.28rem .55rem}.mj-opportunity-switch strong{font-size:.72rem}.mj-opportunity-switch small{font-size:.58rem}
 .mj-live-summary{display:flex;align-items:center;gap:1rem;padding:.6rem .8rem;background:#151F23;}.mj-live-summary b{color:#9FE0D1;font-size:1.25rem}.mj-live-summary span{color:#ECE9E3}.mj-live-summary small{margin-left:auto;color:#94A3A7;}
 .mj-live-phase{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:.65rem;margin:.4rem 0;padding:.45rem .7rem;border:1px solid #26363B;background:#151F23;}.mj-live-phase span{color:#9FE0D1;font-size:.65rem;letter-spacing:.12em}.mj-live-phase strong{font-size:.78rem}.mj-live-phase p{margin:0;color:#94A3A7;font-size:.67rem;text-align:right;}
-.mj-progress-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:.25rem;margin:.25rem 0 .45rem;}.mj-progress-node{display:flex;align-items:center;gap:.3rem;min-width:0;color:#66777B;font-size:.6rem}.mj-progress-node i{display:grid;place-items:center;flex:0 0 1.15rem;height:1.15rem;border:1px solid #354449;border-radius:50%;font-style:normal}.mj-progress-node b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}.mj-progress-node.is-visible{color:#CDD4D3}.mj-progress-node.is-current{color:#9FE0D1}.mj-progress-node.is-current i{border-color:#9FE0D1;box-shadow:0 0 12px rgba(159,224,209,.22)}
+.mj-progress-strip{display:flex;flex-wrap:wrap;gap:.35rem .7rem;margin:.25rem 0 .45rem;}.mj-progress-node{display:flex;align-items:center;flex:0 1 9rem;gap:.3rem;min-width:0;color:#66777B;font-size:.6rem}.mj-progress-node i{display:grid;place-items:center;flex:0 0 1.15rem;height:1.15rem;border:1px solid #354449;border-radius:50%;font-style:normal}.mj-progress-node b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}.mj-progress-node.is-visible{color:#CDD4D3}.mj-progress-node.is-current,.mj-progress-node.is-receiving{color:#9FE0D1}.mj-progress-node.is-current i,.mj-progress-node.is-receiving i{border-color:#9FE0D1;box-shadow:0 0 12px rgba(159,224,209,.22)}.mj-progress-node.is-open{flex:1 1 12rem;color:#7E9094}.mj-progress-node.is-open i{border-style:dashed}.mj-progress-node.is-receiving i{animation:mjProgressReceive 1.4s ease-in-out infinite}
 .mj-live-left,.mj-live-right{min-height:27.5rem;padding:.65rem;border:1px solid #26363B;background:#111B1F;box-sizing:border-box;}.mj-live-right{display:flex;flex-direction:column;gap:.5rem;}
 .mj-comment-idle{display:grid;place-items:center;height:8.5rem;border:1px dashed #354449;color:#758488;font-size:.72rem;background:#0F181B;}
-.mj-blind-confirmation{height:8.5rem;padding:1rem;box-sizing:border-box;border:1px solid rgba(223,160,163,.28);background:#1A2226;}.mj-blind-confirmation span{color:#DFA0A3;font-size:.65rem;letter-spacing:.12em}.mj-blind-confirmation h3{margin:.45rem 0 .25rem;font-size:1rem}.mj-blind-confirmation p{margin:0;color:#94A3A7;font-size:.68rem;}
-.mj-narrative-stage{min-height:12.5rem;padding:1rem;border-left:3px solid #DFA0A3;background:#19262B;}.mj-narrative-stage>span{color:#DFA0A3;font-size:.62rem;letter-spacing:.1em}.mj-narrative-stage h3{margin:.35rem 0 .6rem;font-family:STZhongsong,"华文中宋",serif;font-size:1.05rem}.mj-narrative-old,.mj-narrative-new{color:#CDD4D3;font-family:KaiTi,"楷体",serif;line-height:1.8}.mj-narrative-old{max-height:8rem;margin-bottom:.45rem;overflow:hidden;animation:mjNarrativeOldOut .55s ease both}.mj-narrative-new{margin-top:0!important;animation:mjNarrativeNewIn .55s ease .6s both}.mj-narrative-stage.is-static .mj-narrative-old{display:none}.mj-narrative-stage.is-static .mj-narrative-new{margin-top:0!important;animation:none!important}.mj-narrative-added{color:#FFF4F5;background:rgba(223,160,163,.14)}
+.mj-blind-confirmation{height:auto;min-height:8.5rem;padding:1rem;box-sizing:border-box;border:1px solid rgba(223,160,163,.28);background:#1A2226;}.mj-blind-confirmation span{color:#DFA0A3;font-size:.65rem;letter-spacing:.12em}.mj-blind-confirmation h3{margin:.45rem 0 .25rem;font-size:1rem}.mj-blind-confirmation p{margin:0;color:#94A3A7;font-size:.68rem;}
+.mj-narrative-stage{min-height:24rem;padding:1.15rem 1.2rem;border-left:3px solid #DFA0A3;background:#162126;}.mj-narrative-stage>span{color:#DFA0A3;font-size:.62rem;letter-spacing:.1em}.mj-narrative-stage h3{margin:.45rem 0 .9rem;font-family:STZhongsong,"华文中宋",serif;font-size:1.2rem}.mj-narrative-old,.mj-narrative-new,.mj-narrative-static{color:#D7DEDC;font-family:KaiTi,"楷体",serif;font-size:.94rem;line-height:1.9}.mj-narrative-old{max-height:12rem;margin-bottom:.45rem;overflow:hidden;animation:mjNarrativeOldOut .38s ease both}.mj-narrative-new{margin-top:0!important;animation:mjNarrativeNewIn .42s ease .3s both}.mj-narrative-stage.is-static .mj-narrative-old{display:none}.mj-narrative-stage.is-static .mj-narrative-new{margin-top:0!important;animation:none!important}.mj-narrative-added{color:#FFF4F5;text-decoration:underline;text-decoration-color:#DFA0A3;text-decoration-thickness:2px;text-underline-offset:.18em;background:rgba(223,160,163,.08)}.mj-narrative-removed{text-decoration:line-through;color:#8B9896}
 .mj-score-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;padding:.75rem;background:#151F23}.mj-score-summary article{display:grid;gap:.2rem;padding:.55rem;background:#19262B}.mj-score-summary small{color:#94A3A7;font-size:.6rem}.mj-score-summary strong{color:#ECE9E3;font-size:1rem}
-/* Streamlit removes styles nested inside rendered Markdown, so ticker motion lives at page level. */
-.mj-evidence-ticker{min-height:10.4rem}.mj-evidence-ticker h3{margin:.05rem 0 .35rem!important;font-size:1.05rem!important}.mj-comment-stage{display:grid;gap:.22rem;overflow:hidden}.mj-comment-lane{position:relative;height:2.2rem;overflow:hidden}.mj-comment-bullet{position:absolute;left:100%;display:inline-flex;align-items:center;gap:.5rem;width:max-content;max-width:70rem;animation:mjCommentGlide 24s linear 0s 1 forwards}.mj-comment-bullet.is-item-0{animation-duration:24s;animation-delay:0s}.mj-comment-bullet.is-item-1{animation-duration:23s;animation-delay:1.2s}.mj-comment-bullet.is-item-2{animation-duration:28s;animation-delay:2.4s}.mj-comment-bullet.is-item-3{animation-duration:22s;animation-delay:8s}.mj-comment-bullet.is-item-4{animation-duration:32s;animation-delay:9.2s}.mj-platform-avatar{display:grid;place-items:center;flex:0 0 1.8rem;height:1.8rem;border-radius:50%;color:#fff;font-size:.56rem;font-weight:800}.mj-platform-avatar.is-xiaohongshu{background:#FF2442}.mj-platform-avatar.is-douyin{background:#111;border:1px solid #25F4EE}.mj-platform-avatar.is-bilibili{background:#00A1D6}.mj-platform-avatar.is-jd{background:#E1251B}.mj-platform-avatar.is-taobao{background:#FF5000}.mj-comment-copy{display:flex;align-items:center;gap:.5rem;padding:.42rem .7rem;border:1px solid rgba(159,224,209,.28);border-radius:1.2rem;background:#202F34;color:#CDD4D3;font-size:.66rem;white-space:nowrap}.mj-comment-copy strong{color:#9FE0D1}.mj-comment-complete{margin-top:.25rem;color:#9FE0D1;font-size:.62rem}.mj-evidence-ticker details{margin-top:.12rem;color:#94A3A7;font-size:.62rem}.mj-comment-stage:hover .mj-comment-bullet,.mj-comment-bullet:hover{animation-play-state:paused}
+/* Streamlit 会移除 Markdown 内嵌样式，弹幕运动统一放在页面级 CSS。 */
+.mj-evidence-ticker{min-height:10.4rem;padding:.45rem 0 .2rem}.mj-evidence-ticker h3{margin:.05rem 0 .35rem!important;font-size:.86rem!important;font-weight:600}.mj-comment-stage{display:grid;gap:.22rem;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}.mj-comment-lane{position:relative;height:2.2rem;overflow:hidden}.mj-comment-bullet{position:absolute;left:88%;display:inline-flex;align-items:center;gap:.5rem;width:max-content;max-width:70rem;animation:mjCommentGlide 20s linear 0s 1 forwards}.mj-comment-bullet.is-item-0{animation-duration:20s;animation-delay:0s}.mj-comment-bullet.is-item-1{animation-duration:19s;animation-delay:.7s}.mj-comment-bullet.is-item-2{animation-duration:22s;animation-delay:1.4s}.mj-comment-bullet.is-item-3{animation-duration:18s;animation-delay:6.4s}.mj-comment-bullet.is-item-4{animation-duration:23s;animation-delay:7.2s}.mj-platform-avatar{display:grid;place-items:center;flex:0 0 1.8rem;height:1.8rem;border-radius:50%;color:#fff;font-size:.56rem;font-weight:800}.mj-platform-avatar.is-xiaohongshu{background:#C3394F}.mj-platform-avatar.is-douyin{background:#111;border:1px solid #25F4EE}.mj-platform-avatar.is-bilibili{background:#007FA8}.mj-platform-avatar.is-jd{background:#B9362D}.mj-platform-avatar.is-taobao{background:#C94E22}.mj-comment-copy{display:flex;align-items:center;gap:.5rem;padding:.42rem .7rem;border:1px solid rgba(159,224,209,.28);border-radius:1.2rem;background:#202F34;color:#CDD4D3;font-size:.66rem;white-space:nowrap}.mj-comment-copy strong{color:#9FE0D1}.mj-comment-complete{margin-top:.25rem;color:#9FE0D1;font-size:.62rem}.mj-evidence-ticker details{margin-top:.12rem;color:#94A3A7;font-size:.62rem}.mj-evidence-ticker__record{padding:.2rem 0}.mj-evidence-ticker__record p{display:inline;margin-left:.45rem;color:#C9D2D0}.mj-evidence-ticker__platform{color:#9FE0D1}.mj-comment-stage:hover .mj-comment-bullet,.mj-comment-stage:focus-within .mj-comment-bullet{animation-play-state:paused}
 @keyframes mjCommentGlide{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 100%))}}
+@keyframes mjProgressReceive{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes mjNarrativeOldOut{from{opacity:1;max-height:8rem;margin-bottom:.45rem}to{opacity:0;visibility:hidden;max-height:0;margin-bottom:0}}@keyframes mjNarrativeNewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.mj-full-detail{margin:.6rem 0 0;padding:.75rem;border:1px solid #26363B;background:#111B1F}.mj-full-detail>header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.55rem}.mj-full-detail>header span{color:#9FE0D1;font-size:.62rem;letter-spacing:.12em}.mj-full-detail>header small{color:#758488;font-size:.6rem}.mj-full-dimensions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.45rem}.mj-dimension-card{min-height:7rem;padding:.65rem;background:#19262B}.mj-dimension-card span{color:#94A3A7;font-size:.6rem}.mj-dimension-card strong{display:block;margin:.15rem 0;color:#ECE9E3;font-size:1.15rem}.mj-dimension-card i{display:block;height:3px;margin:.3rem 0 .45rem;background:#2B3A3F}.mj-dimension-card i b{display:block;height:100%;background:#9FE0D1}.mj-dimension-card small{display:-webkit-box;overflow:hidden;color:#94A3A7;font-size:.6rem;line-height:1.5;-webkit-line-clamp:2;-webkit-box-orient:vertical}.mj-full-impact{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.55rem}.mj-full-impact section{padding:.7rem;background:#151F23}.mj-full-impact h4{margin:0 0 .4rem;color:#DFA0A3;font-size:.68rem}.mj-full-impact ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;margin:0;padding:0;list-style:none}.mj-full-impact li{padding:.45rem;color:#CDD4D3;background:#19262B;font-size:.62rem;line-height:1.45}.mj-full-impact li strong,.mj-full-impact li span{display:block}.mj-full-impact li span{margin-top:.18rem;color:#94A3A7}
-@media(max-width:1100px){.mj-live-subtitle{display:none}.mj-live-dashboard{grid-template-columns:1fr}.mj-live-left,.mj-live-right{min-height:auto}.mj-full-dimensions{grid-template-columns:repeat(2,1fr)}.mj-full-impact{grid-template-columns:1fr}.mj-full-impact ul{grid-template-columns:1fr}}
+.mj-full-detail{margin:.75rem 0 0;padding:.85rem 1rem;border:1px solid #26363B;background:#111B1F}.mj-full-detail>header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.55rem}.mj-full-detail>header span{color:#9FE0D1;font-size:.62rem;letter-spacing:.12em}.mj-full-detail>header small{color:#758488;font-size:.6rem}.mj-full-dimensions{display:grid;border-top:1px solid #26363B}.mj-dimension-row{display:grid;grid-template-columns:7.4rem minmax(8rem,.8fr) 2.5rem minmax(12rem,1.6fr);align-items:center;gap:.65rem;padding:.5rem 0;border-bottom:1px solid #223137}.mj-dimension-row span{color:#CDD4D3;font-size:.65rem}.mj-dimension-row strong{color:#ECE9E3;font-size:.82rem;font-variant-numeric:tabular-nums}.mj-dimension-row i{display:block;height:3px;background:#2B3A3F}.mj-dimension-row i b{display:block;height:100%;background:#9FE0D1}.mj-dimension-row small{color:#A9B7B3;font-size:.61rem;line-height:1.5}.mj-full-impact{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:.7rem}.mj-full-impact section{padding:.2rem 0 .2rem .8rem;border-left:1px solid #2A3A40;background:transparent}.mj-full-impact h4{margin:0 0 .45rem;color:#DFA0A3;font-size:.68rem}.mj-full-impact ul{display:grid;gap:.35rem;margin:0;padding:0;list-style:none}.mj-full-impact li{padding:.25rem 0;color:#CDD4D3;background:transparent;font-size:.62rem;line-height:1.5}.mj-full-impact li strong,.mj-full-impact li span{display:block}.mj-full-impact li span{margin-top:.18rem;color:#94A3A7}
+@media(max-width:1100px){.mj-live-subtitle{display:none}.mj-live-dashboard{grid-template-columns:1fr}.mj-live-left,.mj-live-right{min-height:auto}.mj-dimension-row{grid-template-columns:6.6rem minmax(7rem,1fr) 2.5rem}.mj-dimension-row small{grid-column:1/-1}.mj-full-impact{grid-template-columns:1fr}.mj-full-impact ul{grid-template-columns:1fr}}
+.mj-kpi-band{display:flex;align-items:stretch;margin:.4rem 0 .5rem;border-top:1px solid #26363B;border-bottom:1px solid #26363B}
+.mj-kpi-band article{flex:1;display:grid;gap:.18rem;padding:.62rem .95rem;border-right:1px solid #26363B}
+.mj-kpi-band article:last-child{border-right:0}
+.mj-kpi-band small{color:#7E9094;font-size:.62rem;letter-spacing:.16em}
+.mj-kpi-band strong{color:#ECE9E3;font-family:Georgia,serif;font-size:1.8rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.08;animation:mjKpiFlash .14s ease-out both}
+.mj-kpi-band .mj-kpi-delta.is-up{color:#9FE0D1}
+.mj-kpi-band .mj-kpi-delta.is-down{color:#DFA0A3}
+.mj-kpi-band .mj-kpi-node{font-family:"Microsoft YaHei","PingFang SC",sans-serif;font-size:1rem;color:#9FE0D1;letter-spacing:.04em;animation:none}
+@keyframes mjKpiFlash{from{opacity:.2}to{opacity:1}}
+.mj-candidate-nav{display:flex;align-items:baseline;justify-content:space-between;margin:.55rem 0 .25rem}.mj-candidate-nav span{color:#9FE0D1;font-size:.62rem;letter-spacing:.12em}.mj-candidate-nav small{color:#7E9094;font-size:.6rem}
+/* cockpit chrome（自美化层迁入：页面级作用域，避免全页 :has 重算） */
+.mj-system-header{background:#111B1F;border-bottom-color:#26363B;box-shadow:none}
+.mj-system-header__brand span{color:#9FE0D1}
+.mj-system-header__brand strong{color:#ECE9E3}
+.mj-system-status b{color:#CDD4D3}
+.mj-system-status small{color:#7E8F94}
+.mj-system-status article{border-left-color:#26363B}
+.mj-system-status i{background:#9FE0D1;box-shadow:0 0 0 4px rgba(159,224,209,.12)}
+[data-testid="stExpander"]>details{background:rgba(17,27,31,.45);border-color:#26363B}
+[data-testid="stExpander"] summary{color:#CDD4D3}
+[data-testid="stButton"]>button{height:2.2rem;font-size:.72rem;border-radius:.3rem}
+[data-testid="stButton"]>button[data-testid="baseButton-secondary"]{background:rgba(25,38,43,.55);border-color:#26363B;color:#9FB3AE}
+[data-testid="stButton"]>button[data-testid="baseButton-secondary"]:hover{border-color:#9FE0D1;color:#9FE0D1;background:#202F34}
+[data-testid="stButton"]>button p{font-size:inherit}
+.st-key-evolution_candidate_EC-ADD-01-口味图鉴 button,.st-key-evolution_candidate_EC-ADD-02-梅见溯源记 button,.st-key-evolution_candidate_EC-03-双容量双剧本 button{height:2.65rem!important;justify-content:flex-start;padding:0 .85rem;border-left:3px solid var(--mj-candidate-line)!important;background:#121D21!important;color:#C8D1CF!important;text-align:left}
+.st-key-evolution_candidate_EC-ADD-01-口味图鉴 button{--mj-candidate-line:#9FE0D1}.st-key-evolution_candidate_EC-ADD-02-梅见溯源记 button{--mj-candidate-line:#DFA0A3}.st-key-evolution_candidate_EC-03-双容量双剧本 button{--mj-candidate-line:#E6C889}
+[class*="st-key-evolution_candidate_"] button:disabled{opacity:1!important;border-color:var(--mj-candidate-line)!important;background:#1B2B30!important;color:#F1F4F3!important}
+[class*="st-key-evolution_candidate_"] button:hover{border-color:var(--mj-candidate-line)!important;color:#FFF!important;background:#1B2B30!important}
+[class*="st-key-evolution_previous"] button,[class*="st-key-evolution_next"] button,[class*="st-key-evolution_replay"] button{height:2.25rem!important}
+.js-plotly-plot .legendtext{fill:#9FB3AE!important}
+.js-plotly-plot .g-xtitle text,.js-plotly-plot .g-ytitle text{fill:#8FA09B!important}
+:is(.mj-live-subtitle,.mj-live-phase p,.mj-score-summary small,.mj-dimension-row small,.mj-full-detail>header small,.mj-full-impact li span,.mj-comment-idle,.mj-blind-confirmation p,.mj-progress-node){color:#A9B7B3}
+.mj-progress-node:not(.is-visible):not(.is-current){color:#7E9094}
+.mj-live-phase{border-left:2px solid #9FE0D1;border-top:0;border-right:0;border-bottom:1px solid #26363B;padding-left:.8rem}
+.mj-live-left,.mj-live-right{border-color:#22313a}
+/* de-box：看板次级容器发丝线化，主图表区独享抬升 */
+.mj-score-summary{background:transparent}
+.mj-score-summary article{background:transparent;border-right:1px solid #22313a}
+.mj-score-summary article:last-child{border-right:0}
+.mj-full-impact section{background:transparent;border:0;border-left:1px solid #22313a}
+.mj-full-impact li{background:rgba(25,38,43,.4)}
+.mj-full-detail,.mj-live-left,.mj-live-right{border-color:#1D2B30}
+.mj-comment-idle{height:3.1rem;min-height:3.1rem}.mj-live-panel{padding:.52rem .75rem;border-radius:0}
+section.main{position:relative;z-index:1}
+[data-testid="stPlotlyChart"]{position:relative;overflow:hidden}
+[data-testid="stPlotlyChart"]::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.026) 0 1px,transparent 1px 3px)}
+.mj-live-ambience{position:fixed;inset:-6%;z-index:0;pointer-events:none;background-image:radial-gradient(38rem 24rem at 20% 24%,rgba(159,224,209,.05),transparent 70%),radial-gradient(44rem 28rem at 80% 76%,rgba(223,160,163,.045),transparent 70%),linear-gradient(rgba(159,224,209,.026) 1px,transparent 1px),linear-gradient(90deg,rgba(159,224,209,.026) 1px,transparent 1px);background-size:auto,auto,2.6rem 2.6rem,2.6rem 2.6rem}
+@media(max-width:900px){[data-testid="stHorizontalBlock"]:has(.mj-live-panel){flex-wrap:wrap!important}[data-testid="stHorizontalBlock"]:has(.mj-live-panel)>[data-testid="column"]{flex:1 1 100%!important;width:100%!important}.mj-narrative-stage{min-height:auto}.mj-kpi-band{display:grid;grid-template-columns:1fr 1fr}.mj-kpi-band article:nth-child(2){border-right:0}}
+@media(prefers-reduced-motion:reduce){.mj-comment-bullet{position:static;animation:none!important}.mj-comment-lane{height:auto}.mj-comment-stage{gap:.45rem}}
 """.strip()
 
 LATEST_SEGMENT_ANIMATION_CSS = """
-.js-plotly-plot .scatterlayer .trace:nth-last-child(-n+3) path.js-line{stroke-dasharray:1000;stroke-dashoffset:1000;animation:mjLineGrow 3s cubic-bezier(.2,.75,.25,1) forwards}
-.js-plotly-plot .scatterlayer .trace:nth-last-child(-n+3) .point:last-child{transform-box:fill-box;transform-origin:center;animation:mjPointArrive .36s ease 3s both}
+.js-plotly-plot .scatterlayer > .trace:nth-of-type(n+4) path.js-line{stroke-dasharray:1000;stroke-dashoffset:1000;animation:mjLineGrow 2.6s cubic-bezier(.2,.75,.25,1) .12s forwards}
+.js-plotly-plot .scatterlayer > .trace:nth-of-type(n+4) .point:last-child{transform-box:fill-box;transform-origin:center;animation:mjPointArrive .28s ease 2.45s both}
 @keyframes mjLineGrow{to{stroke-dashoffset:0}}
 @keyframes mjPointArrive{from{opacity:0;transform:scale(.35)}60%{opacity:1;transform:scale(1.35)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.js-plotly-plot .scatterlayer path.js-line,.js-plotly-plot .scatterlayer .point{animation:none!important}}
 """.strip()
 
 FINALE_PAGE_CSS = """
@@ -106,6 +157,31 @@ FINALE_PAGE_CSS = """
 .mj-finale-act-two{margin-top:1.25rem;border-top:1px solid rgba(213,194,149,.42);animation:mjFinaleRise .5s ease both}.mj-finale-pillars{display:grid;grid-template-columns:repeat(3,1fr);}.mj-finale-pillar{min-height:7rem;padding:.85rem 1rem;border-right:1px solid rgba(213,194,149,.32);}.mj-finale-pillar:last-child{border-right:0}.mj-finale-pillar>span{color:#D5C295;font-size:.62rem}.mj-finale-pillar h3{margin:.32rem 0;color:#FFF8EF!important;font-family:STZhongsong,"华文中宋",serif;font-size:1.05rem}.mj-finale-pillar p{margin:0;color:#F3E7E2;font-size:.72rem;line-height:1.65}
 .mj-finale-guardrails,.mj-finale-drawer-scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;color:#FFF8EF}.mj-finale-drawer-scenes{grid-template-columns:repeat(3,1fr);}.mj-finale-drawer-scenes article,.mj-finale-guardrails section{padding:.85rem;border:1px solid #8B6976;background:#513942}.mj-finale-drawer-scenes span{color:#D5C295;font-size:.65rem}.mj-finale-drawer-scenes h3,.mj-finale-guardrails h3{color:#FFF8EF!important}.mj-finale-drawer-scenes p,.mj-finale-guardrails li{color:#F3E7E2;font-size:.75rem;line-height:1.65}
 @keyframes mjFinaleRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* finale chrome（自美化层迁入：页面级作用域） */
+.mj-system-header{background:#241B20;border-bottom-color:#57414B}
+.mj-system-header__brand span{color:#D5C295}
+.mj-system-header__brand strong{color:#FFF3EA}
+.mj-system-status b{color:#F0E2DC}
+.mj-system-status small{color:#A08C93}
+.mj-system-status article{border-left-color:#57414B}
+.mj-system-status i{background:#D5C295;box-shadow:0 0 0 4px rgba(213,194,149,.14)}
+[data-testid="stExpander"]>details{background:rgba(62,44,51,.55);border-color:#8B6976}
+[data-testid="stExpander"] summary{color:#D5C295!important}
+.mj-finale-shell{position:relative}
+.mj-finale-shell::before{content:"";position:absolute;top:15%;left:50%;width:0;height:1px;background:linear-gradient(90deg,transparent,#D5C295,transparent);box-shadow:0 0 14px rgba(213,194,149,.45);opacity:0;animation:mjPolishGoldLine 1.1s var(--mj-ease-curtain,cubic-bezier(.65,0,.35,1)) .45s forwards;pointer-events:none}
+.mj-finale-shell::after{content:"";position:absolute;inset:0;background:radial-gradient(58% 46% at 50% 60%,rgba(213,194,149,.15),transparent 72%);animation:mjPolishGlowUp 2.6s ease-out .7s both;pointer-events:none}
+.mj-finale-curtain::before{transform-origin:center;animation:mjPolishBigBreath 9s ease-in-out 2.2s infinite}
+.mj-finale-line-one{animation:mjPolishWipeIn .85s cubic-bezier(.65,0,.35,1) .55s both}
+.mj-finale-line-two{animation:mjPolishWipeIn .85s cubic-bezier(.65,0,.35,1) .85s both}
+.mj-hanging-mark{width:.24em;transform:translateX(0);margin-right:-.16em}
+[data-testid="stButton"]>button{height:2.4rem;border-radius:999px;background:rgba(255,248,239,.06);border:1px solid rgba(213,194,149,.45);color:#E9DCC0;font-size:.78rem;letter-spacing:.14em;transition:background .2s ease-out,border-color .2s ease-out}
+[data-testid="stButton"]>button:hover{background:rgba(213,194,149,.16);border-color:#D5C295;color:#FFF8EF}
+[data-testid="stButton"]>button p{letter-spacing:inherit}
+[data-testid="stButton"]>button[data-testid="baseButton-primary"]{max-width:15rem;margin-left:auto;display:block}
+@keyframes mjPolishGoldLine{from{left:50%;width:0;opacity:0}30%{opacity:1}to{left:8%;width:84%;opacity:1}}
+@keyframes mjPolishGlowUp{0%{opacity:0}45%{opacity:1}100%{opacity:.4}}
+@keyframes mjPolishWipeIn{from{clip-path:inset(0 100% 0 0);opacity:.25;transform:translateY(16px)}to{clip-path:inset(0 0 0 0);opacity:1;transform:translateY(0)}}
+@keyframes mjPolishBigBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
 @media(max-width:900px){.mj-finale-curtain{width:86vw;margin:0 auto}.mj-finale-slogan{font-size:clamp(2.35rem,9vw,4rem)}.mj-finale-pillars,.mj-finale-drawer-scenes,.mj-finale-guardrails{grid-template-columns:1fr}.mj-finale-pillar{border-right:0;border-bottom:1px solid rgba(213,194,149,.32)}}
 """.strip()
 
@@ -539,6 +615,7 @@ def apply_playback_action(
     *,
     checkpoint_index: int | None = None,
     candidate_id: str | None = None,
+    on_milestone: Callable[[], None] | None = None,
 ) -> PlaybackState:
     """Apply a UI-only action by writing only the corresponding session keys."""
 
@@ -561,6 +638,8 @@ def apply_playback_action(
         session_state["evolution_finale_auto_reveal"] = False
     if action is PlaybackAction.SELECT_CANDIDATE and candidate_id is not None:
         session_state["evolution_candidate_id"] = candidate_id
+    if on_milestone is not None:
+        on_milestone()
     return next_state
 
 
@@ -703,23 +782,28 @@ def build_detail_html(detail: Mapping[str, Any]) -> str:
     )
 
 
-def build_opportunity_selector_html(run: Any, selected_candidate_id: str) -> str:
-    """Render the stable three-line selector labels above the live chart."""
+def build_kpi_band_html(detail: Mapping[str, Any] | None) -> str:
+    """Top instrument band: borderless big numbers above the cockpit columns."""
 
-    selected_ids = getattr(run, "selected_candidate_ids", None)
-    if not isinstance(selected_ids, (tuple, list)) or set(selected_ids) != _CANDIDATE_IDS:
-        raise ValueError("正式演化 view 必须包含三条固定机会线")
-    if selected_candidate_id not in selected_ids:
-        raise ValueError(f"未知候选 ID: {selected_candidate_id}")
-    label_by_id = {candidate_id: label for candidate_id, label, _ in _CANDIDATES}
-    cards = "".join(
-        f'<article class="mj-opportunity-switch{" is-selected" if candidate_id == selected_candidate_id else ""}" '
-        f'data-candidate-id="{escape(candidate_id, quote=True)}">'
-        f'<span>{index:02d}</span><strong>{escape(label_by_id[candidate_id])}</strong>'
-        f'<small>{"当前查看" if candidate_id == selected_candidate_id else "点击切换"}</small></article>'
-        for index, candidate_id in enumerate(selected_ids, start=1)
+    if not isinstance(detail, Mapping):
+        return ""
+    for key in ("weighted_score", "score_change", "rank", "checkpoint_label"):
+        if key not in detail:
+            return ""
+    change = float(detail["score_change"])
+    change_value = f"{change:+.2f}" if change else "±0.00"
+    change_class = " is-up" if change > 0 else (" is-down" if change < 0 else "")
+    return (
+        '<section class="mj-kpi-band">'
+        '<article><small>当前加权分</small><strong>'
+        f'{float(detail["weighted_score"]):.2f}</strong></article>'
+        f'<article><small>本轮变化</small><strong class="mj-kpi-delta{change_class}">'
+        f"{change_value}</strong></article>"
+        f'<article><small>当前排名</small><strong>#{detail["rank"]}</strong></article>'
+        '<article><small>当前节点</small>'
+        f'<strong class="mj-kpi-node">{escape(str(detail["checkpoint_label"]))}</strong></article>'
+        "</section>"
     )
-    return f'<section class="mj-opportunity-selector">{cards}</section>'
 
 
 def build_narrative_transition_html(
@@ -834,12 +918,12 @@ def build_full_width_detail_html(detail: Mapping[str, Any]) -> str:
         raise ValueError("detail dimensions 必须包含五项")
     if not isinstance(risks, list) or not isinstance(scenes, list):
         raise ValueError("detail 缺少风险或场景")
-    dimension_cards = "".join(
-        '<article class="mj-dimension-card">'
+    dimension_rows = "".join(
+        '<div class="mj-dimension-row">'
         f'<span>{escape(str(item["name"]))}</span>'
-        f'<strong>{float(item["score"]):.0f}</strong>'
         f'<i><b style="width:{float(item["score"]):.0f}%"></b></i>'
-        f'<small>{escape(str(item["reason"]))}</small></article>'
+        f'<strong>{float(item["score"]):.0f}</strong>'
+        f'<small>{escape(str(item["reason"]))}</small></div>'
         for item in dimensions
     )
     risk_items = "".join(f"<li>{escape(str(item))}</li>" for item in risks)
@@ -855,7 +939,7 @@ def build_full_width_detail_html(detail: Mapping[str, Any]) -> str:
     return (
         '<section class="mj-full-detail"><header><span>五维决策场</span>'
         f'<small>{escape(str(detail.get("checkpoint_label", "当前阶段")))}</small></header>'
-        f'<div class="mj-full-dimensions">{dimension_cards}</div>'
+        f'<div class="mj-full-dimensions">{dimension_rows}</div>'
         '<div class="mj-full-impact">'
         f'<section><h4>风险观察</h4><ul>{risk_items}</ul></section>'
         f'<section><h4>场景变化</h4><ul>{scene_items}</ul></section>'
@@ -985,7 +1069,7 @@ def build_dashboard_view(
 def build_progress_strip_html(
     nodes: list[dict[str, Any]], playback_state: PlaybackState
 ) -> str:
-    """Render the six checkpoints as a non-interactive progress strip."""
+    """Render only occurred checkpoints plus one open-ended continuation."""
 
     if len(nodes) != _NUMERIC_NODE_COUNT:
         raise ValueError("进度条必须包含六个冻结节点")
@@ -994,13 +1078,24 @@ def build_progress_strip_html(
         if playback_state.phase in {PlaybackPhase.SCORE, PlaybackPhase.NARRATIVE}
         else max(0, playback_state.checkpoint_index - 1)
     )
+    receiving = (
+        playback_state.phase is PlaybackPhase.COMMENTS
+        and playback_state.checkpoint_index > visible_index
+    )
+    last_rendered_index = playback_state.checkpoint_index if receiving else visible_index
     markup = "".join(
         '<span class="mj-progress-node'
         + (" is-visible" if index <= visible_index else "")
-        + (" is-current" if index == playback_state.checkpoint_index else "")
+        + (" is-current" if index == visible_index and not receiving else "")
+        + (" is-receiving" if receiving and index == last_rendered_index else "")
         + f'"><i>{"始" if index == 0 else index}</i><b>{escape(str(node["label"]))}</b></span>'
-        for index, node in enumerate(nodes)
+        for index, node in enumerate(nodes[: last_rendered_index + 1])
     )
+    if not receiving and not playback_state.finale and visible_index < len(nodes) - 1:
+        markup += (
+            '<span class="mj-progress-node is-open"><i>···</i>'
+            '<b>下一变化待定 · 可随时收敛</b></span>'
+        )
     return f'<div class="mj-progress-strip" aria-label="实时变化阶段进度">{markup}</div>'
 
 
@@ -1009,6 +1104,7 @@ def render_realtime_decision_dashboard(
     *,
     streamlit_module: Any = None,
     _fragment_body: bool = False,
+    on_milestone: Callable[[], None] | None = None,
 ) -> dict[str, Any]:
     """Render the read-only dashboard and return its projected view for testing."""
 
@@ -1030,16 +1126,17 @@ def render_realtime_decision_dashboard(
         if _fragment_body and hasattr(st, "rerun"):
             st.rerun(scope="app")
             return view
-        _render_finale(st, view["finale"]["view"], session_state)
+        _render_finale(st, view["finale"]["view"], session_state, on_milestone)
         return view
 
     if not _fragment_body and hasattr(st, "markdown"):
         st.markdown(
             f"<style>{LIVE_PAGE_CSS}</style>"
+            '<div class="mj-live-ambience" aria-hidden="true"></div>'
             "<section class='mj-live-dashboard'>"
             "<div class='mj-live-kicker'>梅见 · 实时决策室</div>"
             "<h1 class='mj-live-heading'>实时叙事演化看板</h1>"
-            f"<p class='mj-live-subtitle'>实时变化阶段回放 · {escape(run.run_id)}。"
+            "<p class='mj-live-subtitle'>正式案例回放。"
             "新增评论先进入影响归因，再更新评分、风险、场景与叙事文字。</p>"
             "</section>",
             unsafe_allow_html=True,
@@ -1047,61 +1144,15 @@ def render_realtime_decision_dashboard(
 
     if not _fragment_body:
         if not streamlit_injected:
-            return _render_live_streamlit_fragment(root)
+            return _render_live_streamlit_fragment(root, on_milestone)
         fragment_renderer = lambda: render_realtime_decision_dashboard(
             root,
             streamlit_module=st,
             _fragment_body=True,
+            on_milestone=on_milestone,
         )
         fragment = getattr(st, "fragment", None)
         return fragment(fragment_renderer)() if callable(fragment) else fragment_renderer()
-
-    if hasattr(st, "button"):
-        st.markdown(
-            build_opportunity_selector_html(run, selected_candidate_id),
-            unsafe_allow_html=True,
-        )
-        selector_columns = st.columns(3) if hasattr(st, "columns") else (None,) * 3
-        label_by_id = {candidate_id: label for candidate_id, label, _ in _CANDIDATES}
-        for column, candidate_id in zip(
-            selector_columns, run.selected_candidate_ids, strict=True
-        ):
-            context = column if column is not None else _NullContext()
-            with context:
-                st.button(
-                    f"查看 · {label_by_id[candidate_id]}",
-                    key=f"evolution_candidate_{candidate_id}",
-                    use_container_width=True,
-                    disabled=candidate_id == selected_candidate_id,
-                    on_click=apply_playback_action,
-                    args=(session_state, PlaybackAction.SELECT_CANDIDATE),
-                    kwargs={"candidate_id": candidate_id},
-                )
-
-    if hasattr(st, "button"):
-        control_columns = st.columns(3) if hasattr(st, "columns") else (None,) * 3
-        actions = (
-            ("上一步", PlaybackAction.PREVIOUS, "evolution_previous"),
-            ("下一步", PlaybackAction.NEXT_CHANGE, "evolution_next"),
-            ("从头重播", PlaybackAction.REPLAY, "evolution_replay"),
-        )
-        for column, (label, action, key) in zip(control_columns, actions, strict=True):
-            if column is None:
-                st.button(
-                    label,
-                    key=key,
-                    on_click=apply_playback_action,
-                    args=(session_state, action),
-                )
-            else:
-                with column:
-                    st.button(
-                        label,
-                        key=key,
-                        use_container_width=True,
-                        on_click=apply_playback_action,
-                        args=(session_state, action),
-                    )
 
     state = _playback_state_from_session(session_state)
     selected_candidate_id = session_state["evolution_candidate_id"]
@@ -1114,34 +1165,62 @@ def render_realtime_decision_dashboard(
         if _fragment_body and hasattr(st, "rerun"):
             st.rerun(scope="app")
             return view
-        _render_finale(st, view["finale"]["view"], session_state)
+        _render_finale(st, view["finale"]["view"], session_state, on_milestone)
         return view
+
+    if hasattr(st, "markdown"):
+        st.markdown(
+            build_kpi_band_html(view["evolution"]["detail"]),
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="mj-candidate-nav"><span>三条叙事机会</span>'
+            '<small>选择一条查看同阶段轨迹与叙事</small></div>',
+            unsafe_allow_html=True,
+        )
+    if hasattr(st, "columns"):
+        candidate_columns = st.columns((1, 1, 1), gap="small")
+    else:
+        candidate_columns = (_NullContext(),) * 3
+    label_by_id = {candidate_id: label for candidate_id, label, _ in _CANDIDATES}
+    if hasattr(st, "button"):
+        for candidate_column, candidate_id in zip(
+            candidate_columns, run.selected_candidate_ids, strict=True
+        ):
+            with candidate_column:
+                st.button(
+                    label_by_id[candidate_id],
+                    key=f"evolution_candidate_{candidate_id}",
+                    use_container_width=True,
+                    disabled=candidate_id == selected_candidate_id,
+                    on_click=apply_playback_action,
+                    args=(session_state, PlaybackAction.SELECT_CANDIDATE),
+                    kwargs={
+                        "candidate_id": candidate_id,
+                        "on_milestone": on_milestone,
+                    },
+                )
+
+    if hasattr(st, "columns"):
+        stage_columns = st.columns((2.15, 1), gap="large")
+        main_column, right_column = stage_columns
+    else:
+        main_column = right_column = _NullContext()
     phase_labels = {
         PlaybackPhase.COMMENTS: ("01", "评论进入", "五条完整评论正在进入本轮判断"),
         PlaybackPhase.SCORE: ("02", "数据更新", "新线段、分数与排名在此刻出现"),
         PlaybackPhase.NARRATIVE: ("03", "叙事更新", "旧文本淡出，新文本按真实修改渐入"),
     }
-    phase_number, phase_title, phase_note = phase_labels[state.phase]
-    if hasattr(st, "markdown"):
-        st.markdown(
-            '<section class="mj-live-phase">'
-            f'<span>{phase_number} / 03</span><strong>{phase_title}</strong>'
-            f'<p>{phase_note}</p></section>',
-            unsafe_allow_html=True,
+    if state.checkpoint_index == 0 and not state.finale:
+        phase_number, phase_title, phase_note = (
+            "00",
+            "待启动",
+            "AI 原始锚点已冻结；点击「下一步」开始实时演化回放",
         )
-    if hasattr(st, "markdown"):
-        st.markdown(
-            build_progress_strip_html(view["evolution"]["nodes"], state),
-            unsafe_allow_html=True,
-        )
-
-    if hasattr(st, "columns"):
-        live_columns = st.columns([1.38, 1], gap="medium")
-        left_context, right_context = live_columns
     else:
-        left_context = right_context = _NullContext()
+        phase_number, phase_title, phase_note = phase_labels[state.phase]
 
-    with left_context:
+    with main_column:
         if view["evolution"]["ticker_html"] and hasattr(st, "markdown"):
             st.markdown(view["evolution"]["ticker_html"], unsafe_allow_html=True)
         elif (
@@ -1198,6 +1277,7 @@ def render_realtime_decision_dashboard(
             session_state,
             PlaybackAction.SELECT_CANDIDATE,
             candidate_id=marker[0],
+            on_milestone=on_milestone,
         )
         state = _playback_state_from_session(session_state)
         selected_candidate_id = marker[0]
@@ -1208,7 +1288,7 @@ def render_realtime_decision_dashboard(
         )
 
     full_width_detail: Mapping[str, Any] | None = None
-    with right_context:
+    with right_column:
         if view["evolution"]["detail_error"] and hasattr(st, "error"):
             st.error(view["evolution"]["detail_error"])
         elif view["evolution"]["detail"] is not None and hasattr(st, "markdown"):
@@ -1230,24 +1310,63 @@ def render_realtime_decision_dashboard(
                 ),
                 unsafe_allow_html=True,
             )
-            st.markdown(build_score_summary_html(detail), unsafe_allow_html=True)
             full_width_detail = detail
+    if hasattr(st, "columns"):
+        control_columns = st.columns((1, 1, 1, 5), gap="small")
+    else:
+        control_columns = (_NullContext(),) * 4
+    actions = (
+        ("上一步", PlaybackAction.PREVIOUS, "evolution_previous"),
+        ("下一步", PlaybackAction.NEXT_CHANGE, "evolution_next"),
+        ("从头重播", PlaybackAction.REPLAY, "evolution_replay"),
+    )
+    if hasattr(st, "button"):
+        for control_column, (label, action, key) in zip(
+            control_columns[:3], actions, strict=True
+        ):
+            with control_column:
+                st.button(
+                    label,
+                    key=key,
+                    use_container_width=True,
+                    on_click=apply_playback_action,
+                    args=(session_state, action),
+                    kwargs={"on_milestone": on_milestone},
+                )
+    if hasattr(st, "markdown"):
+        st.markdown(
+            build_progress_strip_html(view["evolution"]["nodes"], state),
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<section class="mj-live-phase">'
+            f'<span>{phase_number} / 03</span><strong>{phase_title}</strong>'
+            f'<p>{phase_note}</p></section>',
+            unsafe_allow_html=True,
+        )
     if full_width_detail is not None and hasattr(st, "markdown"):
         st.markdown(
             build_full_width_detail_html(full_width_detail),
             unsafe_allow_html=True,
         )
+    render_scroll_continuity(
+        f"realtime:{state.checkpoint_index}:{state.phase.value}"
+    )
     return view
 
 
 @_streamlit.fragment
-def _render_live_streamlit_fragment(root: Any) -> dict[str, Any]:
+def _render_live_streamlit_fragment(
+    root: Any,
+    on_milestone: Callable[[], None] | None = None,
+) -> dict[str, Any]:
     """Stable fragment identity for Streamlit and AppTest widget events."""
 
     return render_realtime_decision_dashboard(
         root,
         streamlit_module=_streamlit,
         _fragment_body=True,
+        on_milestone=on_milestone,
     )
 
 
@@ -1263,6 +1382,7 @@ def _render_finale(
     st: Any,
     finale: FinaleView,
     session_state: MutableMapping[str, object],
+    on_milestone: Callable[[], None] | None = None,
 ) -> None:
     """Render the rose finale from the frozen synthesis only."""
 
@@ -1294,6 +1414,8 @@ def _render_finale(
             ):
                 session_state["evolution_finale_act"] = 2
                 session_state["evolution_finale_auto_reveal"] = False
+                if on_milestone is not None:
+                    on_milestone()
                 if hasattr(st, "rerun"):
                     st.rerun()
         else:
@@ -1301,11 +1423,15 @@ def _render_finale(
             with controls[0] if controls[0] is not None else _NullContext():
                 if st.button("上一步", key="evolution_finale_previous", use_container_width=True):
                     session_state["evolution_finale_act"] = 1
+                    if on_milestone is not None:
+                        on_milestone()
                     if hasattr(st, "rerun"):
                         st.rerun()
             with controls[1] if controls[1] is not None else _NullContext():
                 if st.button("从头重播", key="evolution_finale_replay", use_container_width=True):
-                    apply_playback_action(session_state, PlaybackAction.REPLAY)
+                    apply_playback_action(
+                        session_state, PlaybackAction.REPLAY, on_milestone=on_milestone
+                    )
                     if hasattr(st, "rerun"):
                         st.rerun()
     if act == 2 and hasattr(st, "expander"):
@@ -1412,7 +1538,8 @@ def build_score_figure(
             bool,
         ]
     ] = []
-    for candidate_id, label, color in _CANDIDATES:
+    label_positions = ("top right", "middle right", "bottom right")
+    for candidate_index, (candidate_id, label, color) in enumerate(_CANDIDATES):
         x_values: list[int] = []
         stage_text_values: list[str] = []
         y_values: list[float] = []
@@ -1442,12 +1569,16 @@ def build_score_figure(
         base_text = stage_text_values[:-1] if has_latest_segment else stage_text_values
         base_y = y_values[:-1] if has_latest_segment else y_values
         base_customdata = customdata[:-1] if has_latest_segment else customdata
+        base_labels = ["" for _ in base_x]
+        if not has_latest_segment and base_labels:
+            base_labels[-1] = f"{label}  {base_y[-1]:.2f}"
         figure.add_trace(
             go.Scatter(
                 x=base_x,
-                text=base_text,
+                text=base_labels,
+                hovertext=base_text,
                 y=base_y,
-                mode="lines+markers",
+                mode="lines+markers+text",
                 name=label,
                 uid=f"score-history-{candidate_id}",
                 meta="settled-history",
@@ -1460,9 +1591,12 @@ def build_score_figure(
                         for _ in base_x
                     ],
                 },
+                textposition=label_positions[candidate_index],
+                textfont={"color": color, "size": 11},
+                cliponaxis=False,
                 customdata=base_customdata,
                 hovertemplate=(
-                    f"{label}<br>阶段=%{{text}}<br>加权分=%{{y:.2f}}<extra></extra>"
+                    f"{label}<br>阶段=%{{hovertext}}<br>加权分=%{{y:.2f}}<extra></extra>"
                 ),
             )
         )
@@ -1484,7 +1618,7 @@ def build_score_figure(
                 (candidate_id, label, color, [], [], [], [], is_selected)
             )
 
-    for (
+    for latest_index, (
         candidate_id,
         label,
         color,
@@ -1493,13 +1627,14 @@ def build_score_figure(
         y_values,
         customdata,
         is_selected,
-    ) in latest_segments:
+    ) in enumerate(latest_segments):
         figure.add_trace(
             go.Scatter(
                 x=x_values,
-                text=stage_text_values,
+                text=["", f"{label}  {y_values[-1]:.2f}"] if y_values else [],
+                hovertext=stage_text_values,
                 y=y_values,
-                mode="lines+markers",
+                mode="lines+markers+text",
                 name=f"{label} · 新增",
                 uid=f"score-latest-{candidate_id}",
                 meta="latest-segment",
@@ -1507,24 +1642,33 @@ def build_score_figure(
                 opacity=1.0 if is_selected else 0.35,
                 line={"color": color, "width": 4 if is_selected else 2},
                 marker={"color": color, "size": [0, 12 if is_selected else 8]},
+                textposition=label_positions[latest_index],
+                textfont={"color": color, "size": 11},
+                cliponaxis=False,
                 customdata=customdata,
                 hovertemplate=(
-                    f"{label}<br>阶段=%{{text}}<br>加权分=%{{y:.2f}}<extra></extra>"
+                    f"{label}<br>阶段=%{{hovertext}}<br>加权分=%{{y:.2f}}<extra></extra>"
                 ),
             )
         )
+
+    visible_tickvals = list(range(visible_checkpoint_index + 1))
+    visible_ticktext = stage_labels[: visible_checkpoint_index + 1]
+    if visible_checkpoint_index < len(stage_labels) - 1:
+        visible_tickvals.append(visible_checkpoint_index + 1)
+        visible_ticktext.append("下一变化待定")
+    axis_right = max(0.85, visible_tickvals[-1] + 0.15)
 
     figure.update_layout(
         xaxis_title="实时变化阶段",
         yaxis_title="加权分",
         hovermode="closest",
-        showlegend=True,
-        height=235,
-        paper_bgcolor="#19262B",
-        plot_bgcolor="#19262B",
+        showlegend=False,
+        height=320,
+        paper_bgcolor="#111B1F",
+        plot_bgcolor="#111B1F",
         font={"color": "#CDD4D3", "family": "Microsoft YaHei"},
-        margin={"l": 52, "r": 22, "t": 36, "b": 52},
-        legend={"orientation": "h", "y": 1.12, "x": 0},
+        margin={"l": 50, "r": 72, "t": 34, "b": 48},
         uirevision="meijian-score-trajectory",
         meta={
             "animate_latest_segment": bool(
@@ -1536,9 +1680,9 @@ def build_score_figure(
             "zeroline": False,
             "type": "linear",
             "tickmode": "array",
-            "tickvals": list(range(len(stage_labels))),
-            "ticktext": stage_labels,
-            "range": [-0.15, len(stage_labels) - 0.85],
+            "tickvals": visible_tickvals,
+            "ticktext": visible_ticktext,
+            "range": [-0.15, axis_right],
         },
         yaxis={
             "gridcolor": "rgba(148,163,167,.12)",
@@ -1578,26 +1722,26 @@ def build_ticker_html(batch: Any) -> str:
             f'<span class="mj-comment-bullet is-item-{index}">'
             f'<span class="mj-platform-avatar is-{platform_class}">{escape(platform_mark)}</span>'
             '<span class="mj-comment-copy">'
-            f"<strong>{escape(record.source_platform)}</strong>"
-            f"<span>{escape(record.raw_content)}</span></span></span>"
+            f'<strong>{escape(record.source_platform)}</strong>'
+            f'<span>{escape(record.raw_content)}</span></span></span>'
         )
     lane_markup = "".join(
         f'<div class="mj-comment-lane">{"".join(items)}</div>' for items in lanes
     )
     static_items = "".join(
-        "<li class=\"mj-evidence-ticker__record\">"
-        f"<span class=\"mj-evidence-ticker__platform\">{escape(record.source_platform)}</span>"
-        f"<p>{escape(record.raw_content)}</p>"
-        "</li>"
+        '<li class="mj-evidence-ticker__record">'
+        f'<span class="mj-evidence-ticker__platform">{escape(record.source_platform)}</span>'
+        f'<p>{escape(record.raw_content)}</p>'
+        '</li>'
         for record in records
     )
     return (
         f"<section class=\"mj-evidence-ticker\" data-batch-id=\"{escape(batch_id)}\" "
         f"data-record-count=\"{len(records)}\" data-duration-seconds=\"{duration_seconds}\">"
-        "<h3>新增评论回放</h3>"
+        '<h3>新增评论实时进入</h3>'
         f'<div class="mj-comment-stage">{lane_markup}</div>'
-        f'<footer class="mj-comment-complete">本批 {len(records)} 条已进入</footer>'
-        f"<details><summary>查看本批 {len(records)} 条</summary><ol>{static_items}</ol></details>"
+        f'<footer class="mj-comment-complete">本批 {len(records)} 条正在进入</footer>'
+        f'<details><summary>查看本批 {len(records)} 条完整评论</summary><ol>{static_items}</ol></details>'
         "</section>"
     )
 
@@ -1697,7 +1841,6 @@ __all__ = [
     "build_finale_html",
     "build_full_width_detail_html",
     "build_narrative_transition_html",
-    "build_opportunity_selector_html",
     "build_progress_strip_html",
     "build_score_figure",
     "build_score_summary_html",

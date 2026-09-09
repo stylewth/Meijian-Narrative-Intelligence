@@ -39,6 +39,11 @@ from src.ui.system_gateway import (
     reset_system_session,
     resolve_runtime_capabilities,
 )
+from src.ui.ui_polish import (
+    build_polish_css,
+    build_status_bar_html,
+    build_system_rail_html,
+)
 from src.ui.ui_theme import build_theme_css
 from src.ui.workspace_shell import Workspace, render_workspace_navigator
 from tools.run_feishu_bot import REQUIRED_CONFIG_KEYS, load_bot_config
@@ -131,11 +136,21 @@ def _demo_notification_snapshots() -> tuple[Any, ...]:
 
 initialize_state(st.session_state)
 st.markdown(f"<style>{build_theme_css()}</style>", unsafe_allow_html=True)
+st.markdown(f"<style>{build_polish_css()}</style>", unsafe_allow_html=True)
 
 notification_store = _demo_notification_store()
 entry = render_system_gateway(st.session_state, streamlit_module=st)
 if entry is None:
     st.stop()
+
+st.markdown(
+    build_system_rail_html(st.session_state.get("active_workspace", "数据预处理")),
+    unsafe_allow_html=True,
+)
+st.markdown(
+    build_status_bar_html(st.session_state.get("active_workspace", "数据预处理")),
+    unsafe_allow_html=True,
+)
 
 configuration = _runtime_configuration()
 capabilities = resolve_runtime_capabilities(configuration)
@@ -148,32 +163,35 @@ data_status = (
         else "等待数据导入"
     )
 )
-st.markdown(
-    build_system_header_html(
-        entry=entry,
-        data_status=data_status,
-        feishu_status=feishu_connection_status(configuration, notification_store),
-    ),
-    unsafe_allow_html=True,
-)
+header_columns = st.columns([7.4, 2, 1.2])
+with header_columns[0]:
+    st.markdown(
+        build_system_header_html(
+            entry=entry,
+            data_status=data_status,
+            feishu_status=feishu_connection_status(configuration, notification_store),
+        ),
+        unsafe_allow_html=True,
+    )
+with header_columns[1]:
+    with st.popover("飞书机器人助手", use_container_width=True):
+        render_demo_notification_control(
+            st.session_state,
+            store=notification_store,
+            source_run_id=DEMO_NOTIFICATION_SOURCE_RUN_ID,
+            configuration=configuration,
+            workspace_root=ROOT,
+        )
+with header_columns[2]:
+    if st.button("切换入口", key="system-entry-reset"):
+        reset_system_session(st.session_state)
+        st.rerun()
+
 if entry is SystemEntry.CUSTOM and not capabilities.online_ai_enabled:
     st.info("在线 AI 仅在本地配置后可用；公开站不会使用团队模型密钥。")
 
 if entry is SystemEntry.CASE:
     render_remote_command_listener(st.session_state, notification_store)
-
-with st.expander("飞书机器人助手", expanded=False):
-    render_demo_notification_control(
-        st.session_state,
-        store=notification_store,
-        source_run_id=DEMO_NOTIFICATION_SOURCE_RUN_ID,
-        configuration=configuration,
-        workspace_root=ROOT,
-    )
-
-if st.button("切换入口", key="system-entry-reset"):
-    reset_system_session(st.session_state)
-    st.rerun()
 
 render_workspace_navigator(st.session_state)
 active_workspace = Workspace(st.session_state["active_workspace"])
@@ -183,6 +201,11 @@ if active_workspace is Workspace.PREPROCESSING:
         split_manifest_path=ROOT / "data" / "competition" / "screened_v2" / "split_manifest.json",
         prepared_root=ROOT / "data" / "prepared_corpora",
         mode=DEMO_MODE if entry is SystemEntry.CASE else REAL_MODE,
+        on_milestone=lambda: sync_preprocessing_notification(
+            st.session_state,
+            notification_store,
+            _demo_notification_snapshots(),
+        ),
     )
     sync_preprocessing_notification(
         st.session_state,
@@ -202,6 +225,11 @@ if active_workspace is Workspace.STRESS_TEST:
         render_pressure_test_workspace(
             VALIDATION_ROOT,
             EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
+            on_milestone=lambda: sync_pressure_notifications(
+                st.session_state,
+                notification_store,
+                _demo_notification_snapshots(),
+            ),
         )
         sync_pressure_notifications(
             st.session_state,
@@ -218,7 +246,14 @@ if active_workspace is Workspace.REALTIME_DECISION:
             dotenv_path=ROOT / ".env",
         )
     else:
-        render_realtime_decision_dashboard(EVOLUTION_ROOT)
+        render_realtime_decision_dashboard(
+            EVOLUTION_ROOT,
+            on_milestone=lambda: sync_evolution_notifications(
+                st.session_state,
+                notification_store,
+                _demo_notification_snapshots(),
+            ),
+        )
         sync_evolution_notifications(
             st.session_state,
             notification_store,

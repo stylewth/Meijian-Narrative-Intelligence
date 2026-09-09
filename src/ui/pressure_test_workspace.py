@@ -5,8 +5,11 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import time
-from typing import Any
+from typing import Any, Callable
+
+import streamlit as st
 
 from src.services.candidate_ranking import calculate_weighted_score
 from src.services.pressure_test_presentation import (
@@ -16,6 +19,7 @@ from src.services.pressure_test_presentation import (
     PressureRunView,
     load_pressure_test_run,
 )
+from src.ui.scroll_continuity import render_scroll_continuity
 from src.ui.ui_theme import build_theme_css
 from src.ui.workspace_shell import Workspace, activate_workspace, complete_workspace
 
@@ -29,6 +33,7 @@ PRESSURE_STAGES = (
 )
 HOLDOUT_NOTE = "验证稳定性，不改写候选文案和评分"
 FINAL_METHOD = "AI 推荐 → 真人盲评验证 → 团队确认"
+_RAW_EVIDENCE_ID = re.compile(r"(?:MJ-RAW|XHS-SOC|DY-SOC|TB-\d{8}|JD-\d{8})-\d+")
 
 
 @dataclass(frozen=True, slots=True)
@@ -215,6 +220,8 @@ def select_pressure_candidate(
 def render_pressure_test_workspace(
     validation_root: str | Path,
     selection_path: str | Path,
+    *,
+    on_milestone: Callable[[], None] | None = None,
 ) -> None:
     """Render a frozen pressure-test run; interaction changes session state only."""
 
@@ -226,29 +233,43 @@ def render_pressure_test_workspace(
         "<section class='pressure-hero'><span>MEIJIAN · VALIDATION THEATRE</span>"
         "<h1>叙事压力测试</h1><p>五条候选同台接受证据、反证、竞品、产品与鲁棒性检查。"
         "双 Agent 对话、HOLDOUT 与真人盲评均回放冻结结果。</p>"
-        f"<small>正式运行 · {_escape_html(run.validation_root.name)}</small></section>",
+        "<small>官方冻结案例 · 只读回放</small></section>",
         unsafe_allow_html=True,
     )
+    _render_pressure_flow(run, cards, on_milestone)
 
+
+@st.fragment
+def _render_pressure_flow(
+    run: Any,
+    cards: Any,
+    on_milestone: Callable[[], None] | None = None,
+) -> None:
+    """候选/阶段/回放交互体：局部重跑，hero 与页面外壳保持不动。"""
+
+    st = _get_streamlit()
     candidate_id = _selected_candidate_id(st, cards)
-    candidate_id = _render_candidate_cards(st, cards, candidate_id)
-    current_stage = _render_stage_navigation(st)
-
-    candidate = next(item for item in run.candidates if item.candidate_id == candidate_id)
-    card = next(item for item in cards if item.candidate_id == candidate_id)
-    section = active_pressure_section(current_stage)
-    if section in {"original", "checks", "dialogue"}:
-        _render_current_candidate(st, card)
-    if section == "original":
-        _render_original_stage(st, card)
-    elif section == "checks":
-        _render_checks(st, candidate, run.evidence_catalog)
-    elif section == "dialogue":
-        _render_dialogue(st, run, candidate_id)
-    elif section == "holdout":
-        _render_holdout(st, run)
-    elif section == "terminal":
-        _render_terminal(st, run)
+    left, right = st.columns((1.1, 4))
+    with left:
+        candidate_id = _render_candidate_cards(st, cards, candidate_id)
+    with right:
+        current_stage = _render_stage_navigation(st, on_milestone)
+        candidate = next(item for item in run.candidates if item.candidate_id == candidate_id)
+        card = next(item for item in cards if item.candidate_id == candidate_id)
+        section = active_pressure_section(current_stage)
+        if section in {"original", "checks", "dialogue"}:
+            _render_current_candidate(st, card)
+        if section == "original":
+            _render_original_stage(st, card, cards)
+        elif section == "checks":
+            _render_checks(st, candidate, run.evidence_catalog)
+        elif section == "dialogue":
+            _render_dialogue(st, run, candidate_id)
+        elif section == "holdout":
+            _render_holdout(st, run, cards)
+        elif section == "terminal":
+            _render_terminal(st, run, on_milestone=on_milestone)
+    render_scroll_continuity(f"pressure:{current_stage}")
 
 
 def _dialogue_message(message: AgentMessageView) -> DialogueMessage:
@@ -284,12 +305,13 @@ def build_current_candidate_html(card: CandidateCard) -> str:
     )
 
 
-def _render_original_stage(st: Any, card: CandidateCard) -> None:
+def _render_original_stage(st: Any, card: CandidateCard, cards: tuple[CandidateCard, ...]) -> None:
     st.markdown(
         "<section class='pressure-original-stage'><span>阶段 1 · AI 原始五项</span>"
-        "<h2>先保留原始判断，再看压力测试如何改变选择</h2>"
+        f"<h2>{_escape_html(card.title)}</h2>"
         f"<p>当前查看：{_escape_html(card.display_title)}。原始得分 {card.original_score:.1f}，"
-        f"AI 排名第 {card.ai_rank}。此处保持盲评前版本，不提前展示修订结论。</p></section>",
+        f"AI 排名第 {card.ai_rank}。此处保持盲评前版本，不提前展示修订结论。</p>"
+        f"{build_original_score_dotplot_html(cards, card.candidate_id)}</section>",
         unsafe_allow_html=True,
     )
 
@@ -305,24 +327,17 @@ def _selected_candidate_id(st: Any, cards: tuple[CandidateCard, ...]) -> str:
 
 def _render_candidate_cards(st: Any, cards: tuple[CandidateCard, ...], current_id: str) -> str:
     ids = tuple(card.candidate_id for card in cards)
-    columns = st.columns(len(cards))
-    for column, card in zip(columns, cards):
-        with column:
-            if st.button(
-                card.display_title,
-                key=f"pressure_candidate_button_{card.candidate_id}",
-                use_container_width=True,
-            ):
-                select_pressure_candidate(st.session_state, card.candidate_id, ids)
-                current_id = card.candidate_id
-    st.markdown(
-        build_candidate_meta_html(
-            cards,
-            current_id,
-            reveal=bool(st.session_state.get("pressure_blind_revealed", False)),
-        ),
-        unsafe_allow_html=True,
-    )
+    st.markdown("<nav class='pressure-candidate-nav' aria-label='候选导航'><span>五条候选</span></nav>", unsafe_allow_html=True)
+    reveal = bool(st.session_state.get("pressure_blind_revealed", False))
+    for card in cards:
+        if st.button(
+            card.display_title,
+            key=f"pressure_candidate_button_{card.candidate_id}",
+            use_container_width=True,
+        ):
+            select_pressure_candidate(st.session_state, card.candidate_id, ids)
+            current_id = card.candidate_id
+        st.markdown(build_candidate_meta_html((card,), current_id, reveal=reveal), unsafe_allow_html=True)
     return current_id
 
 
@@ -342,12 +357,35 @@ def build_candidate_meta_html(
         status = card.status if reveal else "待盲评"
         items.append(
             f"<article class='pressure-candidate-meta{selected_class}{outcome_class}'>"
-            f"<span>AI #{card.ai_rank}</span><span>{_escape_html(status)}</span></article>"
+            f"<span>AI 初始 #{card.ai_rank}</span><span>{_escape_html(status)}</span></article>"
         )
     return '<section class="pressure-candidate-meta-grid">' + "".join(items) + "</section>"
 
 
-def _render_stage_navigation(st: Any) -> str:
+def build_original_score_dotplot_html(
+    cards: tuple[CandidateCard, ...], current_id: str
+) -> str:
+    """Render all frozen original scores on one shared 0–100 axis."""
+
+    dots = "".join(
+        "<li class='pressure-score-dot"
+        + (" is-selected" if item.candidate_id == current_id else "")
+        + f"' style='--score:{item.original_score:.2f}'>"
+        + f"<b>{_escape_html(item.display_title)}</b><i></i><span>{item.original_score:.1f}</span></li>"
+        for item in cards
+    )
+    return (
+        "<section class='pressure-score-dotplot'><header><span>AI 原始五项</span>"
+        "<small>同一 0–100 刻度；高亮为当前候选</small></header>"
+        "<div class='pressure-score-axis'><i>0</i><i>50</i><i>100</i></div>"
+        f"<ol>{dots}</ol></section>"
+    )
+
+
+def _render_stage_navigation(
+    st: Any,
+    on_milestone: Callable[[], None] | None = None,
+) -> str:
     current_stage = st.session_state.get("pressure_stage", PRESSURE_STAGES[0])
     if current_stage not in PRESSURE_STAGES:
         current_stage = PRESSURE_STAGES[0]
@@ -367,6 +405,9 @@ def _render_stage_navigation(st: Any) -> str:
         ):
             current_stage = move_pressure_stage(current_stage, -1)
             st.session_state["pressure_stage"] = current_stage
+            if on_milestone is not None:
+                on_milestone()
+            st.rerun()
     with controls[1]:
         st.markdown(
             f"<div class='pressure-stage-now'>阶段 {PRESSURE_STAGES.index(current_stage) + 1} / {len(PRESSURE_STAGES)} · {_escape_html(current_stage)}</div>",
@@ -381,6 +422,9 @@ def _render_stage_navigation(st: Any) -> str:
         ):
             current_stage = move_pressure_stage(current_stage, 1)
             st.session_state["pressure_stage"] = current_stage
+            if on_milestone is not None:
+                on_milestone()
+            st.rerun()
     return current_stage
 
 
@@ -401,22 +445,14 @@ def build_dialogue_message_html(message: DialogueMessage, *, is_current: bool = 
 
     avatar_class = "decision-avatar" if message.agent == "决策 Agent" else "review-avatar"
     highlights = "".join(
-        f"<li>{_escape_html(item)}</li>" for item in message.highlights
-    )
-    diffs = "".join(
-        "<section class='dialogue-diff'>"
-        f"<strong>{_escape_html(diff.field_label)}</strong>"
-        f"<div><small>修改前</small><p>{_escape_html(diff.before)}</p></div>"
-        f"<div><small>修改后</small><p>{_escape_html(diff.after)}</p></div>"
-        f"<em>{_escape_html(diff.reason)}</em></section>"
-        for diff in message.field_diffs
+        f"<li>{_escape_html(_display_evidence_text(item))}</li>" for item in message.highlights
     )
     highlights_markup = f"<ul>{highlights}</ul>" if highlights else ""
-    diff_markup = f"<div class='dialogue-diffs'>{diffs}</div>" if diffs else ""
+    audit_markup = _build_pressure_audit_detail(message.body, *message.highlights)
     detail = (
         "<details><summary>本轮详细理由与操作</summary>"
-        f"<p class='dialogue-detail-copy'>{_escape_html(message.body)}</p>"
-        f"{highlights_markup}{diff_markup}</details>"
+        f"<p class='dialogue-detail-copy'>{_escape_html(_display_evidence_text(message.body))}</p>"
+        f"{highlights_markup}{audit_markup}</details>"
     )
     return (
         f'<article class="dialogue-bubble {avatar_class}-bubble" data-current="{"true" if is_current else "false"}">'
@@ -424,50 +460,127 @@ def build_dialogue_message_html(message: DialogueMessage, *, is_current: bool = 
         "<div class='dialogue-bubble__body'>"
         f"<header><strong>{_escape_html(message.agent)}</strong>"
         f"<span>第 {message.round_index} 轮</span></header>"
-        f"<h3>{_escape_html(message.headline)}</h3>"
-        f"<p>{_escape_html(message.summary)}</p>{detail}"
+        f"<h3>{_escape_html(_display_evidence_text(message.headline))}</h3>"
+        f"<p>{_escape_html(_display_evidence_text(message.summary))}</p>{detail}"
         "</div></article>"
     )
 
 
-def build_dialogue_stage_html(
-    messages: tuple[DialogueMessage, ...],
-    *,
-    thinking_agent: str | None = None,
-) -> str:
-    """Build a fixed-height chat frame that centers the newest visible message."""
+def build_dialogue_stage_html(messages: tuple[DialogueMessage, ...]) -> str:
+    """Build a self-playing chat frame: bubbles are revealed client-side.
+
+    回放节奏由 iframe 内的原生 JS 驱动，服务端在回放期间零参与——
+    不再占用 Streamlit 运行窗口，避免交互被遮罩/丢弃。
+    """
 
     if not messages:
         raise ValueError("对话舞台至少需要一条消息")
-    if thinking_agent is not None and thinking_agent not in {"审查 Agent", "决策 Agent"}:
-        raise ValueError(f"未知 Thinking Agent：{thinking_agent}")
     timeline = "".join(
-        build_dialogue_message_html(
-            message,
-            is_current=thinking_agent is None and index == len(messages) - 1,
+        build_dialogue_message_html(message, is_current=False).replace(
+            '<article class="dialogue-bubble', f'<article data-revision-index="{index}" class="dialogue-bubble'
         )
         for index, message in enumerate(messages)
     )
-    if thinking_agent is not None:
-        avatar_class = "decision-avatar" if thinking_agent == "决策 Agent" else "review-avatar"
-        timeline += (
-            f'<article class="dialogue-thinking {avatar_class}-bubble" data-current="true">'
-            f'<span class="agent-avatar {avatar_class}"></span><div>'
-            f"<strong>{_escape_html(thinking_agent)}</strong>"
-            '<p><b>Thinking</b><span class="thinking-dots"><i></i><i></i><i></i></span></p>'
-            "<small>正在分析证据</small></div></article>"
-        )
-    stage_class = (
-        "dialogue-stage is-single"
-        if len(messages) == 1 and thinking_agent is None
-        else "dialogue-stage"
+    revisions = "".join(
+        build_dialogue_revision_html(message, index) for index, message in enumerate(messages)
     )
+    total = len(messages)
+    interval_ms = 4200
     return (
         "<!doctype html><html><head><meta charset='utf-8'><style>"
         + _dialogue_frame_css()
-        + f"</style></head><body><section class='{stage_class}' id='dialogue-stage'>"
-        + timeline
-        + "</section><script>requestAnimationFrame(() => { const stage = document.getElementById('dialogue-stage'); const current = document.querySelector('[data-current=\"true\"]'); if (stage && current) { const top = current.offsetTop - (stage.clientHeight - current.offsetHeight) / 2; stage.scrollTo({top: Math.max(0, top), behavior: 'smooth'}); } });</script></body></html>"
+        + f"""
+.stage-controls{{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:.45rem;padding:.3rem .8rem .34rem;background:linear-gradient(180deg,rgba(239,233,224,0),#EFE9E0 45%)}}
+.stage-controls button{{height:1.5rem;padding:0 .7rem;border:1px solid #C9B8A6;border-radius:999px;background:rgba(255,253,249,.85);color:#6B625B;font-family:inherit;font-size:.64rem;letter-spacing:.08em;cursor:pointer}}
+.stage-controls button:hover{{border-color:#8F2F4D;color:#8F2F4D}}
+.stage-controls .stage-count{{margin-left:auto;color:#8A8078;font-size:.6rem;letter-spacing:.1em;font-variant-numeric:tabular-nums}}
+</style></head><body>
+<section class='dialogue-layout'>
+  <section class='dialogue-stage dialogue-review-axis' id='dialogue-stage'>{timeline}</section>
+  <aside class='dialogue-revision-panel' id='mj-d-revisions'>{revisions}</aside>
+</section>
+<div class='stage-controls'>
+  <button id='mj-d-toggle' type='button'>暂停</button>
+  <button id='mj-d-replay' type='button'>重播</button>
+  <span class='stage-count' id='mj-d-count'></span>
+</div>
+<script>
+(function () {{
+  var INTERVAL = {interval_ms};
+  var stage = document.getElementById('dialogue-stage');
+  var bubbles = Array.prototype.slice.call(document.querySelectorAll('.dialogue-bubble'));
+  var countEl = document.getElementById('mj-d-count');
+  var toggleBtn = document.getElementById('mj-d-toggle');
+  var replayBtn = document.getElementById('mj-d-replay');
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var idx = 0, playing = true, timer = null, chip = null;
+
+  function scrollCurrent() {{
+    var current = bubbles[idx - 1];
+    if (!current) return;
+    var top = current.offsetTop - (stage.clientHeight - current.offsetHeight) / 2;
+    stage.scrollTo({{ top: Math.max(0, top), behavior: 'smooth' }});
+  }}
+  function updateCount() {{ countEl.textContent = idx + ' / ' + bubbles.length; }}
+  function showChip(next) {{
+    clearChip();
+    var agentName = (next.querySelector('header strong') || {{}}).textContent || 'Agent';
+    chip = document.createElement('article');
+    chip.className = 'dialogue-thinking ' + (next.classList.contains('review-avatar-bubble') ? 'review-avatar-bubble' : 'decision-avatar-bubble');
+    chip.innerHTML = '<span class="agent-avatar ' + (chip.className.indexOf('review') > -1 ? 'review-avatar' : 'decision-avatar') + '"></span><div><strong>' + agentName + '</strong><p><b>Thinking</b><span class="thinking-dots"><i></i><i></i><i></i></span></p></div>';
+    chip.style.display = 'flex';
+    chip.style.visibility = 'visible';
+    chip.style.alignSelf = chip.className.indexOf('review') > -1 ? 'flex-end' : 'flex-start';
+    stage.appendChild(chip);
+    stage.scrollTo({{ top: stage.scrollHeight, behavior: 'smooth' }});
+  }}
+  function clearChip() {{ if (chip) {{ chip.remove(); chip = null; }} }}
+  function show(i) {{
+    bubbles[i].classList.add('shown');
+    Array.prototype.forEach.call(document.querySelectorAll('.dialogue-revision'), function (item) {{ item.classList.toggle('is-current', item.getAttribute('data-revision-index') === String(i)); }});
+  }}
+  function reveal() {{
+    if (idx >= bubbles.length) {{ clearChip(); playing = false; toggleBtn.textContent = '重播'; replayBtn.style.display = 'none'; updateCount(); return; }}
+    clearChip();
+    show(idx);
+    idx += 1;
+    updateCount();
+    scrollCurrent();
+    if (idx < bubbles.length) schedule();
+    else {{ playing = false; toggleBtn.textContent = '重播'; replayBtn.style.display = 'none'; }}
+  }}
+  function schedule() {{
+    if (reduced) {{ while (idx < bubbles.length) reveal(); return; }}
+    timer = window.setTimeout(function () {{
+      showChip(bubbles[idx]);
+      timer = window.setTimeout(reveal, 1600);
+    }}, INTERVAL - 1600);
+  }}
+  function stop() {{ if (timer) {{ window.clearTimeout(timer); timer = null; }} clearChip(); }}
+  function start() {{
+    if (reduced) {{ bubbles.forEach(function (b, i) {{ b.classList.add('shown'); show(i); }}); idx = bubbles.length; updateCount(); toggleBtn.textContent = '重播'; replayBtn.style.display = 'none'; return; }}
+    playing = true;
+    toggleBtn.textContent = '暂停';
+    replayBtn.style.display = '';
+    reveal();
+  }}
+  function restart() {{
+    stop();
+    idx = 0;
+    bubbles.forEach(function (b) {{ b.classList.remove('shown'); }});
+    updateCount();
+    start();
+  }}
+  toggleBtn.addEventListener('click', function () {{
+    if (playing) {{ stop(); toggleBtn.textContent = '继续'; replayBtn.style.display = ''; }}
+    else if (idx >= bubbles.length) {{ replayBtn.style.display = ''; restart(); }}
+    else {{ start(); toggleBtn.textContent = '暂停'; }}
+  }});
+  replayBtn.addEventListener('click', function () {{ replayBtn.style.display = ''; restart(); }});
+  start();
+}})();
+</script></body></html>
+    """
     )
 
 
@@ -477,24 +590,30 @@ def _render_checks(st: Any, candidate: Any, evidence_catalog: Any) -> None:
     active = st.session_state.get(
         f"pressure_check_open_{candidate.candidate_id}", check_types[0]
     )
-    active = st.radio(
-        "展开检查项",
-        check_types,
-        index=check_types.index(active) if active in check_types else 0,
-        format_func=lambda check_type: next(
-            check.label for check in candidate.checks if check.check_type == check_type
-        ),
-        key=f"pressure_check_open_{candidate.candidate_id}",
-        horizontal=True,
-    )
-    st.markdown(
-        build_pressure_checks_html(
-            candidate.checks,
-            active_check_type=active,
-            evidence_catalog=evidence_catalog,
-        ),
-        unsafe_allow_html=True,
-    )
+    index, reading = st.columns((1, 2.4))
+    status_labels = {"RECORDED": "已记录", "MISSING": "缺失", "MATERIAL_RISK": "实质风险", "NOTE": "备注"}
+    with index:
+        st.markdown("<section class='pressure-check-index'><span>检查索引</span><small>选择一项阅读证据</small></section>", unsafe_allow_html=True)
+        active = st.radio(
+            "展开检查项",
+            check_types,
+            index=check_types.index(active) if active in check_types else 0,
+            format_func=lambda check_type: (
+                lambda check: f"{check.label} · {status_labels.get(check.status, check.status)}"
+            )(next(check for check in candidate.checks if check.check_type == check_type)),
+            key=f"pressure_check_open_{candidate.candidate_id}",
+            horizontal=False,
+            label_visibility="collapsed",
+        )
+    with reading:
+        st.markdown(
+            build_pressure_checks_html(
+                candidate.checks,
+                active_check_type=active,
+                evidence_catalog=evidence_catalog,
+            ),
+            unsafe_allow_html=True,
+        )
 
 
 def build_pressure_checks_html(
@@ -503,7 +622,7 @@ def build_pressure_checks_html(
     active_check_type: str,
     evidence_catalog: Any | None = None,
 ) -> str:
-    """Render five compact cards and exactly one readable expanded check."""
+    """Render the selected check as one evidence-reading axis."""
 
     if len(checks) != 5:
         raise ValueError("基础压力检查必须恰好包含五项")
@@ -518,139 +637,98 @@ def build_pressure_checks_html(
         "MATERIAL_RISK": "实质风险",
         "NOTE": "备注",
     }
-    card_markup: list[str] = []
-    for check in checks:
-        summary = check.rationale
-        if check.check_type == "EVIDENCE_COVERAGE":
-            summary = f"已关联 {len(check.reference_ids)} 条真实市场评论，展开查看代表性原文。"
-        card_markup.append(
-            f'<article class="pressure-check-card{" is-active" if check.check_type == active_check_type else ""}">'
-            f'<span>{_escape_html(status_labels.get(check.status, check.status))}</span>'
-            f'<strong>{_escape_html(check.label)}</strong>'
-            f'<p>{_escape_html(summary[:72])}{"…" if len(summary) > 72 else ""}</p></article>'
-        )
-    cards = "".join(card_markup)
     references = " · ".join(active.reference_ids) or "本项未记录额外引用"
     active_copy = active.rationale
-    reference_markup = f'<small>{_escape_html(references)}</small>'
     if active.check_type == "EVIDENCE_COVERAGE":
         active_copy = f"共关联 {len(active.reference_ids)} 条真实市场评论；优先展示三条代表性原文，其余证据保留在审计索引中。"
-        reference_markup = (
-            '<details class="pressure-evidence-audit"><summary>'
-            f'审计索引 · {len(active.reference_ids)} 条</summary>'
-            f'<small>{_escape_html(references)}</small></details>'
-        )
+    audit_markup = _build_pressure_audit_detail(active.rationale, references)
     detail = (
-        f'<section class="pressure-check-grid">{cards}</section>'
         '<section class="pressure-check-detail">'
         f'<header><span>{_escape_html(status_labels.get(active.status, active.status))}</span>'
         f'<h3>{_escape_html(active.label)}</h3></header>'
-        f'<p>{_escape_html(active_copy)}</p>'
-        f'{reference_markup}</section>'
+        f'<p>{_escape_html(_display_evidence_text(active_copy))}</p>'
+        f'{audit_markup}</section>'
     )
     if active.check_type == "EVIDENCE_COVERAGE" and evidence_catalog is not None:
-        detail += build_evidence_excerpt_cards_html(active.reference_ids, evidence_catalog)
+        detail += build_evidence_excerpt_cards_html(active.reference_ids, evidence_catalog, active_copy)
     return detail
 
 
 def build_evidence_excerpt_cards_html(
-    reference_ids: tuple[str, ...], evidence_catalog: Any
+    reference_ids: tuple[str, ...], evidence_catalog: Any, rationale: str = ""
 ) -> str:
     missing = [reference for reference in reference_ids if reference not in evidence_catalog]
     if missing:
         raise ValueError("证据原文映射缺失：" + "、".join(missing))
-    selected: list[EvidenceExcerptView] = [
-        evidence_catalog[reference] for reference in reference_ids[:3]
-    ]
-    cards = []
-    for item in selected:
-        excerpt = item.raw_content[:78] + ("…" if len(item.raw_content) > 78 else "")
+    readings = []
+    for reference in reference_ids:
+        item: EvidenceExcerptView = evidence_catalog[reference]
         platform = item.source_platform or "用户评论"
-        cards.append(
-            '<article class="pressure-evidence-card">'
-            f'<header><span>{_escape_html(platform[:1])}</span><b>{_escape_html(platform)}</b>'
-            '<small>真实市场意见</small></header>'
-            f'<blockquote>“{_escape_html(excerpt)}”</blockquote>'
-            '<details><summary>完整原文</summary>'
-            f'<p>{_escape_html(item.raw_content)}</p></details>'
-            f'<footer class="pressure-evidence-id">{_escape_html(item.evidence_id)}</footer>'
-            "</article>"
+        readings.append(
+            "<article class='pressure-evidence-reading'>"
+            "<section><small>原文摘录 · " + _escape_html(platform) + "</small>"
+            f"<blockquote>“{_escape_html(_display_evidence_text(item.raw_content))}”</blockquote></section>"
+            f"<section><small>检查说明</small><p>{_escape_html(_display_evidence_text(rationale))}</p></section>"
+            "<section><small>当前判断</small><p>"
+            "该原文已纳入本项冻结核查；完整证据编号保留在审计索引。"
+            "</p></section></article>"
         )
-    if not cards:
-        return '<section class="pressure-evidence-gallery is-empty">本项未记录消费者评论</section>'
-    remaining = max(0, len(reference_ids) - len(selected))
-    tail = f"<p>另有 {remaining} 条证据保留在审计记录中</p>" if remaining else ""
-    return '<section class="pressure-evidence-gallery">' + "".join(cards) + tail + "</section>"
+    if not readings:
+        return '<section class="pressure-evidence-reading is-empty">本项未记录消费者评论</section>'
+    return '<section class="pressure-evidence-readings">' + "".join(readings) + "</section>"
 
 
 def _render_dialogue(st: Any, run: PressureRunView, candidate_id: str) -> None:
+    """对话剧场：客户端自动播放，回放期间服务端零参与。"""
+
     st.markdown(
         "<div class='pressure-dialogue-title'>阶段 3 · 双 Agent 互审</div>",
         unsafe_allow_html=True,
     )
     messages = dialogue_for_candidate(run, candidate_id)
-    replay_key = f"pressure_replay_{candidate_id}"
-    state = st.session_state.setdefault(
-        replay_key,
-        {"index": 0, "running": True, "completed": False},
-    )
-    if not isinstance(state, dict) or not 0 <= int(state.get("index", 0)) < len(messages):
-        state = {"index": 0, "running": True, "completed": False}
-        st.session_state[replay_key] = state
-
-    state.setdefault("running", not bool(state.get("completed", False)))
-    controls = st.columns(2)
-    with controls[0]:
-        toggle_label = "暂停" if state["running"] else "继续"
-        if st.button(toggle_label, key=f"{replay_key}_toggle", use_container_width=True):
-            state["running"] = not state["running"]
-            st.rerun()
-    with controls[1]:
-        if st.button("重播", key=f"{replay_key}_replay", use_container_width=True):
-            state.update(index=0, running=True, completed=False)
-            st.rerun()
-
-    visible = messages[: state["index"] + 1]
     from streamlit.components.v1 import html as components_html
 
-    thinking_agent = None
-    if state["running"] and not state["completed"] and state["index"] + 1 < len(messages):
-        thinking_agent = messages[state["index"] + 1].agent
     components_html(
-        build_dialogue_stage_html(visible, thinking_agent=thinking_agent),
-        height=250,
+        build_dialogue_stage_html(messages),
+        height=356,
         scrolling=False,
     )
-    if state["running"] and not state["completed"]:
-        time.sleep(5)
-        advance_dialogue_replay(state, message_count=len(messages))
-        if state["completed"]:
-            state["running"] = False
-        st.rerun()
 
 
-def _render_holdout(st: Any, run: PressureRunView) -> None:
+def _render_holdout(st: Any, run: PressureRunView, cards: tuple[CandidateCard, ...]) -> None:
     st.markdown("## 阶段 4 · 统一复评与 HOLDOUT")
     st.warning(HOLDOUT_NOTE)
     st.caption("HOLDOUT：5 个候选 × 60 条留出证据；支持 / 挑战 / 中性 / 阻断")
+    titles = {card.candidate_id: card.display_title for card in cards}
     rows = []
     for item in holdout_distribution(run):
         support_width = item.support_count / item.total * 100
         challenge_width = item.challenge_count / item.total * 100
+        neutral_width = item.neutral_count / item.total * 100
+        if round(support_width + challenge_width + neutral_width, 6) != 100:
+            raise ValueError("HOLDOUT 三类分布宽度必须守恒")
         rows.append(
             "<article class='pressure-holdout-row'>"
-            f"<strong>{_escape_html(item.candidate_id)}</strong>"
+            f"<strong>{_escape_html(titles[item.candidate_id])}</strong>"
             "<div class='pressure-holdout-bar'>"
             f"<i class='is-support' style='width:{support_width:.2f}%'></i>"
-            f"<i class='is-challenge' style='width:{challenge_width:.2f}%'></i></div>"
-            f"<span>支持 {item.support_count}</span><span>挑战 {item.challenge_count}</span>"
-            f"<span>中性 {item.neutral_count}</span><span>阻断 {item.blocking_count}</span>"
+            f"<i class='is-challenge' style='width:{challenge_width:.2f}%'></i>"
+            f"<i class='is-neutral' style='width:{neutral_width:.2f}%'></i></div>"
+            "<span class='pressure-holdout-counts'>"
+            f"支持 {item.support_count} · 挑战 {item.challenge_count} · 中性 {item.neutral_count}"
+            "</span>"
+            f"<span class='pressure-holdout-blocking'>阻断发现 {item.blocking_count} 项（可与分类重叠）</span>"
             "</article>"
         )
     st.markdown("<section class='pressure-holdout-grid'>" + "".join(rows) + "</section>", unsafe_allow_html=True)
 
 
-def _render_terminal(st: Any, run: PressureRunView) -> None:
+def _render_terminal(
+    st: Any,
+    run: PressureRunView,
+    *,
+    on_milestone: Callable[[], None] | None = None,
+) -> None:
     summary = terminal_summary(run)
     st.markdown("## 阶段 5 · 真人盲评 5→3")
     st.markdown(build_blind_review_html(run), unsafe_allow_html=True)
@@ -660,33 +738,40 @@ def _render_terminal(st: Any, run: PressureRunView) -> None:
             st.session_state["pressure_blind_revealed"] = True
             st.rerun()
         return
-    selected_markup = "".join(
-        f"<li><b>{_escape_html(card.display_title)}</b><span>{_escape_html(card.candidate_id)}</span></li>"
-        for card in summary.selected
-    )
-    rejected_markup = "".join(
-        f"<li><b>{_escape_html(card.display_title)}</b><span>{_escape_html(card.candidate_id)} · 历史保留</span></li>"
-        for card in summary.not_selected
-    )
-    st.markdown(
-        "<section class='pressure-terminal'>"
-        f"<header><span>最终选择路径</span><h3>{_escape_html(summary.method)}</h3></header>"
-        f"<div class='is-selected'><strong>三条入选</strong><ol>{selected_markup}</ol></div>"
-        f"<div class='is-rejected'><strong>两条未入选</strong><ol>{rejected_markup}</ol></div>"
-        "</section>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(build_terminal_result_html(summary), unsafe_allow_html=True)
 
     confirmed = bool(st.session_state.get("pressure_team_confirmed", False))
+    st.markdown(
+        "<section class='pressure-terminal-handoff'><span>团队交接</span><strong>"
+        + ("已确认，可进入实时决策看板" if confirmed else "等待团队确认最终名单")
+        + "</strong></section>",
+        unsafe_allow_html=True,
+    )
     if st.button("团队确认 5→3", key="pressure_team_confirm"):
         st.session_state["pressure_team_confirmed"] = True
         complete_workspace(st.session_state, Workspace.PRESSURE_TEST)
-        confirmed = True
+        if on_milestone is not None:
+            on_milestone()
+        activate_workspace(st.session_state, Workspace.REALTIME_DECISION)
+        st.rerun()
     if confirmed:
         st.success("团队已确认；实时决策看板已解锁。")
-        if st.button("进入实时决策看板", key="pressure_enter_realtime", type="primary"):
-            activate_workspace(st.session_state, Workspace.REALTIME_DECISION)
-            st.rerun()
+
+
+def build_dialogue_revision_html(message: DialogueMessage, index: int) -> str:
+    diffs = "".join(
+        "<section class='dialogue-diff'><strong>" + _escape_html(diff.field_label) + "</strong>"
+        f"<del>{_escape_html(_display_evidence_text(diff.before))}</del><ins>{_escape_html(_display_evidence_text(diff.after))}</ins>"
+        f"<small>{_escape_html(_display_evidence_text(diff.reason))}</small></section>"
+        for diff in message.field_diffs
+    ) or "<p>本轮未产生字段修订；保留为审查判断。</p>"
+    audit_markup = _build_pressure_audit_detail(
+        *(text for diff in message.field_diffs for text in (diff.before, diff.after, diff.reason))
+    )
+    return (
+        f"<article class='dialogue-revision' data-revision-index='{index}'><span>当前轮实际修订</span>"
+        f"<strong>第 {message.round_index} 轮 · {_escape_html(message.agent)}</strong>{diffs}{audit_markup}</article>"
+    )
 
 
 def build_blind_review_html(run: PressureRunView) -> str:
@@ -700,19 +785,45 @@ def build_blind_review_html(run: PressureRunView) -> str:
         for metric in review.selection_metrics
     )
     response_markup = "".join(
-        f'<div class="blind-review-item is-item-{index}">'
-        "<span class='blind-review-avatar'>匿</span>"
-        f"<p><b>匿名受访者</b>{_escape_html(item.text)}</p></div>"
+        f"<li class='blind-review-quote'><span>{index + 1:02d}</span>{_escape_html(item.text)}</li>"
         for index, item in enumerate(review.open_responses)
     )
     return (
         "<section class='blind-review-stage'>"
-        "<header><span>真人盲评 · 冻结回放</span>"
-        f"<strong>{review.survey_count} 份有效问卷</strong>"
-        f"<strong>{review.open_response_count} 条开放回答</strong></header>"
-        f"<div class='blind-review-metrics'>{metric_markup}</div>"
-        f"<div class='blind-review-track' data-animation='blindReviewGlide'>{response_markup}</div>"
-        "<footer>本批匿名评价已进入 · 内容来自冻结盲评问卷</footer></section>"
+        "<header><span>真人盲评 · 冻结回放</span><strong>问卷选项偏好</strong>"
+        f"<small>多选口径 · {review.survey_count} 份有效问卷为分母</small></header>"
+        "<div class='blind-review-layout'><section class='blind-review-metrics'>"
+        f"{metric_markup}</section><aside class='blind-review-quotes'><h3>完整匿名原话</h3>"
+        f"<ol>{response_markup}</ol></aside></div>"
+        f"<footer>{review.open_response_count} 条开放回答，按冻结问卷原顺序保留</footer></section>"
+    )
+
+
+def build_terminal_result_html(summary: TerminalSummary) -> str:
+    """Render the factual 5→3 relationship without implying vote magnitude."""
+
+    source_nodes = "".join(
+        "<li class='pressure-terminal-source "
+        + ("is-selected" if card.selected else "is-rejected")
+        + "'><span class='pressure-terminal-relationship'></span><b>"
+        + _escape_html(card.display_title)
+        + "</b><small>"
+        + ("→ 入选方向" if card.selected else "→ 历史保留")
+        + "</small></li>"
+        for card in (*summary.selected, *summary.not_selected)
+    )
+    selected = "".join(
+        "<li><b>入选方向</b><strong>" + _escape_html(card.display_title) + "</strong></li>"
+        for card in summary.selected
+    )
+    rejected = "".join(
+        "<li>" + _escape_html(card.display_title) + "</li>" for card in summary.not_selected
+    )
+    return (
+        "<section class='pressure-terminal pressure-terminal-map'><header><span>最终选择路径</span>"
+        f"<h3>{_escape_html(summary.method)}</h3></header><div class='pressure-terminal-sources'><ol>{source_nodes}</ol></div>"
+        f"<section class='pressure-terminal-selected'><span>三条入选</span><ol>{selected}</ol></section>"
+        f"<aside class='pressure-terminal-register'><span>两条未入选 · 历史保留</span><ol>{rejected}</ol></aside></section>"
     )
 
 
@@ -724,20 +835,36 @@ def _escape_html(value: str) -> str:
     )
 
 
+def _display_evidence_text(value: str) -> str:
+    """Keep frozen evidence prose readable while removing internal identifiers."""
+
+    return _RAW_EVIDENCE_ID.sub("对应原始评论", value)
+
+
+def _build_pressure_audit_detail(*raw_values: str) -> str:
+    """Keep original frozen wording and IDs behind an explicit disclosure control."""
+
+    raw_text = "\n\n".join(value for value in raw_values if value)
+    return (
+        "<details class='pressure-audit-detail'><summary>审计详情 · 原始文本与编号</summary>"
+        f"<p>{_escape_html(raw_text)}</p></details>"
+    )
+
+
 def _dialogue_frame_css() -> str:
     return """
-html,body{margin:0;background:#E8E1D8;color:#292521;font-family:"Microsoft YaHei","PingFang SC",sans-serif;}
-.dialogue-stage{display:flex;flex-direction:column;gap:.7rem;height:248px;padding:.75rem;overflow-y:auto;box-sizing:border-box;scroll-behavior:smooth;border:1px solid #D8CCBE;background:#E8E1D8;}
-.dialogue-stage.is-single{justify-content:center;}
-.dialogue-bubble{display:flex;gap:.8rem;align-items:flex-start;width:min(82%,48rem);padding:.9rem 1rem;box-sizing:border-box;border-left:3px solid #8F2F4D;background:#FAF7F1;box-shadow:0 .45rem 1.2rem rgba(63,48,54,.05);animation:dialogueBubbleIn .4s ease-out both;}
-.dialogue-bubble.review-avatar-bubble{align-self:flex-end;border-left-color:#365B4B;background:#F1F3EE;}
-.dialogue-thinking{display:flex;align-items:center;gap:.7rem;width:min(42%,24rem);padding:.7rem .85rem;box-sizing:border-box;border:1px dashed #BDAFA3;background:rgba(255,253,249,.58);animation:dialogueBubbleIn .35s ease-out both;}
-.dialogue-thinking.review-avatar-bubble{align-self:flex-end;border-color:#8CA093}.dialogue-thinking.decision-avatar-bubble{align-self:flex-start;border-color:#BC8798}
+html,body{margin:0;background:#EFE9E0;color:#292521;font-family:"Microsoft YaHei","PingFang SC",sans-serif;position:relative;}
+.dialogue-stage{position:relative;display:flex;flex-direction:column;gap:.65rem;height:302px;padding:.9rem .95rem 2.6rem;overflow-y:auto;box-sizing:border-box;scroll-behavior:smooth;border:1px solid #D8CCBE;background:linear-gradient(180deg,#F3EDE4,#ECE4D8);}
+.dialogue-bubble{display:none;gap:.8rem;align-items:flex-start;width:fit-content;max-width:min(80%,40rem);padding:.9rem 1rem;box-sizing:border-box;border-left:3px solid #8F2F4D;background:#FAF7F1;box-shadow:0 .45rem 1.2rem rgba(63,48,54,.06);}
+.dialogue-bubble.shown{display:flex;animation:dialogueInLeft .45s cubic-bezier(.16,1,.3,1) both;}
+.dialogue-bubble.review-avatar-bubble{align-self:flex-end;border-left-color:#C9A86A;background:#FBF5E8;animation-name:dialogueInRight;}
+.dialogue-thinking{display:flex;align-items:center;gap:.7rem;width:min(42%,24rem);padding:.7rem .85rem;box-sizing:border-box;border:1px dashed #BDAFA3;background:rgba(255,253,249,.58);animation:dialogueInLeft .35s ease-out both;}
+.dialogue-thinking.review-avatar-bubble{align-self:flex-end;border-color:#C9A86A;animation:dialogueInRight .35s ease-out both}.dialogue-thinking.decision-avatar-bubble{align-self:flex-start;border-color:#BC8798}
 .dialogue-thinking>div{display:grid;grid-template-columns:auto 1fr;gap:.12rem .55rem;align-items:center}.dialogue-thinking strong{color:#5E5550;font-size:.7rem}.dialogue-thinking p{display:flex;align-items:center;gap:.35rem;margin:0;color:#8F2F4D;font-size:.68rem}.dialogue-thinking small{grid-column:1/-1;color:#8A8078;font-size:.6rem}
 .thinking-dots{display:inline-flex;gap:.16rem}.thinking-dots i{width:.25rem;height:.25rem;border-radius:50%;background:#8F2F4D;animation:thinkingDot 1.15s ease-in-out infinite}.thinking-dots i:nth-child(2){animation-delay:.16s}.thinking-dots i:nth-child(3){animation-delay:.32s}
 .dialogue-bubble__body{min-width:0;flex:1;}
 .dialogue-bubble header{display:flex;justify-content:space-between;gap:1rem;color:#8F2F4D;font-size:.7rem;}
-.dialogue-bubble.review-avatar-bubble header{color:#365B4B;}
+.dialogue-bubble.review-avatar-bubble header{color:#8A6B33;}
 .dialogue-bubble h3{margin:.35rem 0;color:#302B28;font-family:STZhongsong,"华文中宋",serif;font-size:1.02rem;font-weight:650;}
 .dialogue-bubble p,.dialogue-bubble li{color:#655D57;font-size:.76rem;line-height:1.65;}
 .dialogue-bubble details{margin-top:.55rem;border-top:1px solid #DED3C8;padding-top:.5rem;}
@@ -746,10 +873,12 @@ html,body{margin:0;background:#E8E1D8;color:#292521;font-family:"Microsoft YaHei
 .dialogue-bubble ul{margin:.55rem 0 0;padding-left:1.1rem;}
 .dialogue-diffs{display:grid;gap:.55rem;margin-top:.65rem;}
 .dialogue-diff{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;padding:.65rem;border:1px solid #DED3C8;background:#FFFDF9;}
-.dialogue-diff>strong,.dialogue-diff>em{grid-column:1/-1;}.dialogue-diff>strong{color:#8F2F4D;font-size:.72rem;}.dialogue-diff div{padding:.5rem;background:#F3EDE6;}.dialogue-diff div:nth-of-type(2){background:#EDF2ED;}.dialogue-diff small{color:#8A8078;font-size:.62rem;}.dialogue-diff p{margin:.2rem 0 0;}.dialogue-diff em{color:#81776F;font-size:.68rem;font-style:normal;}
-.agent-avatar{display:inline-block;flex:0 0 2.25rem;width:2.25rem;height:2.25rem;position:relative;}.decision-avatar{border:2px solid #8F2F4D;border-radius:50%;background:conic-gradient(from 45deg,transparent 0 20%,#8F2F4D 20% 25%,transparent 25% 45%,#8F2F4D 45% 50%,transparent 50% 70%,#8F2F4D 70% 75%,transparent 75%);}.decision-avatar::after{content:"";position:absolute;inset:35%;border-radius:50%;background:#8F2F4D;}.review-avatar{border:2px solid #365B4B;border-radius:35% 35% 48% 48%;background:#365B4B;clip-path:polygon(50% 0,92% 20%,84% 72%,50% 100%,16% 72%,8% 20%);}.review-avatar::after{content:"";position:absolute;inset:35%;border:2px solid #E5C47D;transform:rotate(45deg);}
-@keyframes dialogueBubbleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.dialogue-diff>strong,.dialogue-diff>em{grid-column:1/-1;}.dialogue-diff>strong{color:#8F2F4D;font-size:.72rem;}.dialogue-diff div{padding:.5rem;background:#F3EDE6;}.dialogue-diff div:nth-of-type(2){background:#F7F0DE;}.dialogue-diff small{color:#8A8078;font-size:.62rem;}.dialogue-diff p{margin:.2rem 0 0;}.dialogue-diff em{color:#81776F;font-size:.68rem;font-style:normal;}
+.agent-avatar{display:inline-block;flex:0 0 2.25rem;width:2.25rem;height:2.25rem;position:relative;}.decision-avatar{border:2px solid #8F2F4D;border-radius:50%;background:conic-gradient(from 45deg,transparent 0 20%,#8F2F4D 20% 25%,transparent 25% 45%,#8F2F4D 45% 50%,transparent 50% 70%,#8F2F4D 70% 75%,transparent 75%);}.decision-avatar::after{content:"";position:absolute;inset:35%;border-radius:50%;background:#8F2F4D;}.review-avatar{border:2px solid #C9A86A;border-radius:35% 35% 48% 48%;background:#C9A86A;clip-path:polygon(50% 0,92% 20%,84% 72%,50% 100%,16% 72%,8% 20%);}.review-avatar::after{content:"";position:absolute;inset:35%;border:2px solid #8F2F4D;transform:rotate(45deg);}
+@keyframes dialogueInLeft{from{opacity:0;transform:translate(-14px,8px)}to{opacity:1;transform:translate(0,0)}}
+@keyframes dialogueInRight{from{opacity:0;transform:translate(14px,8px)}to{opacity:1;transform:translate(0,0)}}
 @keyframes thinkingDot{0%,70%,100%{opacity:.25;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+.dialogue-layout{display:grid;grid-template-columns:65fr 35fr;height:302px;border:1px solid #D8CCBE;background:#EFE9E0}.dialogue-review-axis{height:302px;border:0;border-right:1px solid #D8CCBE}.dialogue-revision-panel{overflow-y:auto;padding:.8rem;background:#F8F3EB}.dialogue-revision{display:none}.dialogue-revision.is-current{display:grid;gap:.45rem}.dialogue-revision>span{color:#8F2F4D;font-size:.62rem;font-weight:700;letter-spacing:.1em}.dialogue-revision>strong{color:#443C37;font-size:.75rem}.dialogue-revision .dialogue-diff{grid-template-columns:1fr;padding:.5rem;border:0;border-left:2px solid #C9A86A}.dialogue-revision del{padding:.45rem;background:#F3E5E1;color:#8A5D58;text-decoration-color:#8F2F4D}.dialogue-revision ins{padding:.45rem;background:#EAF1E9;color:#365B4B;text-decoration-color:#365B4B}.dialogue-revision small{color:#746A62;font-size:.66rem;line-height:1.5}@media (prefers-reduced-motion: reduce){*{animation:none!important;scroll-behavior:auto!important}.dialogue-thinking{display:none!important}}@media(max-width:720px){.dialogue-layout{grid-template-columns:1fr;height:auto}.dialogue-review-axis{height:18rem;border-right:0;border-bottom:1px solid #D8CCBE}.dialogue-revision-panel{max-height:14rem}}
 """.strip()
 
 
@@ -865,34 +994,16 @@ def _pressure_test_css() -> str:
 .blind-review-metrics article { display:grid; gap:.2rem; padding:.48rem .6rem; background:#FAF7F1; }
 .blind-review-metrics strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#4A423D; font-size:.68rem; }
 .blind-review-metrics span { color:#8F2F4D; font-size:.65rem; }
-.blind-review-track { position:relative; height:7.2rem; overflow:hidden; border-top:1px solid #D8CCBE; border-bottom:1px solid #D8CCBE; }
-.blind-review-item { position:absolute; left:100%; top:calc((var(--lane, 0)) * 2.25rem + .25rem); display:flex; align-items:center; gap:.5rem; width:max-content; max-width:42rem; animation:blindReviewGlide 28s linear 0s 1 forwards; }
-.blind-review-item:nth-child(3n+1) { --lane:0; }.blind-review-item:nth-child(3n+2) { --lane:1; }.blind-review-item:nth-child(3n) { --lane:2; }
-.blind-review-avatar { display:grid; place-items:center; flex:0 0 1.65rem; height:1.65rem; border-radius:50%; color:#FFF8EF; background:#8F2F4D; font-size:.65rem; }
-.blind-review-item p { display:flex; gap:.55rem; margin:0; padding:.42rem .7rem; border:1px solid #D7C9BC; border-radius:1.2rem; background:#FFF9F3; color:#4F4741; font-size:.68rem; white-space:nowrap; }
-.blind-review-item p b { color:#8F2F4D; }
-.blind-review-track:hover .blind-review-item,.blind-review-item:hover { animation-play-state:paused; }
 .blind-review-stage footer { margin-top:.45rem; color:#81776F; font-size:.63rem; text-align:right; }
-@keyframes blindReviewGlide { from { transform:translateX(0); } to { transform:translateX(calc(-100vw - 100%)); } }
 @media (max-width:900px) { .block-container,[data-testid="stMainBlockContainer"] { padding:.55rem .7rem 1.5rem; } .pressure-current,.pressure-terminal,.pressure-candidate-meta-grid,.pressure-evidence-gallery { grid-template-columns:1fr; } .pressure-current div { grid-column:1; grid-row:auto; min-width:0; } .pressure-check-grid { grid-template-columns:1fr 1fr; } .pressure-holdout-row { grid-template-columns:1fr 1fr; } .dialogue-bubble { width:100%; } .dialogue-diff { grid-template-columns:1fr; } .dialogue-diff > strong,.dialogue-diff > em { grid-column:auto; } }
 """.strip()
-    return f"{base_css}\n{_blind_review_schedule_css()}"
-
-
-def _blind_review_schedule_css() -> str:
-    """Keep the 51-item playback schedule outside sanitized Markdown markup."""
-
-    rules: list[str] = []
-    for index in range(51):
-        duration = 25 + (index % 5) * 2
-        group = index // 3
-        lane_offset = (index % 3) * 0.8
-        delay = (-8 + (index % 3) * 3) if group == 0 else (group - 1) * 4.2 + lane_offset + 2
-        rules.append(
-            f".blind-review-item.is-item-{index}{{animation-duration:{duration}s;"
-            f"animation-delay:{delay:.1f}s}}"
-        )
-    return "".join(rules)
+    redesign_css = """
+.pressure-candidate-nav{margin:.35rem 0 .15rem;padding:.5rem 0;border-bottom:2px solid #8F2F4D;color:#8F2F4D;font-size:.7rem;font-weight:750;letter-spacing:.14em}.pressure-candidate-meta-grid{display:block;margin:-.12rem 0 .45rem}.pressure-candidate-meta{margin:0;padding:.22rem .35rem;border:0;border-left:2px solid #D8CCBE;background:transparent}.pressure-candidate-nav~[data-testid="stButton"]>button{height:auto;min-height:3.15rem;text-align:left;justify-content:flex-start;border:0;border-bottom:1px solid #E0D5C8;border-radius:0;background:transparent;font-size:.76rem;white-space:normal}.pressure-candidate-nav~[data-testid="stButton"]>button:hover{background:#FFF8F3}.pressure-score-dotplot{margin:1rem 0 0}.pressure-score-dotplot header{display:flex;justify-content:space-between;gap:1rem;color:#8F2F4D;font-size:.72rem}.pressure-score-axis{display:flex;justify-content:space-between;margin:.7rem 0 .25rem;border-top:1px solid #BDAFA3;color:#8A8078;font-size:.6rem}.pressure-score-axis i{font-style:normal;transform:translateY(-.1rem)}.pressure-score-dotplot ol{display:grid;gap:.28rem;margin:0;padding:0;list-style:none}.pressure-score-dot{display:grid;grid-template-columns:minmax(9rem,1fr) minmax(4rem,2.3fr) 3rem;gap:.6rem;align-items:center;font-size:.72rem}.pressure-score-dot i{height:8px;background:linear-gradient(90deg,#E7DDD2 calc(var(--score) * 1%),transparent 0);position:relative}.pressure-score-dot i::after{content:"";position:absolute;left:calc(var(--score) * 1% - 4px);top:-3px;width:8px;height:8px;border-radius:50%;background:#8A8078}.pressure-score-dot.is-selected{color:#8F2F4D;font-weight:750}.pressure-score-dot.is-selected i::after{width:12px;height:12px;top:-5px;left:calc(var(--score) * 1% - 6px);background:#8F2F4D}.pressure-score-dot span{text-align:right;font-variant-numeric:tabular-nums}.pressure-check-index{display:grid;gap:.25rem;margin-top:.55rem;padding:.45rem 0;border-top:2px solid #8F2F4D;color:#8F2F4D}.pressure-check-index small{color:#81776F}.pressure-check-detail{min-height:0}.pressure-evidence-readings{display:grid;gap:.65rem;margin-top:.8rem}.pressure-evidence-reading{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:.7rem;padding:.75rem 0;border-top:1px solid #DED3C8}.pressure-evidence-reading small{color:#8F2F4D;font-weight:700;letter-spacing:.08em}.pressure-evidence-reading blockquote{margin:.45rem 0 0;color:#403935;font-family:KaiTi,"楷体",serif;line-height:1.65}.pressure-evidence-reading p{margin:.45rem 0 0;font-size:.75rem;line-height:1.6}.pressure-holdout-row{grid-template-columns:minmax(10rem,1fr) minmax(12rem,2fr) minmax(10rem,1fr) minmax(10rem,1fr)}.pressure-holdout-bar i.is-neutral{background:#AEB7AF}.pressure-holdout-counts,.pressure-holdout-blocking{text-align:right;font-variant-numeric:tabular-nums}.pressure-holdout-blocking{color:#8F2F4D!important}.blind-review-stage header{display:grid;gap:.2rem}.blind-review-stage header small{color:#81776F}.blind-review-layout{display:grid;grid-template-columns:65fr 35fr;gap:1rem;margin-top:.8rem}.blind-review-metrics{display:grid;grid-template-columns:1fr;gap:.5rem;margin:0}.blind-review-metrics article{grid-template-columns:1fr auto;align-items:center;padding:.55rem 0;border-bottom:1px solid #DED3C8;background:transparent}.blind-review-metrics span{text-align:right;font-variant-numeric:tabular-nums}.blind-review-quotes{max-height:18rem;overflow-y:auto;padding-left:.8rem;border-left:1px solid #D8CCBE}.blind-review-quotes h3{margin:0 0 .4rem;font-size:.78rem}.blind-review-quotes ol{display:grid;gap:.4rem;margin:0;padding:0;list-style:none}.blind-review-quote{display:grid;grid-template-columns:2rem 1fr;gap:.4rem;color:#514741;font-size:.72rem;line-height:1.55}.blind-review-quote span{color:#8F2F4D;font-variant-numeric:tabular-nums}.pressure-terminal-map{grid-template-columns:1fr 1.8fr;align-items:start}.pressure-terminal-map header{grid-column:1/-1}.pressure-terminal-sources{position:relative;padding-right:2rem}.pressure-terminal-sources ol,.pressure-terminal-selected ol,.pressure-terminal-register ol{display:grid;gap:.55rem;margin:.5rem 0;padding:0;list-style:none}.pressure-terminal-source{display:flex;gap:.45rem;align-items:center;font-size:.75rem}.pressure-terminal-source span{width:.55rem;height:.55rem;border:1px solid #8F2F4D;border-radius:50%}.pressure-terminal-connector{position:absolute;right:0;top:.7rem;bottom:.7rem;width:1px;background:#8F2F4D}.pressure-terminal-selected{padding-left:1rem;border-left:2px solid #8F2F4D}.pressure-terminal-selected li{padding:.5rem 0;border-bottom:1px solid #DED3C8}.pressure-terminal-selected b,.pressure-terminal-selected strong{display:block}.pressure-terminal-register{grid-column:1/-1;margin-top:.3rem;padding-top:.6rem;border-top:1px solid #DED3C8}.pressure-terminal-register ol{grid-template-columns:repeat(2,minmax(0,1fr))}.pressure-terminal-handoff{display:flex;align-items:baseline;gap:.6rem;margin-top:.4rem;padding:.7rem 0;border-top:2px solid #8F2F4D}.pressure-terminal-handoff span{color:#8F2F4D;font-size:.68rem;font-weight:700;letter-spacing:.1em}@media(prefers-reduced-motion:reduce){.pressure-stage-node.is-current i,.pressure-holdout-bar i,.pressure-terminal,.pressure-terminal li{animation:none!important}}@media(max-width:900px){.pressure-evidence-reading,.blind-review-layout,.pressure-terminal-map{grid-template-columns:1fr}.pressure-terminal-register{grid-column:auto}.pressure-terminal-register ol{grid-template-columns:1fr}.pressure-holdout-row{grid-template-columns:1fr}.pressure-holdout-counts,.pressure-holdout-blocking{text-align:left}}
+"""
+    connection_css = """
+.pressure-terminal-source{display:grid;grid-template-columns:2.4rem 1fr;column-gap:.45rem;align-items:center}.pressure-terminal-relationship{position:relative;display:block!important;width:2.4rem!important;height:1px!important;border:0!important;border-radius:0!important;background:#8F2F4D}.pressure-terminal-relationship::after{content:"";position:absolute;right:0;top:-2px;border-width:3px 0 3px 5px;border-style:solid;border-color:transparent transparent transparent #8F2F4D}.pressure-terminal-source b{font-weight:650}.pressure-terminal-source small{grid-column:2;color:#81776F}.pressure-terminal-source.is-rejected .pressure-terminal-relationship{background:#AEB7AF}.pressure-terminal-source.is-rejected .pressure-terminal-relationship::after{border-left-color:#AEB7AF}
+"""
+    return f"{base_css}\n{redesign_css}\n{connection_css}"
 
 
 def _get_streamlit() -> Any:

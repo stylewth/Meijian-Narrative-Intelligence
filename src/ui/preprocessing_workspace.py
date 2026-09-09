@@ -8,8 +8,9 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import time
-from typing import Any, Literal, Mapping, MutableMapping
+from typing import Any, Callable, Literal, Mapping, MutableMapping
 from types import MappingProxyType
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
@@ -64,6 +65,7 @@ from src.services.preprocessing_demo_presentation import (
     PreprocessingStageDetailView,
     load_preprocessing_demo,
 )
+from src.ui.scroll_continuity import render_scroll_continuity
 from src.ui.workspace_shell import Workspace, complete_workspace
 
 
@@ -484,84 +486,227 @@ def build_official_stage_track_html(
     *,
     current_index: int,
     completed_keys: set[str],
+    running: bool = False,
 ) -> str:
-    """Build the compact five-card replay track from validated stage views."""
+    """Build a five-node track whose rail is independent from the labels."""
 
     if len(stages) != len(_OFFICIAL_STAGE_KEYS):
         raise ValueError("官方回放必须包含五个阶段")
     if not 0 <= current_index < len(stages):
         raise ValueError("current_index 不在官方回放阶段范围内")
-    cards: list[str] = []
+    nodes: list[str] = []
+    connectors: list[str] = []
     for index, stage in enumerate(stages):
         state_classes = []
         if stage.key in completed_keys:
             state_classes.append("is-complete")
         if index == current_index:
             state_classes.append("is-current")
+            if running:
+                state_classes.append("is-running")
         if not stage.ready:
             state_classes.append("is-blocked")
         classes = " ".join(state_classes)
-        state_label = "完成" if stage.key in completed_keys else ("就绪" if stage.ready else "等待")
-        cards.append(
-            f'<article class="mj-stage-card {classes}" data-stage-key="{escape(stage.key)}">'
-            f'<span class="mj-stage-index">0{index + 1}</span>'
-            f'<strong>{escape(stage.label)}</strong>'
-            f'<small>{state_label} · {stage.duration_ms / 1000:.1f}s</small>'
-            '<i aria-hidden="true"></i>'
-            "</article>"
+        state_label = (
+            "完成"
+            if stage.key in completed_keys
+            else ("处理中" if running and index == current_index else ("就绪" if stage.ready else "等待"))
         )
-    return '<section class="mj-stage-grid">' + "".join(cards) + "</section>"
-
-
-def build_case_data_intake_html() -> str:
-    """Present supported intake paths without pretending to import frozen case data."""
-
+        seal = (
+            '<span class="mj-stage-seal" aria-label="已封存">封存</span>'
+            if stage.key == "freeze" and stage.key in completed_keys
+            else ""
+        )
+        nodes.append(
+            f'<li class="mj-stage-node {classes}" data-stage-key="{escape(stage.key)}"'
+            f' style="--mj-fill:{stage.duration_ms / 1000:.1f}s">'
+            f'<span class="mj-stage-dot" aria-hidden="true">{index + 1}</span>'
+            f'<strong>{escape(stage.label)}</strong>'
+            f'<small>{state_label}</small>{seal}</li>'
+        )
+        if index < len(stages) - 1:
+            connector_classes = []
+            if stage.key in completed_keys:
+                connector_classes.append("is-complete")
+            if running and index == current_index:
+                connector_classes.append("is-flowing")
+            connector_class = " ".join(connector_classes)
+            connectors.append(
+                f'<span class="mj-stage-connector {connector_class}" '
+                f'data-connector-from="{escape(stage.key)}" aria-hidden="true"></span>'
+            )
+    track_class = "mj-stage-track is-running" if running else "mj-stage-track"
     return (
-        "<style>"
-        ".mj-case-intake{display:grid;grid-template-columns:minmax(15rem,.8fr) repeat(2,minmax(0,1fr));"
-        "gap:.65rem;margin:.35rem 0 .7rem;padding:.7rem;border:1px solid #D8CCBE;background:#F8F3EC}"
-        ".mj-case-intake>header{padding:.35rem .5rem;border-left:3px solid #8F2F4D}"
-        ".mj-case-intake>header span{color:#8F2F4D;font-size:.62rem;font-weight:750;letter-spacing:.14em}"
-        ".mj-case-intake>header h3{margin:.22rem 0!important;color:#352F2B!important;font-family:STZhongsong,'华文中宋',serif;font-size:1.05rem!important}"
-        ".mj-case-intake>header p{margin:0;color:#756B64;font-size:.65rem;line-height:1.55}"
-        ".mj-case-intake article{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.55rem;padding:.55rem .7rem;border:1px solid #D8CCBE;background:#FFFDF9}"
-        ".mj-case-intake article i{display:grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:50%;color:#FFF8EF;background:#365B4B;font-size:.58rem;font-style:normal;font-weight:750}"
-        ".mj-case-intake article strong{display:block;color:#4D4540;font-size:.75rem}.mj-case-intake article small{color:#887D74;font-size:.6rem}"
-        "@media(max-width:850px){.mj-case-intake{grid-template-columns:1fr}}"
-        "</style>"
-        '<section class="mj-case-intake"><header><span>数据接入 · 案例来源</span>'
-        "<h3>先接入数据，再进入冻结流程</h3>"
-        "<p>本次案例来源：XLSX · 484 条原始语料 · 数据已冻结</p></header>"
-        "<article><i>XL</i><div><strong>XLSX</strong><small>本地结构化语料接入</small></div></article>"
-        "<article><i>飞</i><div><strong>飞书多维表格</strong><small>系统支持的协同数据入口</small></div></article>"
+        f'<section class="{track_class}" aria-label="五阶段数据处理进度">'
+        f'<div class="mj-stage-rail" aria-hidden="true">{"".join(connectors)}</div>'
+        f"<ol>{''.join(nodes)}</ol></section>"
+    )
+
+
+def _first_count(value: str) -> int:
+    match = re.fullmatch(r"([1-9]\d*) 条结构化原始语料", value)
+    if match is None:
+        raise ValueError(f"原始语料数量格式无效：{value}")
+    return int(match.group(1))
+
+
+def _metric_count(value: str) -> int:
+    if re.fullmatch(r"0|[1-9]\d*", value) is None:
+        raise ValueError(f"阶段指标数量格式无效：{value}")
+    return int(value)
+
+
+def _metric_values(stage: PreprocessingStageDetailView) -> dict[str, str]:
+    return {label: value for label, value in stage.metrics}
+
+
+def _source_bar_html(
+    *,
+    source_name: str,
+    source_format: str,
+    record_count: int | None,
+    custom: bool = False,
+) -> str:
+    count_text = f"{record_count} 条原始语料" if record_count is not None else "等待原始语料"
+    custom_class = " mj-preprocess-sourcebar--custom" if custom else ""
+    status_label = "当前会话" if custom else "官方冻结 · 只读"
+    return (
+        f'<section class="mj-preprocess-sourcebar{custom_class}">'
+        '<span class="mj-sourcebar-label">数据来源</span>'
+        f'<strong>{escape(source_name)}</strong>'
+        f'<span>{escape(source_format)}</span>'
+        f'<b>{count_text}</b>'
+        f"<small>{status_label}</small>"
         "</section>"
     )
 
 
-def build_stage_detail_html(stage: PreprocessingStageDetailView) -> str:
-    """Render one preprocessing change as a readable four-part workbench."""
+def build_case_data_intake_html(stages: tuple[OfficialReplayStageView, ...]) -> str:
+    """Present only the actual frozen source facts in a compact source bar."""
 
-    metrics = "".join(
-        f"<li><strong>{escape(label)}</strong><span>{escape(value)}</span></li>"
-        for label, value in stage.metrics
+    if len(stages) != len(_OFFICIAL_STAGE_KEYS):
+        raise ValueError("官方回放必须包含五个阶段")
+    source_name = str(stages[1].summary.get("source_filename") or "官方冻结案例")
+    record_count = stages[0].summary.get("record_count")
+    return _source_bar_html(
+        source_name=source_name,
+        source_format="XLSX · 冻结案例",
+        record_count=record_count if isinstance(record_count, int) else None,
     )
+
+
+def build_custom_preprocessing_status_html(
+    stage: ProcessingStageView,
+    *,
+    entry: str,
+    source_name: str | None,
+    record_count: int | None,
+) -> str:
+    """Render custom preprocessing with the same visual vocabulary, from session state only."""
+
+    current_index = _OFFICIAL_STAGE_KEYS.index(stage.key)
+    nodes = "".join(
+        '<li class="mj-stage-node '
+        + ("is-complete" if index < current_index else "")
+        + (" is-current" if index == current_index else "")
+        + f'" data-stage-key="{key}"><span class="mj-stage-dot" aria-hidden="true">{index + 1}</span>'
+        + f"<strong>{label}</strong><small>{'完成' if index < current_index else ('当前' if index == current_index else '等待')}</small></li>"
+        for index, (key, label) in enumerate(
+            zip(_OFFICIAL_STAGE_KEYS, ("校验", "清洗", "拆分", "标注", "冻结"), strict=True)
+        )
+    )
+    source_bar = _source_bar_html(
+        source_name=source_name or "尚未导入自定义语料",
+        source_format=entry,
+        record_count=record_count,
+        custom=True,
+    )
+    reason = f"<p>{escape(stage.reason)}</p>" if stage.reason else ""
     return (
-        f'<section class="mj-stage-workbench" data-stage="{escape(stage.key)}">'
-        '<header class="mj-stage-workbench__header">'
-        '<span>当前步骤</span>'
-        f'<h2>{escape(stage.label)}</h2>'
-        "</header>"
-        '<div class="mj-stage-workbench__grid">'
-        '<article><small>输入</small>'
-        f'<p>{escape(stage.input_summary)}</p></article>'
-        '<article><small>处理动作</small>'
-        f'<p>{escape(stage.action_summary)}</p></article>'
-        '<article class="is-change"><small>发生变化</small>'
-        f'<p>{escape(stage.change_summary)}</p><ul>{metrics}</ul></article>'
-        '<article><small>阶段产出</small>'
-        f'<p>{escape(stage.output_summary)}</p></article>'
-        "</div></section>"
+        source_bar
+        + '<section class="mj-stage-track mj-stage-track--custom" aria-label="自定义数据处理进度"><ol>'
+        + nodes
+        + "</ol>"
+        + f'<div class="mj-custom-stage-note"><strong>当前 · {escape(stage.label)}</strong>{reason}</div></section>'
     )
+
+
+def build_stage_detail_html(stage: PreprocessingStageDetailView) -> str:
+    """Render each stage as its actual data relationship, not a generic four-card grid."""
+
+    metrics = _metric_values(stage)
+    header = (
+        f'<header class="mj-stage-workbench__header"><span>当前步骤</span>'
+        f"<h2>{escape(stage.label)}</h2></header>"
+    )
+    if stage.key == "validate":
+        body = (
+            '<div class="mj-validate-flow">'
+            f'<article class="mj-flow-input"><small>输入</small><p>{escape(stage.input_summary)}</p></article>'
+            '<i aria-hidden="true"></i>'
+            f'<article class="mj-flow-check"><small>检查</small><p>{escape(stage.action_summary)}</p>'
+            '<ul><li>字段合同</li><li>来源记录</li><li>稳定 ID</li></ul></article>'
+            '<i aria-hidden="true"></i>'
+            f'<article class="mj-flow-output"><small>输出</small><p>{escape(stage.output_summary)}</p>'
+            f'<b>{escape(metrics.get("原始语料", "—"))} 条</b></article></div>'
+        )
+    elif stage.key == "clean":
+        input_count = _first_count(stage.input_summary)
+        outputs = (("有效", "有效语料"), ("排除", "排除"), ("待复核", "待复核"))
+        output_html = "".join(
+            f'<article class="mj-clean-output mj-clean-output--{index + 1}" data-flow="out">'
+            f"<small>{label}</small><strong>{escape(metrics.get(metric, "—"))}</strong></article>"
+            for index, (label, metric) in enumerate(outputs)
+        )
+        actual_sum = sum(_metric_count(metrics.get(metric, "")) for _, metric in outputs)
+        conservation = (
+            f"守恒核验：{actual_sum} = {input_count}" if input_count is not None else "守恒核验待输入"
+        )
+        body = (
+            '<div class="mj-clean-flow"><article class="mj-clean-input" data-flow="in">'
+            f'<small>原始输入</small><strong>{input_count if input_count is not None else "—"}</strong>'
+            f"<p>{escape(stage.action_summary)}</p></article><div class=\"mj-clean-branch\">{output_html}</div>"
+            f'<p class="mj-conservation">{conservation}</p></div>'
+        )
+    elif stage.key == "split":
+        lanes = (("分析", "ANALYSIS"), ("校准", "GOLD"), ("挑战", "CHALLENGE_POOL"), ("留出", "HOLDOUT"))
+        lanes_html = "".join(
+            f'<article class="mj-split-lane"><span>{label}</span><i aria-hidden="true"></i>'
+            f'<strong>{escape(metrics.get(metric, "—"))}</strong><small>{metric}</small></article>'
+            for label, metric in lanes
+        )
+        body = (
+            '<div class="mj-split-flow"><header><small>共享起点</small>'
+            f"<strong>{escape(stage.input_summary)}</strong></header><div>{lanes_html}</div>"
+            f'<p>{escape(stage.change_summary)}</p></div>'
+        )
+    elif stage.key == "annotate":
+        metric_html = "".join(
+            f"<li><small>{escape(label)}</small><strong>{escape(value)}</strong></li>"
+            for label, value in stage.metrics
+        )
+        body = (
+            '<div class="mj-annotation-transform"><article class="mj-annotation-text">'
+            f'<small>输入文本</small><p>{escape(stage.input_summary)}</p></article><i aria-hidden="true"></i>'
+            '<article class="mj-annotation-fields"><small>字段结构 · 示意</small>'
+            '<div><span>路由</span><span>体验范围</span><span>证据等级</span><span>来源引用</span></div></article>'
+            f'<aside><p>{escape(stage.action_summary)}</p><ul>{metric_html}</ul></aside></div>'
+        )
+    elif stage.key == "freeze":
+        package_names = [item.strip() for item in metrics.get("正式包", "").split("·") if item.strip()]
+        packages = "".join(
+            f'<span class="mj-package-line">{escape(package)}</span>' for package in package_names
+        )
+        body = (
+            '<div class="mj-freeze-convergence"><div class="mj-freeze-packages">'
+            f"{packages}</div><i aria-hidden=\"true\"></i>"
+            '<article class="mj-freeze-node"><small>单次封存</small><strong>冻结</strong>'
+            '<span class="mj-freeze-seal" aria-label="正式封存">封存</span></article><i aria-hidden="true"></i>'
+            f'<article class="mj-freeze-output"><small>交接</small><p>{escape(stage.output_summary)}</p></article></div>'
+        )
+    else:
+        raise ValueError(f"未知预处理展示阶段：{stage.key}")
+    return f'<section class="mj-stage-workbench mj-stage-workbench--{escape(stage.key)}" data-stage="{escape(stage.key)}">{header}{body}</section>'
 
 
 def build_foundation_opportunities_html(
@@ -571,25 +716,21 @@ def build_foundation_opportunities_html(
 
     if len(opportunities) != 5:
         raise ValueError("冻结结果必须恰好包含五条基础机会")
-    cards: list[str] = []
+    rows: list[str] = []
     for item in opportunities:
-        cards.append(
-            '<article class="mj-opportunity-card">'
-            '<header>'
-            f'<span>基础机会 {item.original_rank:02d}</span>'
-            f'<strong>{item.original_score:.1f}</strong>'
-            "</header>"
+        rows.append(
+            '<article class="mj-opportunity-row">'
+            f'<span class="mj-opportunity-rank">{item.original_rank:02d}</span>'
             f'<h3>{escape(item.title)}</h3>'
+            f'<strong><small>原始分</small>{item.original_score:.1f}</strong>'
             '<section><small>核心洞察</small>'
             f'<p>{escape(item.argument)}</p></section>'
-            '<section><small>为什么值得验证</small>'
-            f'<p>{escape(_localized_foundation_evaluation(item))}</p></section>'
-            '<footer>'
-            f'<span>{escape(item.evidence_summary)}</span>'
-            f'<span>验证关注：{escape(item.validation_risk)}</span>'
-            "</footer></article>"
+            '<details><summary>查看原始论证与验证依据</summary>'
+            f'<p>{escape(_localized_foundation_evaluation(item))}</p>'
+            f'<p>{escape(item.evidence_summary)}；验证关注：{escape(item.validation_risk)}</p>'
+            "</details></article>"
         )
-    return '<section class="mj-opportunity-grid">' + "".join(cards) + "</section>"
+    return '<section class="mj-opportunity-ledger" aria-label="冻结基础机会名录">' + "".join(rows) + "</section>"
 
 
 def derive_processing_stage(state: Mapping[str, Any]) -> ProcessingStageView:
@@ -616,7 +757,12 @@ def derive_processing_stage(state: Mapping[str, Any]) -> ProcessingStageView:
     return ProcessingStageView("freeze", "ready", True, True, labels["freeze"])
 
 
-def apply_official_replay_action(state: MutableMapping[str, Any], action: str) -> None:
+def apply_official_replay_action(
+    state: MutableMapping[str, Any],
+    action: str,
+    *,
+    on_milestone: Callable[[], None] | None = None,
+) -> None:
     """Apply a replay control without touching any official artifact."""
 
     if action not in {"start", "pause", "skip", "replay"}:
@@ -638,6 +784,9 @@ def apply_official_replay_action(state: MutableMapping[str, Any], action: str) -
             state["preprocessing_replay_completed_steps"] = completed
             state["preprocessing_replay_step"] = min(current + 1, len(_OFFICIAL_STAGE_KEYS) - 1)
         state["preprocessing_replay_running"] = False
+
+    if on_milestone is not None:
+        on_milestone()
 
 
 def advance_official_replay(
@@ -1050,7 +1199,10 @@ def _render_demo(split_manifest_path: Path, prepared_root: Path) -> None:
     )
 
 
-def _render_official_replay(split_manifest_path: Path) -> None:
+def _render_official_replay(
+    split_manifest_path: Path,
+    on_milestone: Callable[[], None] | None = None,
+) -> None:
     stages = build_official_replay_stages(split_manifest_path.parent)
     project_root = split_manifest_path.parent.parents[2]
     validation_root = (
@@ -1061,50 +1213,85 @@ def _render_official_replay(split_manifest_path: Path) -> None:
         / "official-20260813-five-candidate-validation-002"
     )
     demo_view = load_preprocessing_demo(split_manifest_path.parent, validation_root)
-    state = st.session_state
+
+    st.markdown(build_case_data_intake_html(stages), unsafe_allow_html=True)
+    st.caption("只读官方运行回放：状态控制保存在当前会话，任何按钮都不会改写官方 JSON。")
+    if not all(stage.ready for stage in stages):
+        first_blocked = next(stage for stage in stages if not stage.ready)
+        st.warning(f"官方运行回放未完成：{first_blocked.label}阶段等待真实产物。{first_blocked.reason or ''}")
+
+    _official_replay_stage_flow(st.session_state, stages, demo_view, on_milestone)
+
+
+@st.fragment
+def _official_replay_stage_flow(
+    state: MutableMapping[str, Any],
+    stages: tuple[OfficialReplayStageView, ...],
+    demo_view: Any,
+    on_milestone: Callable[[], None] | None = None,
+) -> None:
+    """阶段轨道/控制/详情的局部回放：步进只重建此 fragment，页面外壳保持不动。"""
+
     current = min(
         max(int(state.get("preprocessing_replay_step", 0) or 0), 0),
         len(stages) - 1,
     )
     completed = set(state.get("preprocessing_replay_completed_steps") or [])
 
-    st.markdown(build_case_data_intake_html(), unsafe_allow_html=True)
-    st.caption("只读官方运行回放：状态控制保存在当前会话，任何按钮都不会改写官方 JSON。")
-    if not all(stage.ready for stage in stages):
-        first_blocked = next(stage for stage in stages if not stage.ready)
-        st.warning(f"官方运行回放未完成：{first_blocked.label}阶段等待真实产物。{first_blocked.reason or ''}")
-
     st.markdown(
         build_official_stage_track_html(
             stages,
             current_index=current,
-            completed_keys={str(item) for item in completed},
+            completed_keys={
+                stages[item].key
+                for item in completed
+                if isinstance(item, int) and 0 <= item < len(stages)
+            },
+            running=bool(state.get("preprocessing_replay_running", False)),
         ),
         unsafe_allow_html=True,
     )
     current_stage = stages[current]
+
+    st.markdown('<div class="mj-replay-controls">回放控制</div>', unsafe_allow_html=True)
+    controls = st.columns((1, 1, 1, 1, 6))
+    with controls[0]:
+        st.button(
+            "自动播放",
+            key="official_replay_start",
+            use_container_width=True,
+            on_click=apply_official_replay_action,
+            args=(state, "start"),
+            kwargs={"on_milestone": on_milestone},
+        )
+    with controls[1]:
+        st.button(
+            "暂停",
+            key="official_replay_pause",
+            use_container_width=True,
+            on_click=apply_official_replay_action,
+            args=(state, "pause"),
+            kwargs={"on_milestone": on_milestone},
+        )
+    with controls[2]:
+        st.button("下一步", key="official_replay_skip",
+            use_container_width=True,
+            on_click=apply_official_replay_action,
+            args=(state, "skip"),
+            kwargs={"on_milestone": on_milestone},
+        )
+    with controls[3]:
+        st.button("重播", key="official_replay_replay",
+            use_container_width=True,
+            on_click=apply_official_replay_action,
+            args=(state, "replay"),
+            kwargs={"on_milestone": on_milestone},
+        )
+
     st.markdown(
         build_stage_detail_html(demo_view.stages[current]),
         unsafe_allow_html=True,
     )
-
-    controls = st.columns(4)
-    with controls[0]:
-        if st.button("自动播放", key="official_replay_start", use_container_width=True):
-            apply_official_replay_action(state, "start")
-            st.rerun()
-    with controls[1]:
-        if st.button("暂停", key="official_replay_pause", use_container_width=True):
-            apply_official_replay_action(state, "pause")
-            st.rerun()
-    with controls[2]:
-        if st.button("下一变化", key="official_replay_skip", use_container_width=True):
-            apply_official_replay_action(state, "skip")
-            st.rerun()
-    with controls[3]:
-        if st.button("重播", key="official_replay_replay", use_container_width=True):
-            apply_official_replay_action(state, "replay")
-            st.rerun()
 
     if complete_official_replay(state, stages):
         st.success("官方运行回放已完成；正式数据已冻结，可进入下一工作区。")
@@ -1118,23 +1305,16 @@ def _render_official_replay(split_manifest_path: Path) -> None:
             state["active_workspace"] = Workspace.PRESSURE_TEST.value
             st.rerun()
 
-    with st.expander("高级操作", expanded=False):
-        st.caption("高级操作仅影响当前会话回放位置，不会重跑、覆盖或修改任何官方产物。")
-        if st.button("清除回放进度", key="official_replay_clear"):
-            state.pop("preprocessing_replay_step", None)
-            state.pop("preprocessing_replay_completed_steps", None)
-            state.pop("preprocessing_replay_running", None)
-
-    with st.expander("技术追溯", expanded=False):
-        st.caption("案例展示默认收起。正式包已通过只读校验，技术标识仅用于审计追踪。")
-        st.write(f"冻结组：{stages[-1].summary.get('group_id', '—')}")
+    render_scroll_continuity(f"preprocessing:{current}")
 
     if state.get("preprocessing_replay_running", False):
         time.sleep(stages[current].duration_ms / 1000)
         advance_official_replay(state, stages)
+        if on_milestone is not None:
+            on_milestone()
         if complete_official_replay(state, stages):
             state["preprocessing_replay_running"] = False
-        st.rerun()
+        st.rerun(scope="app")
 
 
 def _render_real() -> None:
@@ -1146,6 +1326,20 @@ def _render_real() -> None:
         ["Excel/CSV", "飞书多维表格"],
         horizontal=True,
         key="preprocessing_new_data_entry",
+    )
+    records = list(state.get("preprocessing_records") or [])
+    st.markdown(
+        build_custom_preprocessing_status_html(
+            derive_processing_stage(state),
+            entry=entry,
+            source_name=(
+                str(state.get("preprocessing_source_name"))
+                if state.get("preprocessing_source_name")
+                else None
+            ),
+            record_count=len(records) if records else None,
+        ),
+        unsafe_allow_html=True,
     )
     if entry == "Excel/CSV":
         st.markdown("#### 1. 导入原始语料")
@@ -1296,7 +1490,8 @@ def _render_real() -> None:
 
 
 def render_preprocessing_workspace(
-    *, split_manifest_path: Path, prepared_root: Path, mode: str | None = None
+    *, split_manifest_path: Path, prepared_root: Path, mode: str | None = None,
+    on_milestone: Callable[[], None] | None = None,
 ) -> None:
     st.markdown('<p class="hero-kicker">梅见 · 数据预处理工作台</p>', unsafe_allow_html=True)
     st.title("数据预处理")
@@ -1312,7 +1507,7 @@ def render_preprocessing_workspace(
     elif selected_mode not in PREPROCESSING_MODES:
         raise ValueError(f"未知预处理入口：{selected_mode}")
     if selected_mode == OFFICIAL_REPLAY_MODE:
-        _render_official_replay(split_manifest_path)
+        _render_official_replay(split_manifest_path, on_milestone)
     else:
         _render_real()
 
