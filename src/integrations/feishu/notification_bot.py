@@ -94,7 +94,7 @@ def handle_query(
     if session is None:
         return CallbackResult(
             toast_type="warning",
-            toast_content="当前没有活动演示会话。",
+            toast_content="当前没有活动连接。",
         )
 
     jobs = store.jobs_for_session(session.session_id)

@@ -12,6 +12,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+tests/.tmp_runs/
 .coverage*
 htmlcov/
 
@@ -22,7 +23,17 @@ outputs/
 *.log
 *.sqlite
 *.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
 *.db
+*.db-wal
+*.db-shm
+
+# Local agent planning and learning notes
+docs/superpowers/
+lessons.md
 
 # IDE and operating-system metadata
 .vscode/

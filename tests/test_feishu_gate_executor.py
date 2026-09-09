@@ -13,7 +13,13 @@ from src.integrations.feishu.gate_executor import (
     DecisionGateExecutor,
     GateExecutionError,
 )
+from src.integrations.feishu.notification_store import NotificationStore
 from src.integrations.feishu.writeback_store import WritebackStore
+from src.integrations.feishu.writeback_targets import (
+    DYNAMIC_RESULTS_FIELDS,
+    DYNAMIC_RUN_LOG_FIELDS,
+    WritebackTarget,
+)
 from src.schemas import CandidateSelection, FinalCandidateSelection
 from src.services.prepared_corpus import sha256_bytes
 
@@ -119,6 +125,7 @@ def _executor(
     coordinator,
     store,
     writeback_store,
+    notification_store=None,
 ) -> tuple[DecisionGateExecutor, FakeMessageClient]:
     client = FakeMessageClient()
     executor = DecisionGateExecutor(
@@ -127,6 +134,7 @@ def _executor(
         chat_id="oc_demo",
         writeback_store=writeback_store,
         coordinator_factory=lambda root, run_id: (coordinator, store),
+        notification_store=notification_store,
     )
     return executor, client
 
@@ -151,6 +159,49 @@ def test_submit_selection_success_enqueues_log_and_sends_card(tmp_path):
     assert len(client.cards) == 1
     _chat_id, card, _uuid = client.cards[0]
     assert "完成" in card["header"]["title"]["content"]
+
+
+def test_dynamic_connection_routes_gate_rows_to_bound_tables(tmp_path):
+    job = _make_job(tmp_path, action="RUN_NEXT_RELEASE", payload={})
+    coordinator = FakeCoordinator(stage="CHECKPOINT_00")
+    store = FakeStageStore(tmp_path, {"checkpoint_01": _checkpoint()})
+    writeback = WritebackStore(tmp_path / "wb.sqlite3")
+    notification_store = NotificationStore(tmp_path / "notifications.sqlite3")
+    targets = {
+        key: WritebackTarget(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=(
+                DYNAMIC_RUN_LOG_FIELDS if key == "RUN_LOG" else DYNAMIC_RESULTS_FIELDS
+            ),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+    notification_store.create_session(
+        "run-1",
+        created_by="streamlit-local",
+        session_id="demo-a",
+        created_at="2026-09-09T08:30:00+00:00",
+        writeback_targets=targets,
+    )
+    executor, _client = _executor(
+        tmp_path,
+        coordinator,
+        store,
+        writeback,
+        notification_store=notification_store,
+    )
+
+    executor(job)
+
+    jobs = writeback.jobs_for_demo_run("demo-a")
+    assert len(jobs) == 3
+    assert {item.target_table_id for item in jobs if item.table_key == "RUN_LOG"} == {
+        "tbl_run_log"
+    }
+    assert all("demo_run_id" in item.payload_json for item in jobs)
 
 
 def test_run_next_release_projects_checkpoint_rows(tmp_path):

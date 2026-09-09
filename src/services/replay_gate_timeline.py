@@ -307,7 +307,7 @@ def apply_action(
         raise ReplayTimelineError("时间戳必须带时区")
     if milestone_cursor is None:
         raise ReplayTimelineError(
-            "当前没有活动演示会话：请先在网页端「开始新的案例会话」，再推进决策门。"
+            "当前没有活动连接：请先在网页端「连接助手」，再推进决策门。"
         )
     if not isinstance(milestone_cursor, int) or isinstance(milestone_cursor, bool) or not 0 <= milestone_cursor <= 8:
         raise ReplayTimelineError("演示进度游标无效")

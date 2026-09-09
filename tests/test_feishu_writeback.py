@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from threading import Lock
+import time
+from types import SimpleNamespace
 
 import pytest
 
 from src.integrations.feishu.writeback_store import WritebackStore, writeback_uuid
 from src.integrations.feishu.writeback_targets import (
+    DYNAMIC_RESULTS_FIELDS,
+    DYNAMIC_RUN_LOG_FIELDS,
+    WritebackProvisioningError,
+    provision_demo_writeback_targets,
     inventory_writeback_target,
     inventory_writeback_targets,
 )
@@ -25,16 +32,22 @@ RESULTS_FIELDS = [
 
 
 class FakeBitableClient:
-    def __init__(self, *, fields=None, fail_calls=0):
+    def __init__(self, *, fields=None, fail_calls=0, fail_table_call=None):
         self.field_map = fields or {}
         self.fail_calls = fail_calls
+        self.fail_table_call = fail_table_call
         self.created: list[tuple[str, str, dict]] = []
+        self.updated: list[tuple[str, str, str, dict]] = []
+        self.created_tables: list[tuple[str, str, list[dict]]] = []
+        self.table_attempts = 0
+        self.resolve_calls = 0
         self._next = 1
 
     def get_fields(self, app_token: str, table_id: str):
         return self.field_map[(app_token, table_id)]
 
     def resolve_wiki_app_token(self, wiki_token: str) -> str:
+        self.resolve_calls += 1
         return "app_from_wiki"
 
     def create_record(self, app_token: str, table_id: str, fields: dict) -> str:
@@ -45,6 +58,19 @@ class FakeBitableClient:
         record_id = f"rec_{self._next}"
         self._next += 1
         return record_id
+
+    def update_record(
+        self, app_token: str, table_id: str, record_id: str, fields: dict
+    ) -> str:
+        self.updated.append((app_token, table_id, record_id, dict(fields)))
+        return record_id
+
+    def create_table(self, app_token: str, name: str, fields: list[dict]) -> str:
+        self.table_attempts += 1
+        if self.table_attempts == self.fail_table_call:
+            raise RuntimeError("table creation failed")
+        self.created_tables.append((app_token, name, list(fields)))
+        return f"tbl_new_{len(self.created_tables)}"
 
 
 class FakeClock:
@@ -250,6 +276,29 @@ def test_inventory_targets_skips_unconfigured_urls():
     ) == {}
 
 
+def test_writeback_store_accepts_reload_like_target(tmp_path):
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    target = SimpleNamespace(
+        table_key="RUN_LOG",
+        app_token="app_demo",
+        table_id="tbl_demo",
+        field_names=("run_id", "demo_run_id"),
+        table_url="https://demo.feishu.cn/base/app_demo?table=tbl_demo",
+    )
+
+    job = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields={"run_id": "run-1", "demo_run_id": "demo-a"},
+        demo_run_id="demo-a",
+        event_key="progress:current:log",
+        target=target,
+    )
+
+    assert job.target_table_id == "tbl_demo"
+
+
 # ---------- WritebackWorker ----------
 
 
@@ -345,3 +394,319 @@ def test_worker_requires_at_least_one_target(tmp_path):
 
     with pytest.raises(ValueError):
         WritebackWorker(store, FakeBitableClient(), {}, clock=FakeClock())
+
+
+def test_dynamic_connection_creates_two_tables_in_the_same_base():
+    client = FakeBitableClient()
+
+    targets = provision_demo_writeback_targets(
+        client,
+        run_log_url=_base_url(),
+        results_url="https://demo.feishu.cn/base/app_demo?table=tbl_results&view=vew_old",
+        demo_run_id="demo-12345678",
+        started_at="2026-09-09T08:30:00+00:00",
+    )
+
+    assert set(targets) == {"RUN_LOG", "RESULTS"}
+    assert [item[0] for item in client.created_tables] == ["app_demo", "app_demo"]
+    assert client.created_tables[0][1].endswith("-日志")
+    assert client.created_tables[1][1].endswith("-结果")
+    assert {field["field_name"] for field in client.created_tables[0][2]} == set(
+        DYNAMIC_RUN_LOG_FIELDS
+    )
+    assert {field["field_name"] for field in client.created_tables[1][2]} == set(
+        DYNAMIC_RESULTS_FIELDS
+    )
+    assert targets["RUN_LOG"].table_id == "tbl_new_1"
+    assert targets["RUN_LOG"].table_url.endswith("table=tbl_new_1")
+    assert targets["RESULTS"].table_url.endswith("table=tbl_new_2")
+    assert "view=" not in targets["RUN_LOG"].table_url
+
+
+def test_dynamic_connection_creates_both_tables_concurrently():
+    class TimedClient(FakeBitableClient):
+        def __init__(self):
+            super().__init__()
+            self._active = 0
+            self._lock = Lock()
+            self.max_active = 0
+
+        def create_table(self, app_token: str, name: str, fields: list[dict]) -> str:
+            with self._lock:
+                self._active += 1
+                self.max_active = max(self.max_active, self._active)
+            try:
+                time.sleep(0.05)
+                return super().create_table(app_token, name, fields)
+            finally:
+                with self._lock:
+                    self._active -= 1
+
+    client = TimedClient()
+
+    provision_demo_writeback_targets(
+        client,
+        run_log_url=_base_url(),
+        results_url="https://demo.feishu.cn/base/app_demo?table=tbl_results",
+        demo_run_id="demo-12345678",
+        started_at="2026-09-09T08:30:00+00:00",
+    )
+
+    assert client.max_active == 2
+
+
+def test_dynamic_connection_resolves_a_shared_wiki_base_once():
+    client = FakeBitableClient()
+
+    provision_demo_writeback_targets(
+        client,
+        run_log_url=_wiki_url(),
+        results_url="https://demo.feishu.cn/wiki/wiki_demo?table=tbl_results",
+        demo_run_id="demo-12345678",
+        started_at="2026-09-09T08:30:00+00:00",
+    )
+
+    assert client.resolve_calls == 1
+
+
+def test_dynamic_connection_rejects_different_bases():
+    client = FakeBitableClient()
+
+    with pytest.raises(ValueError, match="同一个飞书 Base"):
+        provision_demo_writeback_targets(
+            client,
+            run_log_url=_base_url(),
+            results_url="https://demo.feishu.cn/base/app_other?table=tbl_results",
+            demo_run_id="demo-12345678",
+            started_at="2026-09-09T08:30:00+00:00",
+        )
+
+
+def test_dynamic_connection_reports_partial_table_without_activating_it():
+    client = FakeBitableClient(fail_table_call=2)
+
+    with pytest.raises(WritebackProvisioningError, match="未激活"):
+        provision_demo_writeback_targets(
+            client,
+            run_log_url=_base_url(),
+            results_url="https://demo.feishu.cn/base/app_demo?table=tbl_results",
+            demo_run_id="demo-12345678",
+            started_at="2026-09-09T08:30:00+00:00",
+        )
+
+    assert len(client.created_tables) == 1
+
+
+def test_dynamic_jobs_bind_session_target_and_event_key(tmp_path):
+    from src.integrations.feishu.writeback_targets import WritebackTarget
+
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    target_a = WritebackTarget(
+        table_key="RUN_LOG",
+        app_token="app_a",
+        table_id="tbl_a",
+        field_names=tuple(DYNAMIC_RUN_LOG_FIELDS),
+        table_url="https://demo.feishu.cn/base/app_a?table=tbl_a",
+    )
+    target_b = WritebackTarget(
+        table_key="RUN_LOG",
+        app_token="app_b",
+        table_id="tbl_b",
+        field_names=tuple(DYNAMIC_RUN_LOG_FIELDS),
+        table_url="https://demo.feishu.cn/base/app_b?table=tbl_b",
+    )
+    fields_a = {
+        "run_id": "run-1",
+        "demo_run_id": "demo-a",
+        "action": "MILESTONE",
+        "actor_open_id": "streamlit-local",
+        "summary": "节点 1",
+        "demo_started_at": "2026-09-09T08:30:00+00:00",
+        "created_at": "2026-09-09T08:30:01+00:00",
+    }
+    fields_b = dict(fields_a, demo_run_id="demo-b")
+
+    first = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=fields_a,
+        demo_run_id="demo-a",
+        event_key="milestone:1:log",
+        target=target_a,
+    )
+    duplicate = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=fields_a,
+        demo_run_id="demo-a",
+        event_key="milestone:1:log",
+        target=target_a,
+    )
+    second = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=fields_b,
+        demo_run_id="demo-b",
+        event_key="milestone:1:log",
+        target=target_b,
+    )
+
+    assert duplicate.job_id == first.job_id
+    assert second.job_id != first.job_id
+    assert first.target_table_id == "tbl_a"
+    assert second.target_table_id == "tbl_b"
+
+
+def test_dynamic_event_overwrite_reuses_the_existing_feishu_record(tmp_path):
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    client = FakeBitableClient()
+    target = _targets()["RUN_LOG"]
+    first_fields = dict(
+        _sample_fields(),
+        demo_run_id="demo-a",
+        demo_started_at="2026-09-09T08:30:00+00:00",
+    )
+    first = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=first_fields,
+        demo_run_id="demo-a",
+        event_key="progress:current:log",
+        target=target,
+    )
+    worker = WritebackWorker(store, client, _targets(), clock=FakeClock())
+
+    assert worker.run_once() is True
+    wrote = store.get_job(first.job_id)
+    assert wrote.status == "WROTE"
+    assert wrote.record_id == "rec_1"
+
+    latest = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=dict(first_fields, summary="当前进度已更新"),
+        demo_run_id="demo-a",
+        event_key="progress:current:log",
+        target=target,
+    )
+
+    assert latest.job_id == first.job_id
+    assert latest.status == "PENDING"
+    assert latest.record_id == "rec_1"
+    assert worker.run_once() is True
+    assert client.updated == [
+        (
+            "app_demo",
+            "tbl_demo",
+            "rec_1",
+            dict(first_fields, summary="当前进度已更新"),
+        )
+    ]
+
+
+def test_worker_records_real_completion_feedback_for_dynamic_job(tmp_path):
+    from src.integrations.feishu.writeback_targets import WritebackTarget
+
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    target = WritebackTarget(
+        table_key="RUN_LOG",
+        app_token="app_demo",
+        table_id="tbl_demo",
+        field_names=tuple(DYNAMIC_RUN_LOG_FIELDS),
+        table_url="https://demo.feishu.cn/base/app_demo?table=tbl_demo",
+    )
+    worker = WritebackWorker(
+        store,
+        FakeBitableClient(),
+        {"RUN_LOG": target},
+        clock=FakeClock(),
+    )
+    job = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields={
+            "run_id": "run-1",
+            "demo_run_id": "demo-a",
+            "action": "MILESTONE",
+            "actor_open_id": "streamlit-local",
+            "summary": "节点 1",
+            "demo_started_at": "2026-09-09T08:30:00+00:00",
+            "created_at": "2026-09-09T08:30:01+00:00",
+        },
+        demo_run_id="demo-a",
+        event_key="milestone:1:log",
+        target=target,
+    )
+
+    assert worker.run_once() is True
+    assert [item.job_id for item in store.pending_feedback_jobs()] == [job.job_id]
+    store.mark_feedback_sent(job.job_id)
+    assert store.pending_feedback_jobs() == []
+
+
+def test_feedback_loop_reports_actual_write_and_can_retry_failure(tmp_path):
+    from tools.run_feishu_bot import (
+        WritebackFeedbackLoop,
+        handle_writeback_retry_action,
+    )
+    from src.integrations.feishu.writeback_targets import WritebackTarget
+
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    target = WritebackTarget(
+        table_key="RUN_LOG",
+        app_token="app_demo",
+        table_id="tbl_demo",
+        field_names=tuple(DYNAMIC_RUN_LOG_FIELDS),
+        table_url="https://demo.feishu.cn/base/app_demo?table=tbl_demo",
+    )
+    job = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields={
+            "run_id": "run-1",
+            "demo_run_id": "demo-a",
+            "action": "MILESTONE",
+            "actor_open_id": "streamlit-local",
+            "summary": "节点 1",
+            "demo_started_at": "2026-09-09T08:30:00+00:00",
+            "created_at": "2026-09-09T08:30:01+00:00",
+        },
+        demo_run_id="demo-a",
+        event_key="milestone:1:log",
+        target=target,
+    )
+    store.claim_next_writeback(datetime(2026, 9, 9, 8, 30, tzinfo=timezone.utc))
+    store.mark_failed(job.job_id, error="连接超时")
+    store.enqueue_terminal_feedback(job.job_id)
+
+    class FakeCardClient:
+        def __init__(self) -> None:
+            self.cards = []
+
+        def send_card(self, chat_id, card, *, uuid):
+            self.cards.append((chat_id, card, uuid))
+            return "message-1"
+
+    client = FakeCardClient()
+    WritebackFeedbackLoop(store, client, "oc_demo")._tick()
+
+    assert len(client.cards) == 1
+    card = client.cards[0][1]
+    assert "0/1" in str(card)
+    assert "tbl_demo" in str(card)
+    assert "WRITEBACK_RETRY" in str(card)
+    retry = handle_writeback_retry_action(
+        {"type": "WRITEBACK_RETRY", "job_id": job.job_id},
+        operator_open_id="ou_operator",
+        allowed_operator_ids={"ou_operator"},
+        store=store,
+    )
+    assert retry.toast_type == "success"
+    assert store.get_job(job.job_id).status == "PENDING"

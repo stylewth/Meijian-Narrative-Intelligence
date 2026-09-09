@@ -34,7 +34,7 @@ from src.integrations.feishu.notification_bot import (
     handle_query,
     handle_replay_action,
 )
-from src.integrations.feishu.notification_cards import validate_card
+from src.integrations.feishu.notification_cards import _button, validate_card
 from src.integrations.feishu.notification_store import NotificationStore
 from src.integrations.feishu.notification_worker import NotificationWorker
 from src.integrations.feishu.streamlit_url import (
@@ -239,6 +239,7 @@ def load_bot_config(
 
 
 DECISION_STATUS_COMMANDS = frozenset({"决策进度"})
+WRITEBACK_RETRY_ACTION_TYPE = "WRITEBACK_RETRY"
 _RUN_ID_PATTERN = re.compile(r"^[^/\\]+$")
 
 
@@ -428,7 +429,18 @@ def build_event_handler(
     def _on_card_action_inner(event: Any) -> Any:
         event_dict = _event_to_mapping(event, lark)
         payload = _extract_card_action_payload(event_dict)
-        if isinstance(payload, Mapping) and payload.get("type") == DECISION_GATE_ACTION_TYPE:
+        if isinstance(payload, Mapping) and payload.get("type") == WRITEBACK_RETRY_ACTION_TYPE:
+            result = handle_writeback_retry_action(
+                payload,
+                operator_open_id=_extract_operator_open_id(event_dict),
+                allowed_operator_ids=config.operator_open_ids,
+                store=(
+                    WritebackStore(config.writeback_db)
+                    if config.writeback_db is not None
+                    else None
+                ),
+            )
+        elif isinstance(payload, Mapping) and payload.get("type") == DECISION_GATE_ACTION_TYPE:
             result = handle_decision_gate_action(
                 payload,
                 operator_open_id=_extract_operator_open_id(event_dict),
@@ -505,7 +517,12 @@ def _build_runtime(
             if config.writeback_db is not None and writeback_worker is not None
             else None
         )
-        gate_executor = _build_gate_executor(config, client, writeback_store_for_gates)
+        gate_executor = _build_gate_executor(
+            config,
+            client,
+            writeback_store_for_gates,
+            notification_store=store,
+        )
     handler = build_event_handler(
         config,
         lark=lark,
@@ -519,7 +536,11 @@ def _build_runtime(
 
 
 def _build_gate_executor(
-    config: BotConfig, client: Any, writeback_store: Any
+    config: BotConfig,
+    client: Any,
+    writeback_store: Any,
+    *,
+    notification_store: NotificationStore | None = None,
 ) -> Any | None:
     """决策门执行器仅在配置了 run 根目录后启用；LLM 栈延迟导入。"""
 
@@ -534,6 +555,7 @@ def _build_gate_executor(
         chat_id=config.demo_chat_id,
         writeback_store=writeback_store,
         coordinator_factory=build_gate_coordinator,
+        notification_store=notification_store,
     )
 
 
@@ -673,6 +695,113 @@ class ReplayFeedbackLoop:
         return ("mj-fb-" + hashlib.sha256(raw).hexdigest())[:48]
 
 
+class WritebackFeedbackLoop:
+    """把真实写入结果送回飞书，并为最终失败任务提供重试按钮。"""
+
+    def __init__(self, store: WritebackStore, client: Any, chat_id: str) -> None:
+        self._store = store
+        self._client = client
+        self._chat_id = chat_id
+
+    def run_forever(self, stop_event: Any) -> None:
+        from threading import Event
+
+        if not isinstance(stop_event, Event):
+            raise TypeError("stop_event must be a threading.Event")
+        while not stop_event.is_set():
+            try:
+                self._tick()
+            except Exception:
+                traceback.print_exc()
+                print("[worker] feishu-writeback-feedback tick failed; printed above", flush=True)
+            stop_event.wait(0.6)
+
+    def _tick(self) -> None:
+        for job in self._store.pending_feedback_jobs():
+            jobs = self._store.jobs_for_demo_run(job.demo_run_id or "")
+            wrote = sum(item.status == "WROTE" for item in jobs)
+            total = len(jobs)
+            table_label = "日志表" if job.table_key == "RUN_LOG" else "结果表"
+            if job.status == "WROTE":
+                title = "飞书写回完成"
+                template = "turquoise"
+                status_line = f"本轮实际已写入：{wrote}/{total} 条"
+            else:
+                title = "飞书写回失败"
+                template = "red"
+                status_line = f"本轮实际已写入：{wrote}/{total} 条；当前记录失败"
+            content = (
+                f"demo_run_id：{job.demo_run_id}\n"
+                f"当前记录：{table_label} · {job.record_kind}\n"
+                f"{status_line}"
+            )
+            if job.last_error:
+                content += f"\n原因：{job.last_error}"
+            if job.target_table_url:
+                content += f"\n[打开{table_label}]({job.target_table_url})"
+            elements: list[dict[str, Any]] = [
+                {
+                    "tag": "div",
+                    "element_id": f"wb_result_{job.job_id}",
+                    "text": {"tag": "lark_md", "content": content},
+                }
+            ]
+            if job.status == "FAILED":
+                elements.append(
+                    _button(
+                        f"wb_retry_{job.job_id}",
+                        "重试写回",
+                        {"type": WRITEBACK_RETRY_ACTION_TYPE, "job_id": job.job_id},
+                        button_type="primary",
+                    )
+                )
+            card = {
+                "schema": "2.0",
+                "config": {
+                    "update_multi": True,
+                    "summary": {"content": title},
+                },
+                "header": {
+                    "title": {"tag": "plain_text", "content": title},
+                    "template": template,
+                },
+                "body": {"elements": elements},
+            }
+            validate_card(card)
+            self._client.send_card(
+                self._chat_id,
+                card,
+                uuid=self._uuid(job.job_id, job.status),
+            )
+            self._store.mark_feedback_sent(job.job_id)
+
+    @staticmethod
+    def _uuid(job_id: int, status: str) -> str:
+        raw = f"writeback:{job_id}:{status}".encode("utf-8")
+        return ("mj-wb-fb-" + hashlib.sha256(raw).hexdigest())[:48]
+
+
+def handle_writeback_retry_action(
+    payload: Mapping[str, Any],
+    *,
+    operator_open_id: str,
+    allowed_operator_ids: set[str] | frozenset[str],
+    store: WritebackStore | None,
+) -> CallbackResult:
+    if operator_open_id not in allowed_operator_ids:
+        return CallbackResult(toast_type="warning", toast_content="你没有权限重试写回。")
+    job_id = payload.get("job_id") if isinstance(payload, Mapping) else None
+    if not isinstance(job_id, int) or isinstance(job_id, bool):
+        return CallbackResult(toast_type="error", toast_content="写回任务编号无效。")
+    if store is None:
+        return CallbackResult(toast_type="error", toast_content="写回未启用。")
+    try:
+        store.retry_failed(job_id)
+    except (KeyError, ValueError) as exc:
+        return CallbackResult(toast_type="warning", toast_content=str(exc))
+    return CallbackResult(toast_type="success", toast_content="已重新排队写回任务。")
+
+
 def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     lark = _import_lark_oapi() if lark is None else lark
     event_handler, worker, writeback_worker, gate_executor, gate_store = _build_runtime(config, lark=lark)
@@ -702,6 +831,16 @@ def run_runtime(config: BotConfig, *, lark: Any | None = None) -> None:
     extra_threads: list[tuple[str, Any]] = []
     if writeback_worker is not None:
         extra_threads.append(("feishu-writeback-worker", writeback_worker))
+        extra_threads.append(
+            (
+                "feishu-writeback-feedback",
+                WritebackFeedbackLoop(
+                    WritebackStore(config.writeback_db),
+                    FeishuMessageClient(config.app_id, config.app_secret),
+                    config.demo_chat_id,
+                ),
+            )
+        )
     if config.gate_mode == "replay":
         extra_threads.append(
             (
@@ -973,8 +1112,8 @@ def _reply_help(client: Any, source_message_id: str, chat_id: Any, *, content: s
         client,
         source_message_id,
         chat_id,
-        title="梅见演示机器人",
-        content=content or "支持的命令：远程操控（远端单步推进网页演示）、决策进度",
+        title="梅见助手",
+        content=content or "支持的命令：远程操控（远端单步推进网页）、决策进度",
         summary="帮助",
     )
 
@@ -1017,8 +1156,8 @@ def _reply_decision_status(
         session = progress_store.active_session()
         if session is None:
             content = (
-                "当前没有活动演示会话：请先在网页端「开始新的案例会话」。\n"
-                "会话开始后，可用叙事卡片「下一步」远端单步推进网页演示，"
+                "当前没有活动连接：请先在网页端「连接助手」。\n"
+                "连接后，可用叙事卡片「下一步」远端单步推进网页，"
                 "每步都会推送反馈卡片。"
             )
         else:

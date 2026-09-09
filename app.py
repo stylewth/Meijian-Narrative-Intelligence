@@ -8,6 +8,7 @@ import streamlit as st
 from dotenv import dotenv_values
 
 from src.integrations.feishu.notification_store import NotificationStore
+from src.integrations.feishu.writeback_store import WritebackStore
 from src.services.demo_notifications import build_demo_notification_snapshots
 from src.services.evolution_presentation import load_official_evolution_run
 from src.services.preprocessing_demo_presentation import load_preprocessing_demo
@@ -21,6 +22,7 @@ from src.ui import (
     render_system_gateway,
 )
 from src.ui.demo_notification_control import (
+    initialize_feishu_page_connection,
     render_demo_notification_control,
     render_remote_command_listener,
     sync_evolution_notifications,
@@ -71,6 +73,9 @@ RUNTIME_CONFIGURATION_KEYS = tuple(
             *REQUIRED_CONFIG_KEYS,
             "STREAMLIT_PUBLIC_URL",
             "FEISHU_WIKI_URL",
+            "FEISHU_RUNLOG_URL",
+            "FEISHU_RESULTS_URL",
+            "FEISHU_WRITEBACK_DB",
             "LLM_API_KEY",
             "LLM_MODEL",
         )
@@ -119,6 +124,22 @@ def _demo_notification_store() -> NotificationStore | None:
     return NotificationStore(config.notification_db)
 
 
+@st.cache_resource
+def _demo_writeback_store() -> WritebackStore | None:
+    values = _runtime_configuration()
+    try:
+        config = load_bot_config(values, workspace_root=ROOT)
+    except (TypeError, ValueError):
+        return None
+    if (
+        config.writeback_db is None
+        or config.writeback_run_log_url is None
+        or config.writeback_results_url is None
+    ):
+        return None
+    return WritebackStore(config.writeback_db)
+
+
 @st.cache_data
 def _demo_notification_snapshots() -> tuple[Any, ...]:
     return build_demo_notification_snapshots(
@@ -139,9 +160,11 @@ st.markdown(f"<style>{build_theme_css()}</style>", unsafe_allow_html=True)
 st.markdown(f"<style>{build_polish_css()}</style>", unsafe_allow_html=True)
 
 notification_store = _demo_notification_store()
+writeback_store = _demo_writeback_store()
 entry = render_system_gateway(st.session_state, streamlit_module=st)
 if entry is None:
     st.stop()
+initialize_feishu_page_connection(st.session_state, notification_store)
 
 st.markdown(
     build_system_rail_html(st.session_state.get("active_workspace", "数据预处理")),
@@ -164,23 +187,47 @@ data_status = (
     )
 )
 header_columns = st.columns([7.4, 2, 1.2])
-with header_columns[0]:
+
+
+@st.fragment(run_every="1s")
+def _render_header_status() -> None:
+    """Poll only the compact status label; do not rebuild the popover."""
+
     st.markdown(
         build_system_header_html(
             entry=entry,
             data_status=data_status,
-            feishu_status=feishu_connection_status(configuration, notification_store),
+            feishu_status=feishu_connection_status(
+                configuration,
+                notification_store,
+                page_connected=(
+                    isinstance(
+                        st.session_state.get("demo_notification_session_id"), str
+                    )
+                    and bool(
+                        st.session_state.get(
+                            "demo_notification_session_id", ""
+                        ).strip()
+                    )
+                ),
+            ),
         ),
         unsafe_allow_html=True,
     )
+
+
+with header_columns[0]:
+    _render_header_status()
 with header_columns[1]:
-    with st.popover("飞书机器人助手", use_container_width=True):
+    with st.popover("飞书助手", use_container_width=True):
         render_demo_notification_control(
             st.session_state,
             store=notification_store,
             source_run_id=DEMO_NOTIFICATION_SOURCE_RUN_ID,
             configuration=configuration,
             workspace_root=ROOT,
+            writeback_store=writeback_store,
+            snapshots=_demo_notification_snapshots(),
         )
 with header_columns[2]:
     if st.button("切换入口", key="system-entry-reset"):
@@ -205,12 +252,14 @@ if active_workspace is Workspace.PREPROCESSING:
             st.session_state,
             notification_store,
             _demo_notification_snapshots(),
+            writeback_store=writeback_store,
         ),
     )
     sync_preprocessing_notification(
         st.session_state,
         notification_store,
         _demo_notification_snapshots(),
+        writeback_store=writeback_store,
     )
     st.stop()
 
@@ -229,12 +278,14 @@ if active_workspace is Workspace.STRESS_TEST:
                 st.session_state,
                 notification_store,
                 _demo_notification_snapshots(),
+                writeback_store=writeback_store,
             ),
         )
         sync_pressure_notifications(
             st.session_state,
             notification_store,
             _demo_notification_snapshots(),
+            writeback_store=writeback_store,
         )
     st.stop()
 
@@ -252,11 +303,13 @@ if active_workspace is Workspace.REALTIME_DECISION:
                 st.session_state,
                 notification_store,
                 _demo_notification_snapshots(),
+                writeback_store=writeback_store,
             ),
         )
         sync_evolution_notifications(
             st.session_state,
             notification_store,
             _demo_notification_snapshots(),
+            writeback_store=writeback_store,
         )
     st.stop()

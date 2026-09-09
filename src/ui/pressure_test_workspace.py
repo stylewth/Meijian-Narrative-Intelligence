@@ -229,23 +229,44 @@ def render_pressure_test_workspace(
     run = load_pressure_test_run(validation_root, selection_path)
     cards = build_candidate_cards(run)
     st.markdown(f"<style>{build_theme_css()}{_pressure_test_css()}</style>", unsafe_allow_html=True)
-    st.markdown(
-        "<section class='pressure-hero'><span>MEIJIAN · VALIDATION THEATRE</span>"
-        "<h1>叙事压力测试</h1><p>五条候选同台接受证据、反证、竞品、产品与鲁棒性检查。"
-        "双 Agent 对话、HOLDOUT 与真人盲评均回放冻结结果。</p>"
-        "<small>官方冻结案例 · 只读回放</small></section>",
-        unsafe_allow_html=True,
-    )
-    _render_pressure_flow(run, cards, on_milestone)
+    transition_requested = False
+
+    def request_workspace_exit() -> None:
+        nonlocal transition_requested
+        transition_requested = True
+
+    pressure_surface = st.empty()
+    with pressure_surface.container():
+        st.markdown(
+            "<section class='pressure-hero'><span>MEIJIAN · VALIDATION THEATRE</span>"
+            "<h1>叙事压力测试</h1><p>五条候选同台接受证据、反证、竞品、产品与鲁棒性检查。"
+            "双 Agent 对话、HOLDOUT 与真人盲评均回放冻结结果。</p>"
+            "<small>官方冻结案例 · 只读回放</small></section>",
+            unsafe_allow_html=True,
+        )
+        _render_pressure_flow(
+            run,
+            cards,
+            on_milestone,
+            on_workspace_exit=request_workspace_exit,
+        )
+    if transition_requested:
+        # The placeholder is cleared only after its container context closes;
+        # clearing it from the nested button handler creates an invalid setIn
+        # delta in Streamlit and leaves the browser in a grey error state.
+        pressure_surface.empty()
+        if on_milestone is not None:
+            on_milestone()
+        st.rerun(scope="app")
 
 
-@st.fragment
 def _render_pressure_flow(
     run: Any,
     cards: Any,
     on_milestone: Callable[[], None] | None = None,
+    on_workspace_exit: Callable[[], None] | None = None,
 ) -> None:
-    """候选/阶段/回放交互体：局部重跑，hero 与页面外壳保持不动。"""
+    """候选/阶段/回放交互体：使用完整页面重跑，避免跨页面残留旧 DOM。"""
 
     st = _get_streamlit()
     candidate_id = _selected_candidate_id(st, cards)
@@ -268,7 +289,12 @@ def _render_pressure_flow(
         elif section == "holdout":
             _render_holdout(st, run, cards)
         elif section == "terminal":
-            _render_terminal(st, run, on_milestone=on_milestone)
+            _render_terminal(
+                st,
+                run,
+                on_milestone=on_milestone,
+                on_workspace_exit=on_workspace_exit,
+            )
     render_scroll_continuity(f"pressure:{current_stage}")
 
 
@@ -728,6 +754,7 @@ def _render_terminal(
     run: PressureRunView,
     *,
     on_milestone: Callable[[], None] | None = None,
+    on_workspace_exit: Callable[[], None] | None = None,
 ) -> None:
     summary = terminal_summary(run)
     st.markdown("## 阶段 5 · 真人盲评 5→3")
@@ -750,10 +777,13 @@ def _render_terminal(
     if st.button("团队确认 5→3", key="pressure_team_confirm"):
         st.session_state["pressure_team_confirmed"] = True
         complete_workspace(st.session_state, Workspace.PRESSURE_TEST)
-        if on_milestone is not None:
-            on_milestone()
         activate_workspace(st.session_state, Workspace.REALTIME_DECISION)
-        st.rerun()
+        if on_workspace_exit is not None:
+            on_workspace_exit()
+        else:
+            if on_milestone is not None:
+                on_milestone()
+            st.rerun(scope="app")
     if confirmed:
         st.success("团队已确认；实时决策看板已解锁。")
 

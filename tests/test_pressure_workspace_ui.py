@@ -175,6 +175,7 @@ def test_terminal_connects_five_to_three_and_preserves_action_keys() -> None:
     assert "pressure-terminal-register" in source
     assert 'key="pressure_blind_reveal"' in source
     assert 'key="pressure_team_confirm"' in terminal_source
+    assert 'st.rerun(scope="app")' in terminal_source
     assert 'key="pressure_enter_realtime"' not in terminal_source
     assert 'key="pressure_team_confirm"' not in revision_source
     assert 'key="pressure_enter_realtime"' not in revision_source
@@ -196,6 +197,33 @@ def test_team_confirmation_completes_pressure_test_and_activates_realtime_in_one
     assert stub.session_state["active_workspace"] == "实时决策看板"
     assert stub.rerun_calls == [()]
     assert "进入实时决策看板" not in stub.button_calls
+
+
+def test_team_confirmation_defers_sync_when_page_exit_is_pending() -> None:
+    module = __import__("src.ui.pressure_test_workspace", fromlist=["*"])
+    stub = _TerminalStreamlitStub()
+    events: list[str] = []
+
+    module._render_terminal(
+        stub,
+        _run(),
+        on_workspace_exit=lambda: events.append("request-page-exit"),
+        on_milestone=lambda: events.append("sync-feishu"),
+    )
+
+    assert events == ["request-page-exit"]
+    assert stub.rerun_calls == []
+
+
+def test_pressure_surface_is_cleared_only_after_its_container_closes() -> None:
+    module = __import__("src.ui.pressure_test_workspace", fromlist=["*"])
+    source = inspect.getsource(module.render_pressure_test_workspace)
+    assert source.index("with pressure_surface.container():") < source.index(
+        "pressure_surface.empty()"
+    )
+    assert source.index("pressure_surface.empty()") < source.index(
+        "if on_milestone is not None:"
+    )
 
 
 def test_team_confirmation_enqueues_node_3_via_milestone_callback(tmp_path: Path) -> None:

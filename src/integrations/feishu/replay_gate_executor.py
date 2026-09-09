@@ -35,7 +35,8 @@ from .decision_gates import (
 from src.services.replay_gate_timeline import gate_milestone_binding
 from .gate_executor import _ZERO_ARG_GATES, GateExecutionError
 from .notification_cards import _button, _button_elements, _text_element, validate_card
-from .result_projection import run_log_fields
+from .result_projection import add_demo_context, run_log_fields
+from .run_scoped_writeback import active_writeback_context
 from .writeback_store import WritebackStore
 
 
@@ -49,7 +50,7 @@ def replay_gate_elements(
 ) -> list[dict]:
     """当前回放阶段的门按钮；参数化门从冻结产物生成真按钮。
 
-    传入演示游标时，未解锁到对应里程碑的门不显示，避免剧透后续内容。
+    传入当前进度游标时，未解锁到对应里程碑的门不显示，避免提前展示后续内容。
     """
 
     if run_id != timeline.run_id:
@@ -127,7 +128,7 @@ def replay_gate_elements(
         elements.append(
             _text_element(
                 f"{prefix}_locked_hint",
-                "尚未解锁：" + "、".join(locked) + "；请先推进网页演示或用「下一步」远端推进。",
+                "尚未解锁：" + "、".join(locked) + "；请先推进网页进度或用「下一步」远端推进。",
             )
         )
     return elements
@@ -213,7 +214,7 @@ class ReplayGateExecutor:
         save_replay_state(self._state_path, outcome.state)
 
     def _demo_cursor(self) -> int | None:
-        """当前演示会话已同步的最大节点；没有会话返回 None。"""
+        """当前连接已同步的最大节点；没有连接返回 None。"""
 
         if self._notification_store is None:
             return None
@@ -244,22 +245,57 @@ class ReplayGateExecutor:
         if self._writeback_store is None:
             return 0
         count = 0
+        context = active_writeback_context(self._notification_store)
         log_fields = run_log_fields(
             job.run_id,
             action=job.gate_action,
             actor_open_id=job.requested_by,
             summary=summary,
+            demo_run_id=context.demo_run_id if context else None,
+            demo_started_at=context.demo_started_at if context else None,
         )
+        log_kwargs: dict[str, Any] = {}
+        if context is not None:
+            log_kwargs = {
+                "demo_run_id": context.demo_run_id,
+                "event_key": f"gate:{job.job_id}:{job.gate_action}:log",
+                "target": context.targets["RUN_LOG"],
+            }
         self._writeback_store.enqueue(
-            job.run_id, table_key="RUN_LOG", record_kind="RUN_LOG", fields=log_fields
+            job.run_id,
+            table_key="RUN_LOG",
+            record_kind="RUN_LOG",
+            fields=log_fields,
+            **log_kwargs,
         )
         count += 1
         for row in outcome.result_rows:
+            record_kind = str(row["record_kind"])
+            fields = (
+                add_demo_context(
+                    row,
+                    demo_run_id=context.demo_run_id,
+                    demo_started_at=context.demo_started_at,
+                )
+                if context is not None
+                else dict(row)
+            )
+            result_kwargs: dict[str, Any] = {}
+            if context is not None:
+                result_kwargs = {
+                    "demo_run_id": context.demo_run_id,
+                    "event_key": (
+                        f"gate:{job.job_id}:{job.gate_action}:"
+                        f"{record_kind}:{row['record_key']}"
+                    ),
+                    "target": context.targets["RESULTS"],
+                }
             self._writeback_store.enqueue(
                 job.run_id,
                 table_key="RESULTS",
-                record_kind=str(row["record_kind"]),
-                fields=dict(row),
+                record_kind=record_kind,
+                fields=fields,
+                **result_kwargs,
             )
             count += 1
         return count
@@ -287,7 +323,7 @@ class ReplayGateExecutor:
         if summary:
             lines.append(summary)
         if success and self._writeback_store is not None:
-            lines.append(f"写回入队：{written} 条")
+            lines.append(f"已生成写回任务：{written} 条，等待实际写入结果")
         elements = [
             {
                 "tag": "div",

@@ -34,6 +34,12 @@ _REALTIME_SESSION_KEYS = (
     "evolution_finale_act",
     "evolution_finale_auto_reveal",
 )
+_PRESSURE_SESSION_KEYS = (
+    "pressure_candidate_id",
+    "pressure_stage",
+    "pressure_blind_revealed",
+)
+_PRESSURE_SESSION_PREFIXES = ("pressure_replay_", "pressure_check_open_")
 
 
 def _as_workspace(value: Workspace | str) -> Workspace:
@@ -99,6 +105,11 @@ def activate_workspace(
     if target is Workspace.REALTIME_DECISION and current is not target:
         for key in _REALTIME_SESSION_KEYS:
             state.pop(key, None)
+        for key in _PRESSURE_SESSION_KEYS:
+            state.pop(key, None)
+        for key in tuple(state):
+            if isinstance(key, str) and key.startswith(_PRESSURE_SESSION_PREFIXES):
+                state.pop(key, None)
     state["active_workspace"] = target.value
     return target
 

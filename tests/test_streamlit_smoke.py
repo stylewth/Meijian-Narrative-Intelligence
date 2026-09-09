@@ -2,16 +2,24 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
 from src.integrations.feishu.notification_store import NotificationStore
+from src.integrations.feishu.writeback_store import WritebackStore
+from src.integrations.feishu.writeback_targets import (
+    DYNAMIC_RESULTS_FIELDS,
+    DYNAMIC_RUN_LOG_FIELDS,
+    WritebackTarget,
+)
 from src.services.demo_notifications import DemoNotificationNode, build_demo_notification_snapshots
 from src.services.evolution_presentation import load_official_evolution_run
 from src.services.preprocessing_demo_presentation import load_preprocessing_demo
 from src.services.pressure_test_presentation import load_pressure_test_run
 from src.ui import (
+    demo_notification_control,
     preprocessing_workspace,
     pressure_test_workspace,
     realtime_decision_dashboard,
@@ -36,6 +44,7 @@ from src.ui.system_gateway import (
     build_system_header_html,
     render_system_gateway,
 )
+from src.ui.workspace_shell import Workspace, activate_workspace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,7 +113,7 @@ def test_public_custom_entry_exposes_local_only_credentials_state() -> None:
 
     assert not app.exception
     assert "在线 AI 仅在本地配置后可用" in visible_text(app)
-    local_feishu = button(app, "开始新的案例会话")
+    local_feishu = button(app, "连接助手")
     assert local_feishu.disabled is True
 
 
@@ -139,7 +148,11 @@ def test_preprocessing_next_step_advances_inside_fragment_without_exception() ->
     assert app.session_state["preprocessing_replay_completed_steps"] == [0]
 
 
-def test_pressure_next_stage_advances_inside_fragment_without_exception() -> None:
+def test_pressure_next_stage_advances_without_a_stale_fragment_boundary() -> None:
+    module = __import__("src.ui.pressure_test_workspace", fromlist=["*"])
+    source = inspect.getsource(module)
+    assert "@st.fragment\ndef _render_pressure_flow" not in source
+
     app = AppTest.from_file(APP_PATH).run(timeout=10)
     app.session_state.system_entry = "梅见案例展示"
     app.session_state.active_workspace = "叙事压力测试"
@@ -150,6 +163,137 @@ def test_pressure_next_stage_advances_inside_fragment_without_exception() -> Non
 
     assert not app.exception
     assert app.session_state["pressure_stage"] == "基础压力检查"
+
+
+def test_pressure_completion_replaces_old_fragment_before_realtime_dashboard() -> None:
+    app = AppTest.from_file(APP_PATH).run(timeout=10)
+    app.session_state.system_entry = "梅见案例展示"
+    app.session_state.active_workspace = "叙事压力测试"
+    app.session_state.completed_workspaces = ["数据预处理"]
+    app.session_state.pressure_stage = "真人盲评 5→3"
+    app.session_state.pressure_blind_revealed = True
+    app.run(timeout=10)
+
+    button(app, "团队确认 5→3").click().run(timeout=10)
+
+    assert not app.exception
+    assert app.session_state["active_workspace"] == "实时决策看板"
+    text = visible_text(app)
+    assert "实时叙事演化看板" in text
+    assert "完整匿名原话" not in text
+    assert "团队交接" not in text
+    assert "问卷选项偏好" not in text
+
+
+def test_connected_feishu_page_enters_realtime_without_pressure_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """已连接状态下切换看板不能留下压力测试片段内容。"""
+
+    import shutil
+    import streamlit as st
+
+    workspace_tmp = ROOT / "tests" / ".tmp_runs" / "connected_feishu_page"
+    workspace_tmp.mkdir(parents=True, exist_ok=True)
+    notification_path = workspace_tmp / "notifications.sqlite3"
+    writeback_path = workspace_tmp / "writeback.sqlite3"
+    monkeypatch.setenv("FEISHU_APP_ID", "app_demo")
+    monkeypatch.setenv("FEISHU_APP_SECRET", "app_secret")
+    monkeypatch.setenv("FEISHU_DEMO_CHAT_ID", "chat_demo")
+    monkeypatch.setenv("FEISHU_BOT_OPEN_ID", "ou_demo")
+    monkeypatch.setenv("FEISHU_OPERATOR_OPEN_IDS", "ou_demo")
+    monkeypatch.setenv(
+        "FEISHU_NOTIFICATION_DB",
+        str(notification_path.relative_to(ROOT)),
+    )
+    monkeypatch.setenv(
+        "FEISHU_WRITEBACK_DB",
+        str(writeback_path.relative_to(ROOT)),
+    )
+    monkeypatch.setenv(
+        "FEISHU_RUNLOG_URL",
+        "https://demo.feishu.cn/base/app_demo?table=tbl_log",
+    )
+    monkeypatch.setenv(
+        "FEISHU_RESULTS_URL",
+        "https://demo.feishu.cn/base/app_demo?table=tbl_results",
+    )
+
+    targets = {
+        key: WritebackTarget(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=(
+                DYNAMIC_RUN_LOG_FIELDS if key == "RUN_LOG" else DYNAMIC_RESULTS_FIELDS
+            ),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+    store = NotificationStore(notification_path)
+
+    try:
+        st.cache_resource.clear()
+        st.cache_data.clear()
+        app = AppTest.from_file(APP_PATH).run(timeout=10)
+        store.create_session(
+            "official-20260814-three-opportunity-evolution-001",
+            created_by="streamlit-local",
+            session_id="connected-page",
+            created_at="2026-09-10T00:00:00+00:00",
+            connected_at="2026-09-10T00:00:02+00:00",
+            writeback_targets=targets,
+        )
+        app.session_state.system_entry = "梅见案例展示"
+        app.session_state.active_workspace = "叙事压力测试"
+        app.session_state.completed_workspaces = ["数据预处理"]
+        app.session_state.pressure_stage = "真人盲评 5→3"
+        app.session_state.pressure_blind_revealed = True
+        app.session_state["feishu_page_connection_initialized"] = True
+        app.session_state["demo_notification_session_id"] = "connected-page"
+        app.run(timeout=10)
+
+        assert "飞书启动时间：2026-09-10 08:00:00" in visible_text(app)
+        button(app, "团队确认 5→3").click().run(timeout=10)
+
+        assert not app.exception
+        assert app.session_state["active_workspace"] == "实时决策看板"
+        text = visible_text(app)
+        assert "完整匿名原话" not in text
+        assert "团队交接" not in text
+        assert "问卷选项偏好" not in text
+    finally:
+        st.cache_resource.clear()
+        st.cache_data.clear()
+        if workspace_tmp.exists():
+            shutil.rmtree(workspace_tmp)
+
+
+def test_entering_realtime_clears_pressure_presentation_state() -> None:
+    state = {
+        "active_workspace": Workspace.STRESS_TEST.value,
+        "completed_workspaces": ["数据预处理", Workspace.STRESS_TEST.value],
+        "pressure_candidate_id": "candidate-1",
+        "pressure_stage": "真人盲评 5→3",
+        "pressure_blind_revealed": True,
+        "pressure_team_confirmed": True,
+        "pressure_replay_candidate-1": {"index": 2, "running": False},
+        "pressure_check_open_candidate-1": "EVIDENCE_COVERAGE",
+    }
+
+    activate_workspace(state, Workspace.REALTIME_DECISION)
+
+    assert state["active_workspace"] == Workspace.REALTIME_DECISION.value
+    assert state["pressure_team_confirmed"] is True
+    assert not any(
+        key == "pressure_candidate_id"
+        or key == "pressure_stage"
+        or key == "pressure_blind_revealed"
+        or key.startswith("pressure_replay_")
+        or key.startswith("pressure_check_open_")
+        for key in state
+    )
 
 
 def test_preprocessing_final_step_enqueues_node_1_via_milestone_callback(tmp_path: Path) -> None:
@@ -177,6 +321,130 @@ def test_preprocessing_final_step_enqueues_node_1_via_milestone_callback(tmp_pat
 
     jobs = store.jobs_for_session(session.session_id)
     assert [job.node_key for job in jobs] == [DemoNotificationNode.PREPROCESSING_COMPLETE.value]
+
+
+def test_preprocessing_milestone_enqueues_run_scoped_writeback_rows(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    errors: list[str] = []
+    monkeypatch.setattr(
+        demo_notification_control,
+        '_get_streamlit',
+        lambda _st: SimpleNamespace(error=errors.append),
+    )
+    store = NotificationStore(tmp_path / "notifications.sqlite3")
+    writeback = WritebackStore(tmp_path / "writeback.sqlite3")
+    targets = {
+        key: WritebackTarget(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=(
+                DYNAMIC_RUN_LOG_FIELDS if key == "RUN_LOG" else DYNAMIC_RESULTS_FIELDS
+            ),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+    session = store.create_session(
+        "official-20260814-three-opportunity-evolution-001",
+        created_by="streamlit-local",
+        session_id="demo-a",
+        created_at="2026-09-09T08:30:00+00:00",
+        writeback_targets=targets,
+    )
+    snapshots = build_demo_notification_snapshots(
+        load_preprocessing_demo(SCREENED_ROOT, VALIDATION_ROOT),
+        load_pressure_test_run(
+            VALIDATION_ROOT,
+            EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
+        ),
+        load_official_evolution_run(EVOLUTION_ROOT),
+    )
+
+    sync_preprocessing_notification(
+        {
+            "preprocessing_replay_completed_steps": [0, 1, 2, 3, 4],
+        },
+        store,
+        snapshots,
+        writeback_store=writeback,
+    )
+    sync_preprocessing_notification(
+        {
+            "preprocessing_replay_completed_steps": [0, 1, 2, 3, 4],
+        },
+        store,
+        snapshots,
+        writeback_store=writeback,
+    )
+
+    jobs = writeback.jobs_for_demo_run(session.session_id)
+    assert errors == []
+    assert len(jobs) == 2
+    assert {job.event_key for job in jobs} == {
+        "milestone:PREPROCESSING_COMPLETE:log",
+        "milestone:PREPROCESSING_COMPLETE:result",
+    }
+
+
+def test_connection_backfills_current_progress_without_replaying_old_notifications(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    errors: list[str] = []
+    monkeypatch.setattr(
+        demo_notification_control,
+        "_get_streamlit",
+        lambda _st: SimpleNamespace(error=errors.append),
+    )
+    store = NotificationStore(tmp_path / "notifications.sqlite3")
+    writeback = WritebackStore(tmp_path / "writeback.sqlite3")
+    targets = {
+        key: WritebackTarget(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=(
+                DYNAMIC_RUN_LOG_FIELDS if key == "RUN_LOG" else DYNAMIC_RESULTS_FIELDS
+            ),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+    session = store.create_session(
+        "official-20260814-three-opportunity-evolution-001",
+        created_by="streamlit-local",
+        session_id="demo-a",
+        created_at="2026-09-09T08:30:00+00:00",
+        writeback_targets=targets,
+    )
+    snapshots = build_demo_notification_snapshots(
+        load_preprocessing_demo(SCREENED_ROOT, VALIDATION_ROOT),
+        load_pressure_test_run(
+            VALIDATION_ROOT,
+            EVOLUTION_ROOT / "blind" / "selection_confirmation.json",
+        ),
+        load_official_evolution_run(EVOLUTION_ROOT),
+    )
+
+    demo_notification_control._sync_current_progress(
+        {"preprocessing_replay_completed_steps": [0, 1, 2, 3, 4]},
+        store,
+        snapshots,
+        writeback_store=writeback,
+    )
+
+    jobs = writeback.jobs_for_demo_run(session.session_id)
+    assert errors == []
+    assert len(jobs) == 3
+    assert {job.event_key for job in jobs} == {
+        "progress:current:log",
+        "milestone:PREPROCESSING_COMPLETE:log",
+        "milestone:PREPROCESSING_COMPLETE:result",
+    }
+    assert store.jobs_for_session(session.session_id) == []
 
 
 def test_preprocessing_html_uses_the_five_stage_processing_language() -> None:
@@ -215,11 +483,30 @@ def test_shared_feishu_control_uses_a_dismissible_popover() -> None:
 
     polish_css = build_polish_css()
 
-    assert 'with st.popover("飞书机器人助手"' in APP_SOURCE
-    assert 'with st.expander("飞书机器人助手"' not in APP_SOURCE
+    assert 'with st.popover("飞书助手"' in APP_SOURCE
+    assert 'with st.expander("飞书助手"' not in APP_SOURCE
     assert '[data-testid="stPopover"]' in polish_css
     assert '[data-testid="stPopoverBody"]' in polish_css
     assert '.mj-system-header) [data-testid="stExpander"]' not in polish_css
+
+
+def test_header_polling_fragment_does_not_own_feishu_popover() -> None:
+    """顶部状态轮询不能反复重建飞书弹层，避免连接后留下旧内容。"""
+
+    fragment_start = APP_SOURCE.index('@st.fragment(run_every="1s")')
+    fragment_end = APP_SOURCE.index('with header_columns[0]:', fragment_start)
+    polling_fragment_source = APP_SOURCE[fragment_start:fragment_end]
+
+    assert "st.popover" not in polling_fragment_source
+    assert "use_connection_fragment=False" not in APP_SOURCE
+
+
+def test_runtime_configuration_passes_writeback_settings_to_streamlit() -> None:
+    """网页端必须把写回模板和写回库配置传给连接助手。"""
+
+    assert '"FEISHU_RUNLOG_URL"' in APP_SOURCE
+    assert '"FEISHU_RESULTS_URL"' in APP_SOURCE
+    assert '"FEISHU_WRITEBACK_DB"' in APP_SOURCE
 
 
 def test_gateway_home_and_header_fit_the_safe_visual_contract() -> None:
@@ -314,10 +601,16 @@ def test_preprocessing_track_stacks_labels_below_the_rail() -> None:
     assert "grid-template-rows:1.2rem auto auto" in polish_css
     assert "justify-items:center" in polish_css
     assert "row-gap:" in polish_css
-    assert ".mj-stage-dot{position:relative;z-index:2;grid-row:1" in polish_css
+    assert ".mj-stage-dot{position:relative;z-index:2;box-sizing:border-box;grid-row:1" in polish_css
     assert ".mj-stage-node strong{grid-row:2" in polish_css
     assert ".mj-stage-node small{grid-row:3" in polish_css
     assert ".mj-stage-node:not(:last-child)::after" not in polish_css
+    assert ".mj-stage-connector{position:relative;height:5px;margin:0 .4rem;" in polish_css
+    assert 'font-family:STZhongsong,"华文中宋",serif;font-size:.92rem;' in polish_css
+    assert ".mj-stage-node small{grid-row:3;grid-column:1;font-size:.68rem;" in polish_css
+    assert "box-shadow:0 0 0 .22rem #F6F5F2" in polish_css
+    assert ".mj-stage-node.is-current .mj-stage-dot{border:1px solid var(--mj-polish-wine);box-shadow:0 0 0 .22rem #F6F5F2,0 0 0 .32rem rgba(143,47,77,.1)" in polish_css
+    assert ".mj-stage-connector{margin:0 .18rem}" in polish_css
 
 
 def test_preprocessing_motion_is_stage_specific_and_reduced_motion_safe() -> None:

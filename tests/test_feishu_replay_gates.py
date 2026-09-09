@@ -316,7 +316,7 @@ def test_bot_config_replay_requires_manifest(tmp_path: Path, monkeypatch: pytest
 def test_gate_requires_milestone(run_root: Path) -> None:
     timeline = load_replay_timeline(run_root)
     state = initial_replay_state(RUN_ID)
-    with pytest.raises(ReplayTimelineError, match="没有活动演示会话"):
+    with pytest.raises(ReplayTimelineError, match="没有活动连接"):
         apply_action(timeline, state, "SUBMIT_SELECTION", {}, requested_by=OPERATOR, now=NOW)
     with pytest.raises(ReplayTimelineError, match="演示尚未推进"):
         apply_action(

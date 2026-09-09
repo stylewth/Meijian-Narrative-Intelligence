@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sqlite3
 from types import SimpleNamespace
 
 import pytest
@@ -20,6 +21,8 @@ from src.integrations.feishu.message_client import (
     REQUEST_TIMEOUT,
     FeishuMessageClient,
 )
+from src.integrations.feishu.notification_store import NotificationStore
+from src.integrations.feishu.writeback_targets import WritebackTarget
 from src.integrations.feishu.notification_worker import RETRY_DELAYS_SECONDS
 from src.llm_client import LLMClient
 from src.prompt_loader import (
@@ -50,9 +53,11 @@ class FakeSession:
     def __init__(self, responses: list[dict]) -> None:
         self._responses = list(responses)
         self.requested_urls: list[str] = []
+        self.requests: list[tuple[str, str, dict]] = []
 
     def request(self, method: str, url: str, **kwargs) -> FakeResponse:
         self.requested_urls.append(url)
+        self.requests.append((method, url, kwargs))
         return FakeResponse(self._responses.pop(0))
 
     @property
@@ -135,6 +140,53 @@ def test_bitable_client_raises_when_token_still_invalid() -> None:
         client.get_tables("app-token")
 
 
+def test_bitable_client_creates_table_with_text_fields() -> None:
+    session = FakeSession(
+        [
+            _auth_payload("t-1"),
+            {"code": 0, "data": {"table_id": "tbl_new"}},
+        ]
+    )
+    client = FeishuBitableClient("app-id", "app-secret", session=session)
+
+    table_id = client.create_table(
+        "app-token",
+        "梅见-连接-20260909-0830-ABCD1234-日志",
+        [{"field_name": "run_id", "type": 1}],
+    )
+
+    assert table_id == "tbl_new"
+    method, url, kwargs = session.requests[-1]
+    assert method == "POST"
+    assert url.endswith("/bitable/v1/apps/app-token/tables")
+    assert kwargs["json"]["table"]["fields"] == [{"field_name": "run_id", "type": 1}]
+
+
+def test_bitable_client_updates_an_existing_record() -> None:
+    session = FakeSession(
+        [
+            _auth_payload("t-1"),
+            {"code": 0, "data": {"record": {"record_id": "rec_existing"}}},
+        ]
+    )
+    client = FeishuBitableClient("app-id", "app-secret", session=session)
+
+    record_id = client.update_record(
+        "app-token",
+        "tbl-demo",
+        "rec_existing",
+        {"summary": "当前进度已更新"},
+    )
+
+    assert record_id == "rec_existing"
+    method, url, kwargs = session.requests[-1]
+    assert method == "PUT"
+    assert url.endswith(
+        "/bitable/v1/apps/app-token/tables/tbl-demo/records/rec_existing"
+    )
+    assert kwargs["json"] == {"fields": {"summary": "当前进度已更新"}}
+
+
 def test_message_client_refreshes_token_and_retries_once() -> None:
     session = FakeSession(
         [
@@ -165,6 +217,93 @@ def test_load_bot_config_creates_missing_parent_directory(tmp_path: Path) -> Non
 
     assert config.notification_db.parent.is_dir()
     assert config.notification_db == (tmp_path / "outputs/sub/notifications.sqlite3").resolve()
+
+
+def test_notification_store_persists_run_scoped_writeback_targets(tmp_path: Path) -> None:
+    store = NotificationStore(tmp_path / "notifications.sqlite3")
+    targets = {
+        key: WritebackTarget(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=("run_id", "demo_run_id"),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+
+    session = store.create_session(
+        "run-source",
+        created_by="streamlit-local",
+        session_id="demo-1",
+        created_at="2026-09-09T08:30:00+00:00",
+        connected_at="2026-09-09T08:30:03+00:00",
+        writeback_targets=targets,
+    )
+
+    assert session.session_id == "demo-1"
+    assert session.created_at == "2026-09-09T08:30:00+00:00"
+    assert session.connected_at == "2026-09-09T08:30:03+00:00"
+    assert store.writeback_targets_for_session("demo-1") == targets
+    assert store.active_writeback_targets() == targets
+
+
+def test_notification_store_normalizes_reload_like_writeback_targets(
+    tmp_path: Path,
+) -> None:
+    store = NotificationStore(tmp_path / "notifications.sqlite3")
+    targets = {
+        key: SimpleNamespace(
+            table_key=key,
+            app_token="app_demo",
+            table_id=f"tbl_{key.lower()}",
+            field_names=("run_id", "demo_run_id"),
+            table_url=f"https://demo.feishu.cn/base/app_demo?table=tbl_{key.lower()}",
+        )
+        for key in ("RUN_LOG", "RESULTS")
+    }
+
+    store.create_session(
+        "run-source",
+        created_by="streamlit-local",
+        session_id="reload-like",
+        writeback_targets=targets,
+    )
+
+    persisted = store.writeback_targets_for_session("reload-like")
+    assert all(isinstance(target, WritebackTarget) for target in persisted.values())
+    assert persisted["RUN_LOG"].table_id == "tbl_run_log"
+
+
+def test_notification_store_migrates_connected_at_column(tmp_path: Path) -> None:
+    database_path = tmp_path / "legacy-notifications.sqlite3"
+    connection = sqlite3.connect(database_path)
+    connection.execute(
+        "CREATE TABLE demo_sessions ("
+        "session_id TEXT PRIMARY KEY,"
+        "source_run_id TEXT NOT NULL,"
+        "created_by TEXT NOT NULL,"
+        "created_at TEXT NOT NULL,"
+        "status TEXT NOT NULL)"
+    )
+    connection.commit()
+    connection.close()
+
+    store = NotificationStore(database_path)
+    with sqlite3.connect(database_path) as verify:
+        columns = {
+            row[1]
+            for row in verify.execute("PRAGMA table_info(demo_sessions)")
+        }
+
+    assert "connected_at" in columns
+    session = store.create_session(
+        "run-source",
+        created_by="streamlit-local",
+        created_at="2026-09-09T08:30:00+00:00",
+        connected_at="2026-09-09T08:30:03+00:00",
+    )
+    assert session.connected_at == "2026-09-09T08:30:03+00:00"
 
 
 class _DemoOutput(BaseModel):

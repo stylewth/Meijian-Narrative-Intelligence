@@ -13,7 +13,7 @@
 | 功能 | 说明 |
 |---|---|
 | 全新决策工作台 | 统一数据预处理、叙事压力测试与实时决策看板的视觉语言、阶段导航和滚动体验；完整保留冻结案例与自定义真实推理链路。 |
-| 飞书远程操控 | 在飞书发送 `远程操控` 获取交互卡片，可用「下一步」远端单步推进网页演示，网页与飞书进度保持同步。 |
+| 飞书远程操控 | 在飞书发送 `远程操控` 获取交互卡片，可用「下一步」远端单步推进网页，网页与飞书进度保持同步。 |
 | 决策里程碑通知 | 数据冻结、压力测试、真人盲评、五轮增量演化与最终方向等 8 个关键节点会推送可追溯卡片。 |
 | 飞书决策门 | 选线、HOLDOUT、冻结、终选与换主叙事等操作通过卡片确认；操作人、阶段和候选参数均经过校验。 |
 | 多维表格接入 | 自定义链路可只读导入飞书多维表格；配置写回目标后，可把运行日志与结构化结果追加到指定表格。 |
@@ -32,15 +32,15 @@
 
 ### 叙事压力测试
 
-![pressure](assets\pressure-test.png)
+![pressure](assets/pressure-test.png)
 
 #### AI自主对话推动叙事演进
 
-![](assets\agent evolution.png)
+![](assets/agent evolution.png)
 
 #### 盲评
 
-![](assets\real review.png)
+![](assets/real review.png)
 
 ### 实时看板
 
@@ -83,7 +83,7 @@ Copy-Item .env.example .env
 | 配置 | 用途 |
 |---|---|
 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` | 自建应用身份与鉴权；密钥只保存在本机。 |
-| `FEISHU_DEMO_CHAT_ID` | 接收演示节点通知和结果卡片的会话。 |
+| `FEISHU_DEMO_CHAT_ID` | 接收阶段通知和结果卡片的会话。 |
 | `FEISHU_BOT_OPEN_ID` | 机器人自身 Open ID，用于忽略自身消息并校验群聊 @。 |
 | `FEISHU_OPERATOR_OPEN_IDS` | 允许点击控制卡片的人员 Open ID，多个值用英文逗号分隔。 |
 | `FEISHU_NOTIFICATION_DB` | 本地通知队列数据库，路径必须位于仓库内。 |
@@ -96,7 +96,7 @@ Copy-Item .env.example .env
 | `FEISHU_WIKI_URL` | 卡片中的飞书知识库入口；未配置时回到网页。 |
 | `FEISHU_DECISION_RUN_ROOT` | coordinator 的 run 根目录，或 replay 模式下的官方演化 run 目录。 |
 | `FEISHU_GATE_MODE` | `coordinator` 执行正式决策 run；`replay` 零模型回放冻结产物，两种模式互斥。 |
-| `FEISHU_RUNLOG_URL` / `FEISHU_RESULTS_URL` | 两张多维表格完整链接，用于追加写回运行日志与结构化结果。 |
+| `FEISHU_RUNLOG_URL` / `FEISHU_RESULTS_URL` | 同一个 Base 内两张模板表的完整链接；点击网页端“连接助手”后，会在同一 Base 创建本轮两张空白写回表，并回填当前网页进度，模板表和旧写回表保留。 |
 
 配置完成后，在两个 PowerShell 窗口分别启动网页与机器人：
 
@@ -116,11 +116,11 @@ python tools/run_feishu_bot.py
 | `决策进度` | 返回网页进度和决策阶段，不提前剧透后续结果；启用决策门时同时给出当前可执行操作。 |
 | 其他文本 | 返回机器人帮助与支持命令。 |
 
-私聊可直接发送命令；群聊必须先 @ 机器人。网页端先进入“梅见案例展示”并开始会话，飞书远程卡片才会绑定到当前演示。网页推进数据冻结、5→3 与增量演化时会自动同步对应里程碑通知。
+私聊可直接发送命令；群聊必须先 @ 机器人。网页端确认“连接助手”后，飞书远程卡片才会绑定到当前连接。网页推进数据冻结、5→3 与增量演化时会自动同步对应里程碑通知。
 
 决策门卡片会校验操作人白名单、当前阶段和候选参数，再进入本地单飞队列；选线类操作必须由人明确确认候选 ID，机器人不会自动选线。`replay` 模式只读取官方冻结产物且零模型调用，所有结果会标注“冻结回放”；`coordinator` 模式沿用正式 CLI 构建合同，LLM 门失败不会自动重试。
 
-如配置多维表格写回，机器人启动时会先只读检查字段合同：运行日志表需包含 `run_id, action, actor_open_id, summary, created_at`，结果表需包含 `run_id, record_kind, record_key, content, created_at`；字段缺失时会直接拒绝启动写回。run 创建、盲测素材冻结、入围组合和审查结果导入仍由本地 CLI 完成。
+如配置多维表格写回，机器人启动时会先只读检查模板表字段合同：运行日志模板需包含 `run_id, action, actor_open_id, summary, created_at`，结果模板需包含 `run_id, record_kind, record_key, content, created_at`；字段缺失时会直接拒绝启动写回。网页端确认连接后创建的新表会额外带上 `demo_run_id, demo_started_at`，每条任务绑定具体 table_id；连接完成后当前网页进度会回填到新表，网页不会整页刷新；同一 `demo_run_id/event_key` 的内容变化更新原行，不重复创建。旧表不会被清空。run 创建、盲测素材冻结、入围组合和审查结果导入仍由本地 CLI 完成。
 
 ## 自由链路（自定义使用 · 本地真实推理）
 

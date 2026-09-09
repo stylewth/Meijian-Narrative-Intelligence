@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Mapping
 
 from src.schemas import (
     CandidateDecisionSnapshot,
@@ -27,6 +27,9 @@ def run_log_fields(
     action: str,
     actor_open_id: str,
     summary: str,
+    demo_run_id: str | None = None,
+    demo_started_at: str | None = None,
+    created_at: str | None = None,
 ) -> dict[str, str]:
     """一条运行/决策日志的字段记录。"""
 
@@ -38,13 +41,89 @@ def run_log_fields(
     ):
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{name} must be non-empty")
-    return {
-        "run_id": run_id,
-        "action": action,
-        "actor_open_id": actor_open_id,
-        "summary": summary,
-        "created_at": _utc_now_iso(),
-    }
+    if created_at is not None and (
+        not isinstance(created_at, str) or not created_at.strip()
+    ):
+        raise ValueError("created_at must be non-empty")
+    return add_demo_context(
+        {
+            "run_id": run_id,
+            "action": action,
+            "actor_open_id": actor_open_id,
+            "summary": summary,
+            "created_at": created_at if created_at is not None else _utc_now_iso(),
+        },
+        demo_run_id=demo_run_id,
+        demo_started_at=demo_started_at,
+    )
+
+
+def add_demo_context(
+    fields: Mapping[str, Any],
+    *,
+    demo_run_id: str | None,
+    demo_started_at: str | None,
+) -> dict[str, Any]:
+    """为本轮动态表增加固定 session 标识；未传时保持旧字段契约。"""
+
+    if not isinstance(fields, Mapping) or not fields:
+        raise ValueError("fields must be a non-empty mapping")
+    if (demo_run_id is None) != (demo_started_at is None):
+        raise ValueError("demo_run_id and demo_started_at must be provided together")
+    result = dict(fields)
+    if demo_run_id is not None:
+        if not isinstance(demo_run_id, str) or not demo_run_id.strip():
+            raise ValueError("demo_run_id must be non-empty")
+        if not isinstance(demo_started_at, str) or not demo_started_at.strip():
+            raise ValueError("demo_started_at must be non-empty")
+        result["demo_run_id"] = demo_run_id
+        result["demo_started_at"] = demo_started_at
+    return result
+
+
+def milestone_row(
+    snapshot: Any,
+    *,
+    demo_run_id: str,
+    demo_started_at: str,
+    created_at: datetime,
+) -> dict[str, Any]:
+    """把一个阶段节点快照投影为结果表中的一行。"""
+
+    source_run_id = getattr(snapshot, "source_run_id", None)
+    node = getattr(getattr(snapshot, "node", None), "value", getattr(snapshot, "node", None))
+    title = getattr(snapshot, "title", None)
+    conclusion = getattr(snapshot, "conclusion", None)
+    if not all(isinstance(value, str) and value.strip() for value in (source_run_id, node, title)):
+        raise ValueError("snapshot must contain source_run_id, node and title")
+    if not isinstance(conclusion, str):
+        raise ValueError("snapshot conclusion must be text")
+    metrics = getattr(snapshot, "metrics", ())
+    candidates = getattr(snapshot, "candidates", ())
+    metric_text = "；".join(
+        f"{getattr(metric, 'label', '')}：{getattr(metric, 'value', '')}"
+        for metric in metrics
+    )
+    candidate_text = "、".join(
+        str(getattr(candidate, "candidate_id", candidate))
+        for candidate in candidates
+    )
+    content_lines = [title, conclusion]
+    if metric_text:
+        content_lines.append(f"指标：{metric_text}")
+    if candidate_text:
+        content_lines.append(f"候选：{candidate_text}")
+    return add_demo_context(
+        {
+            "run_id": source_run_id,
+            "record_kind": "MILESTONE",
+            "record_key": node,
+            "content": "\n".join(content_lines),
+            "created_at": created_at.astimezone(timezone.utc).isoformat(),
+        },
+        demo_run_id=demo_run_id,
+        demo_started_at=demo_started_at,
+    )
 
 
 def candidate_rows(
@@ -213,9 +292,11 @@ def _require_utc(value: Any, name: str) -> None:
 
 
 __all__ = [
+    "add_demo_context",
     "candidate_rows",
     "checkpoint_rows",
     "final_selection_row",
+    "milestone_row",
     "run_log_fields",
     "snapshot_row",
 ]

@@ -44,7 +44,10 @@ class WritebackWorker:
         job = self._store.claim_next_writeback(now)
         if job is None:
             return False
-        self._process(job, now)
+        try:
+            self._process(job, now)
+        finally:
+            self._store.enqueue_terminal_feedback(job.job_id)
         return True
 
     def run_forever(
@@ -64,7 +67,7 @@ class WritebackWorker:
                 waiter(poll_seconds)
 
     def _process(self, job: WritebackJob, now: datetime) -> None:
-        target = self._targets.get(job.table_key)
+        target = self._target_for_job(job)
         if target is None:
             self._store.mark_failed(
                 job.job_id,
@@ -76,16 +79,43 @@ class WritebackWorker:
             fields = json.loads(job.payload_json)
             if not isinstance(fields, dict):
                 raise ValueError("writeback payload must decode to an object")
-            record_id = self._client.create_record(
-                target.app_token, target.table_id, fields
-            )
+            if job.record_id is None:
+                record_id = self._client.create_record(
+                    target.app_token, target.table_id, fields
+                )
+            else:
+                update_record = getattr(self._client, "update_record", None)
+                if not callable(update_record):
+                    raise ValueError(
+                        "writeback client must support update_record for an existing record"
+                    )
+                record_id = update_record(
+                    target.app_token, target.table_id, job.record_id, fields
+                )
             if not isinstance(record_id, str) or not record_id.strip():
-                raise ValueError("create_record must return a non-empty record_id")
+                raise ValueError("writeback record operation must return a non-empty record_id")
         except Exception as exc:
             self._record_failure(job, error=str(exc), now=now)
             return
 
         self._store.mark_wrote(job.job_id, record_id=record_id, written_at=now)
+
+    def _target_for_job(self, job: WritebackJob) -> WritebackTarget | None:
+        if job.target_app_token is None and job.target_table_id is None:
+            return self._targets.get(job.table_key)
+        if not job.target_app_token or not job.target_table_id:
+            self._store.mark_failed(
+                job.job_id,
+                error="writeback job has an incomplete concrete target",
+            )
+            raise ValueError("writeback job has an incomplete concrete target")
+        return WritebackTarget(
+            table_key=job.table_key,
+            app_token=job.target_app_token,
+            table_id=job.target_table_id,
+            field_names=(),
+            table_url=job.target_table_url,
+        )
 
     def _record_failure(
         self,

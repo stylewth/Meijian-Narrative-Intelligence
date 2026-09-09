@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from typing import Any, Mapping
 
 from src.services.prepared_corpus import canonical_json_bytes, sha256_bytes
+from .writeback_targets import WritebackTarget
 
 
 TABLE_KEYS = ("RUN_LOG", "RESULTS")
@@ -22,6 +23,7 @@ RECORD_KINDS = (
     "BLIND_REASSESS",
     "CHECKPOINT",
     "FINAL_SELECTION",
+    "MILESTONE",
 )
 _JOB_STATUSES = ("PENDING", "IN_FLIGHT", "WROTE", "FAILED", "UNKNOWN")
 _AMBIGUITY_WINDOW = timedelta(hours=1)
@@ -36,6 +38,28 @@ def _utc_iso(value: datetime) -> str:
 
 def _now_iso() -> str:
     return _utc_iso(datetime.now(timezone.utc))
+
+
+def _validate_writeback_target(target: Any, table_key: str) -> None:
+    """Validate a concrete target by its data contract, not class identity."""
+
+    try:
+        target_key = target.table_key
+        app_token = target.app_token
+        table_id = target.table_id
+        field_names = target.field_names
+    except AttributeError as exc:
+        raise TypeError("target must be WritebackTarget") from exc
+    if target_key != table_key:
+        raise ValueError("target table_key differs from job table_key")
+    if not isinstance(app_token, str) or not app_token.strip():
+        raise TypeError("target must include app_token")
+    if not isinstance(table_id, str) or not table_id.strip():
+        raise TypeError("target must include table_id")
+    if not isinstance(field_names, (tuple, list)) or not all(
+        isinstance(name, str) and name.strip() for name in field_names
+    ):
+        raise TypeError("target must include field_names")
 
 
 def writeback_uuid(run_id: str, record_kind: str, payload_sha256: str) -> str:
@@ -63,6 +87,11 @@ class WritebackJob:
     last_error: str | None
     created_at: str
     written_at: str | None
+    demo_run_id: str | None = None
+    event_key: str | None = None
+    target_app_token: str | None = None
+    target_table_id: str | None = None
+    target_table_url: str | None = None
 
 
 _SCHEMA = """
@@ -82,7 +111,19 @@ CREATE TABLE IF NOT EXISTS writeback_jobs (
   last_error TEXT,
   created_at TEXT NOT NULL,
   written_at TEXT,
+  demo_run_id TEXT,
+  event_key TEXT,
+  target_app_token TEXT,
+  target_table_id TEXT,
+  target_table_url TEXT,
   UNIQUE(run_id, record_kind, payload_sha256)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS writeback_feedback (
+  job_id INTEGER PRIMARY KEY REFERENCES writeback_jobs(job_id),
+  status TEXT NOT NULL CHECK (status IN ('PENDING','SENT')),
+  created_at TEXT NOT NULL,
+  sent_at TEXT
 ) STRICT;
 """
 
@@ -124,6 +165,26 @@ class WritebackStore:
     def _initialize(self) -> None:
         with self._operation() as connection:
             connection.executescript(_SCHEMA)
+            existing_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(writeback_jobs)")
+            }
+            for column, column_type in (
+                ("demo_run_id", "TEXT"),
+                ("event_key", "TEXT"),
+                ("target_app_token", "TEXT"),
+                ("target_table_id", "TEXT"),
+                ("target_table_url", "TEXT"),
+            ):
+                if column not in existing_columns:
+                    connection.execute(
+                        f"ALTER TABLE writeback_jobs ADD COLUMN {column} {column_type}"
+                    )
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS writeback_event_identity "
+                "ON writeback_jobs(demo_run_id, event_key, table_key, record_kind) "
+                "WHERE demo_run_id IS NOT NULL AND event_key IS NOT NULL"
+            )
 
     @staticmethod
     def _begin_immediate(connection: sqlite3.Connection) -> None:
@@ -147,6 +208,11 @@ class WritebackStore:
             last_error=row["last_error"],
             created_at=row["created_at"],
             written_at=row["written_at"],
+            demo_run_id=row["demo_run_id"],
+            event_key=row["event_key"],
+            target_app_token=row["target_app_token"],
+            target_table_id=row["target_table_id"],
+            target_table_url=row["target_table_url"],
         )
 
     def enqueue(
@@ -156,6 +222,9 @@ class WritebackStore:
         table_key: str,
         record_kind: str,
         fields: Mapping[str, Any],
+        demo_run_id: str | None = None,
+        event_key: str | None = None,
+        target: WritebackTarget | None = None,
     ) -> WritebackJob:
         if not isinstance(run_id, str) or not run_id.strip():
             raise ValueError("run_id must be non-empty")
@@ -165,26 +234,79 @@ class WritebackStore:
             raise ValueError(f"record_kind must be one of {RECORD_KINDS}")
         if not isinstance(fields, Mapping) or not fields:
             raise ValueError("fields must be a non-empty mapping")
+        if (demo_run_id is None) != (event_key is None):
+            raise ValueError("demo_run_id and event_key must be provided together")
+        if demo_run_id is not None:
+            if not isinstance(demo_run_id, str) or not demo_run_id.strip():
+                raise ValueError("demo_run_id must be non-empty")
+            if not isinstance(event_key, str) or not event_key.strip():
+                raise ValueError("event_key must be non-empty")
+            if target is None:
+                raise ValueError("dynamic writeback jobs require a concrete target")
+        if target is not None:
+            _validate_writeback_target(target, table_key)
         payload_bytes = canonical_json_bytes(dict(fields))
         payload_json = payload_bytes.decode("utf-8")
         payload_sha256 = sha256_bytes(payload_bytes)
-        stable_uuid = writeback_uuid(run_id, record_kind, payload_sha256)
+        identity = demo_run_id or run_id
+        stable_uuid = writeback_uuid(
+            identity,
+            f"{record_kind}:{event_key or ''}",
+            payload_sha256,
+        )
         created_at = _now_iso()
         with self._operation() as connection:
             self._begin_immediate(connection)
-            existing = connection.execute(
-                "SELECT * FROM writeback_jobs WHERE run_id = ? AND record_kind = ? "
-                "AND payload_sha256 = ?",
-                (run_id, record_kind, payload_sha256),
-            ).fetchone()
+            if demo_run_id is not None:
+                existing = connection.execute(
+                    "SELECT * FROM writeback_jobs WHERE demo_run_id = ? "
+                    "AND event_key = ? AND table_key = ? AND record_kind = ?",
+                    (demo_run_id, event_key, table_key, record_kind),
+                ).fetchone()
+            else:
+                existing = connection.execute(
+                    "SELECT * FROM writeback_jobs WHERE run_id = ? AND record_kind = ? "
+                    "AND payload_sha256 = ?",
+                    (run_id, record_kind, payload_sha256),
+                ).fetchone()
             if existing is not None:
                 if existing["table_key"] != table_key:
                     raise ValueError("writeback table_key differs for the existing job")
-                return self._job(existing)
+                if demo_run_id is not None and (
+                    existing["target_app_token"] != target.app_token
+                    or existing["target_table_id"] != target.table_id
+                ):
+                    raise ValueError("writeback target differs for the existing event")
+                if existing["payload_sha256"] == payload_sha256:
+                    return self._job(existing)
+                if demo_run_id is None:
+                    raise ValueError("writeback payload differs for the existing event")
+                if existing["status"] in ("IN_FLIGHT", "UNKNOWN"):
+                    raise ValueError("writeback event is currently in flight")
+                connection.execute(
+                    "UPDATE writeback_jobs SET payload_json = ?, payload_sha256 = ?, "
+                    "delivery_uuid = ?, status = 'PENDING', attempt_count = 0, "
+                    "first_attempt_at = NULL, next_attempt_at = NULL, last_error = NULL, "
+                    "written_at = NULL WHERE job_id = ?",
+                    (payload_json, payload_sha256, stable_uuid, existing["job_id"]),
+                )
+                connection.execute(
+                    "UPDATE writeback_feedback SET status = 'PENDING', sent_at = NULL "
+                    "WHERE job_id = ?",
+                    (existing["job_id"],),
+                )
+                updated = connection.execute(
+                    "SELECT * FROM writeback_jobs WHERE job_id = ?",
+                    (existing["job_id"],),
+                ).fetchone()
+                assert updated is not None
+                return self._job(updated)
             connection.execute(
                 "INSERT INTO writeback_jobs("
                 "run_id, table_key, record_kind, payload_json, payload_sha256, "
-                "delivery_uuid, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)",
+                "delivery_uuid, status, created_at, demo_run_id, event_key, "
+                "target_app_token, target_table_id, target_table_url) "
+                "VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?)",
                 (
                     run_id,
                     table_key,
@@ -193,13 +315,25 @@ class WritebackStore:
                     payload_sha256,
                     stable_uuid,
                     created_at,
+                    demo_run_id,
+                    event_key,
+                    target.app_token if target is not None else None,
+                    target.table_id if target is not None else None,
+                    target.table_url if target is not None else None,
                 ),
             )
-            row = connection.execute(
-                "SELECT * FROM writeback_jobs WHERE run_id = ? AND record_kind = ? "
-                "AND payload_sha256 = ?",
-                (run_id, record_kind, payload_sha256),
-            ).fetchone()
+            if demo_run_id is not None:
+                row = connection.execute(
+                    "SELECT * FROM writeback_jobs WHERE demo_run_id = ? "
+                    "AND event_key = ? AND table_key = ? AND record_kind = ?",
+                    (demo_run_id, event_key, table_key, record_kind),
+                ).fetchone()
+            else:
+                row = connection.execute(
+                    "SELECT * FROM writeback_jobs WHERE run_id = ? AND record_kind = ? "
+                    "AND payload_sha256 = ?",
+                    (run_id, record_kind, payload_sha256),
+                ).fetchone()
             assert row is not None
             return self._job(row)
 
@@ -221,6 +355,63 @@ class WritebackStore:
                 (run_id,),
             ).fetchall()
             return [self._job(row) for row in rows]
+
+    def jobs_for_demo_run(self, demo_run_id: str) -> list[WritebackJob]:
+        if not isinstance(demo_run_id, str) or not demo_run_id.strip():
+            raise ValueError("demo_run_id must be non-empty")
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT * FROM writeback_jobs WHERE demo_run_id = ? ORDER BY job_id",
+                (demo_run_id,),
+            ).fetchall()
+            return [self._job(row) for row in rows]
+
+    def enqueue_terminal_feedback(self, job_id: int) -> bool:
+        """为动态任务登记一次真实完成/最终失败反馈。"""
+
+        if not isinstance(job_id, int) or isinstance(job_id, bool):
+            raise ValueError("job_id must be an integer")
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            row = connection.execute(
+                "SELECT status, demo_run_id FROM writeback_jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"unknown writeback job: {job_id}")
+            if row["demo_run_id"] is None or row["status"] not in ("WROTE", "FAILED"):
+                return False
+            now = _now_iso()
+            connection.execute(
+                "INSERT INTO writeback_feedback(job_id, status, created_at, sent_at) "
+                "VALUES (?, 'PENDING', ?, NULL) "
+                "ON CONFLICT(job_id) DO UPDATE SET status = 'PENDING', sent_at = NULL",
+                (job_id, now),
+            )
+            return True
+
+    def pending_feedback_jobs(self) -> list[WritebackJob]:
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT j.* FROM writeback_jobs AS j "
+                "JOIN writeback_feedback AS f ON f.job_id = j.job_id "
+                "WHERE f.status = 'PENDING' ORDER BY j.job_id"
+            ).fetchall()
+            return [self._job(row) for row in rows]
+
+    def mark_feedback_sent(self, job_id: int, *, sent_at: datetime | None = None) -> None:
+        if not isinstance(job_id, int) or isinstance(job_id, bool):
+            raise ValueError("job_id must be an integer")
+        timestamp = _now_iso() if sent_at is None else _utc_iso(sent_at)
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            result = connection.execute(
+                "UPDATE writeback_feedback SET status = 'SENT', sent_at = ? "
+                "WHERE job_id = ? AND status = 'PENDING'",
+                (timestamp, job_id),
+            )
+            if result.rowcount != 1:
+                raise ValueError("writeback feedback is not PENDING")
 
     def claim_next_writeback(self, now: datetime) -> WritebackJob | None:
         now_iso = _utc_iso(now)
@@ -326,8 +517,13 @@ class WritebackStore:
                 raise ValueError("only FAILED jobs can be retried")
             connection.execute(
                 "UPDATE writeback_jobs SET status = 'PENDING', attempt_count = 0, "
-                "first_attempt_at = NULL, next_attempt_at = NULL, record_id = NULL, "
+                "first_attempt_at = NULL, next_attempt_at = NULL, "
                 "last_error = NULL, written_at = NULL WHERE job_id = ?",
+                (job_id,),
+            )
+            connection.execute(
+                "UPDATE writeback_feedback SET status = 'PENDING', sent_at = NULL "
+                "WHERE job_id = ?",
                 (job_id,),
             )
             retried = connection.execute(

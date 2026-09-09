@@ -119,10 +119,13 @@ def _coerce_entry(value: SystemEntry | str) -> SystemEntry:
 
 
 def feishu_connection_status(
-    configuration: Mapping[str, object], store: object | None
+    configuration: Mapping[str, object],
+    store: object | None,
+    *,
+    page_connected: bool = False,
 ) -> str:
     configured = _configured(configuration, FEISHU_STATUS_KEYS)
-    return "已连接" if configured and store is not None else "未连接"
+    return "已连接" if configured and store is not None and page_connected else "未连接"
 
 
 def build_gateway_html() -> str:

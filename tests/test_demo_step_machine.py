@@ -34,7 +34,7 @@ def test_full_walk_27_steps() -> None:
     assert state["active_workspace"] == Workspace.REALTIME_DECISION.value
     assert len(state["completed_workspaces"]) == 2
 
-    assert advance_demo_one_step(state) == "演示已到终幕结尾"
+    assert advance_demo_one_step(state) == "已到终幕结尾"
 
 
 def test_progress_text_follows_state() -> None:
@@ -64,5 +64,5 @@ def test_step_machine_is_idempotent_at_boundaries() -> None:
     for _ in range(27):
         advance_demo_one_step(state)
     for _ in range(3):
-        assert advance_demo_one_step(state) == "演示已到终幕结尾"
+        assert advance_demo_one_step(state) == "已到终幕结尾"
     assert state["evolution_finale_act"] == 2

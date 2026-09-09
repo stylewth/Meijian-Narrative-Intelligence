@@ -5,13 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
+import json
 from pathlib import Path
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from typing import Any, TYPE_CHECKING
+from typing import Any, Mapping, TYPE_CHECKING
 
 from src.services.prepared_corpus import canonical_json_bytes, sha256_bytes
+from .writeback_targets import WritebackTarget
 
 if TYPE_CHECKING:
     from src.services.demo_notifications import DemoNotificationNode, DemoNotificationSnapshot
@@ -40,6 +42,37 @@ def _now_iso() -> str:
     return _utc_iso(datetime.now(timezone.utc))
 
 
+def _validate_writeback_target(target: Any, table_key: str) -> None:
+    """Validate the target data contract without relying on module identity.
+
+    Streamlit can reload one integration module while another still holds the
+    previous ``WritebackTarget`` class object.  The target is a data boundary,
+    so validate its fields rather than rejecting a valid object solely because
+    its class identity came from the previous module generation.
+    """
+
+    try:
+        target_key = target.table_key
+        app_token = target.app_token
+        table_id = target.table_id
+        field_names = target.field_names
+        table_url = target.table_url
+    except AttributeError as exc:
+        raise TypeError(f"{table_key} target must be WritebackTarget") from exc
+    if target_key != table_key:
+        raise ValueError(f"{table_key} target key differs")
+    if not isinstance(app_token, str) or not app_token.strip():
+        raise TypeError(f"{table_key} target must include app_token")
+    if not isinstance(table_id, str) or not table_id.strip():
+        raise TypeError(f"{table_key} target must include table_id")
+    if not isinstance(field_names, (tuple, list)) or not all(
+        isinstance(name, str) and name.strip() for name in field_names
+    ):
+        raise TypeError(f"{table_key} target must include field_names")
+    if not isinstance(table_url, str) or not table_url.strip():
+        raise ValueError(f"{table_key} target must include table_url")
+
+
 def _node_key(node: Any) -> str:
     value = getattr(node, "value", node)
     if not isinstance(value, str) or not value.strip():
@@ -62,6 +95,7 @@ class DemoSession:
     created_by: str
     created_at: str
     status: str
+    connected_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -142,10 +176,21 @@ CREATE TABLE IF NOT EXISTS demo_sessions (
   source_run_id TEXT NOT NULL,
   created_by TEXT NOT NULL CHECK (created_by = 'streamlit-local'),
   created_at TEXT NOT NULL,
+  connected_at TEXT,
   status TEXT NOT NULL CHECK (status IN ('ACTIVE','COMPLETE'))
 ) STRICT;
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_session
 ON demo_sessions(status) WHERE status = 'ACTIVE';
+
+CREATE TABLE IF NOT EXISTS demo_writeback_targets (
+  session_id TEXT NOT NULL REFERENCES demo_sessions(session_id),
+  table_key TEXT NOT NULL CHECK (table_key IN ('RUN_LOG','RESULTS')),
+  app_token TEXT NOT NULL,
+  table_id TEXT NOT NULL,
+  table_url TEXT NOT NULL,
+  field_names_json TEXT NOT NULL,
+  PRIMARY KEY(session_id, table_key)
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS notification_jobs (
   job_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -240,6 +285,16 @@ class NotificationStore:
             if row is not None and "ADVANCE_STEP" not in str(row["sql"]):
                 connection.execute("DROP TABLE demo_commands")
             connection.executescript(_SCHEMA)
+            columns = {
+                item["name"]
+                for item in connection.execute(
+                    "PRAGMA table_info(demo_sessions)"
+                ).fetchall()
+            }
+            if "connected_at" not in columns:
+                connection.execute(
+                    "ALTER TABLE demo_sessions ADD COLUMN connected_at TEXT"
+                )
 
     @staticmethod
     def _begin_immediate(connection: sqlite3.Connection) -> None:
@@ -253,6 +308,7 @@ class NotificationStore:
             created_by=row["created_by"],
             created_at=row["created_at"],
             status=row["status"],
+            connected_at=row["connected_at"],
         )
 
     @staticmethod
@@ -453,21 +509,82 @@ class NotificationStore:
             feedback_status=row["feedback_status"],
         )
 
-    def create_session(self, source_run_id: str, *, created_by: str) -> DemoSession:
+    def create_session(
+        self,
+        source_run_id: str,
+        *,
+        created_by: str,
+        session_id: str | None = None,
+        created_at: str | None = None,
+        connected_at: str | None = None,
+        writeback_targets: Mapping[str, WritebackTarget] | None = None,
+    ) -> DemoSession:
         if not isinstance(source_run_id, str) or not source_run_id.strip():
             raise ValueError("source_run_id must be non-empty")
         if created_by != "streamlit-local":
             raise ValueError("created_by must be streamlit-local")
-        created_at = _now_iso()
+        if session_id is None:
+            session_id = str(uuid.uuid4())
+        elif not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        if created_at is None:
+            normalized_created_at = _now_iso()
+        else:
+            if not isinstance(created_at, str) or not created_at.strip():
+                raise ValueError("created_at must be a non-empty ISO timestamp")
+            try:
+                normalized_created_at = _utc_iso(datetime.fromisoformat(created_at))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("created_at must include a valid timezone") from exc
+        if connected_at is None:
+            normalized_connected_at = normalized_created_at
+        else:
+            if not isinstance(connected_at, str) or not connected_at.strip():
+                raise ValueError("connected_at must be a non-empty ISO timestamp")
+            try:
+                normalized_connected_at = _utc_iso(datetime.fromisoformat(connected_at))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("connected_at must include a valid timezone") from exc
+        if writeback_targets is not None:
+            if set(writeback_targets) != {"RUN_LOG", "RESULTS"}:
+                raise ValueError("writeback_targets must contain RUN_LOG and RESULTS")
+            for table_key, target in writeback_targets.items():
+                _validate_writeback_target(target, table_key)
         with self._operation() as connection:
             self._begin_immediate(connection)
             connection.execute("UPDATE demo_sessions SET status = 'COMPLETE' WHERE status = 'ACTIVE'")
-            session_id = str(uuid.uuid4())
             connection.execute(
-                "INSERT INTO demo_sessions(session_id, source_run_id, created_by, created_at, status) "
-                "VALUES (?, ?, ?, ?, 'ACTIVE')",
-                (session_id, source_run_id, created_by, created_at),
+                "INSERT INTO demo_sessions("
+                "session_id, source_run_id, created_by, created_at, connected_at, status) "
+                "VALUES (?, ?, ?, ?, ?, 'ACTIVE')",
+                (
+                    session_id,
+                    source_run_id,
+                    created_by,
+                    normalized_created_at,
+                    normalized_connected_at,
+                ),
             )
+            if writeback_targets is not None:
+                for table_key in ("RUN_LOG", "RESULTS"):
+                    target = writeback_targets[table_key]
+                    connection.execute(
+                        "INSERT INTO demo_writeback_targets("
+                        "session_id, table_key, app_token, table_id, table_url, field_names_json) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (
+                            session_id,
+                            table_key,
+                            target.app_token,
+                            target.table_id,
+                            target.table_url,
+                            json.dumps(
+                                list(target.field_names),
+                                ensure_ascii=False,
+                                separators=(",", ":"),
+                            ),
+                        ),
+                    )
             row = connection.execute(
                 "SELECT * FROM demo_sessions WHERE session_id = ?", (session_id,)
             ).fetchone()
@@ -481,6 +598,16 @@ class NotificationStore:
             ).fetchone()
             return None if row is None else self._session(row)
 
+    def complete_active_session(self) -> int:
+        """Close the persisted connection when a new page session starts."""
+
+        with self._operation() as connection:
+            self._begin_immediate(connection)
+            result = connection.execute(
+                "UPDATE demo_sessions SET status = 'COMPLETE' WHERE status = 'ACTIVE'"
+            )
+            return result.rowcount
+
     def get_session(self, session_id: str) -> DemoSession:
         with self._operation() as connection:
             row = connection.execute(
@@ -489,6 +616,41 @@ class NotificationStore:
             if row is None:
                 raise KeyError(f"unknown session: {session_id}")
             return self._session(row)
+
+    def writeback_targets_for_session(
+        self, session_id: str
+    ) -> dict[str, WritebackTarget]:
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("session_id must be non-empty")
+        with self._operation() as connection:
+            rows = connection.execute(
+                "SELECT * FROM demo_writeback_targets WHERE session_id = ? "
+                "ORDER BY table_key",
+                (session_id,),
+            ).fetchall()
+            targets: dict[str, WritebackTarget] = {}
+            for row in rows:
+                field_names = json.loads(row["field_names_json"])
+                if not isinstance(field_names, list) or not all(
+                    isinstance(name, str) and name for name in field_names
+                ):
+                    raise ValueError(
+                        f"session {session_id} has invalid field_names_json"
+                    )
+                targets[row["table_key"]] = WritebackTarget(
+                    table_key=row["table_key"],
+                    app_token=row["app_token"],
+                    table_id=row["table_id"],
+                    field_names=tuple(field_names),
+                    table_url=row["table_url"],
+                )
+            return targets
+
+    def active_writeback_targets(self) -> dict[str, WritebackTarget]:
+        session = self.active_session()
+        if session is None:
+            return {}
+        return self.writeback_targets_for_session(session.session_id)
 
     def enqueue_snapshot(
         self,

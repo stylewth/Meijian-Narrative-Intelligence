@@ -16,7 +16,7 @@ class FeishuAPIError(RuntimeError):
 
 
 class FeishuBitableClient:
-    """提供飞书多维表格字段、记录读取和单条记录写入。"""
+    """提供飞书多维表格字段、表、记录读取和单条记录写入/更新。"""
 
     def __init__(
         self,
@@ -34,6 +34,11 @@ class FeishuBitableClient:
             session=self._session,
             timeout=timeout,
         )
+
+    def ensure_token(self) -> str:
+        """Warm the tenant token once before a group of concurrent requests."""
+
+        return self._tokens.get_token()
 
     def get_tables(
         self, app_token: str, *, page_size: int = 100
@@ -59,6 +64,36 @@ class FeishuBitableClient:
         )
         return self._get_paginated(path, page_size=page_size, max_page_size=500)
 
+    def create_table(
+        self, app_token: str, name: str, fields: list[dict[str, Any]]
+    ) -> str:
+        """在指定 Base 中创建一张表，并返回新的 table_id。"""
+
+        if not isinstance(app_token, str) or not app_token.strip():
+            raise ValueError("app_token must be non-empty")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("table name must be non-empty")
+        if not isinstance(fields, list) or not fields:
+            raise ValueError("fields must be a non-empty list")
+        if not all(isinstance(field, dict) for field in fields):
+            raise ValueError("fields must contain objects")
+        path = f"/bitable/v1/apps/{quote(app_token, safe='')}/tables"
+        data = self._request(
+            "POST",
+            path,
+            json={
+                "table": {
+                    "name": name,
+                    "default_view_name": "默认视图",
+                    "fields": fields,
+                }
+            },
+        )
+        table_id = data.get("table_id")
+        if not isinstance(table_id, str) or not table_id:
+            raise FeishuAPIError("飞书创建表响应缺少 table_id")
+        return table_id
+
     def create_record(
         self, app_token: str, table_id: str, fields: dict[str, Any]
     ) -> str:
@@ -74,6 +109,32 @@ class FeishuBitableClient:
         if not isinstance(record_id, str) or not record_id:
             raise FeishuAPIError("飞书创建记录响应缺少 record_id")
         return record_id
+
+    def update_record(
+        self, app_token: str, table_id: str, record_id: str, fields: dict[str, Any]
+    ) -> str:
+        """更新指定记录并返回其 record_id。"""
+
+        if not isinstance(app_token, str) or not app_token.strip():
+            raise ValueError("app_token must be non-empty")
+        if not isinstance(table_id, str) or not table_id.strip():
+            raise ValueError("table_id must be non-empty")
+        if not isinstance(record_id, str) or not record_id.strip():
+            raise ValueError("record_id must be non-empty")
+        if not isinstance(fields, dict) or not fields:
+            raise ValueError("fields must be a non-empty dict")
+        path = (
+            f"/bitable/v1/apps/{quote(app_token, safe='')}/tables/"
+            f"{quote(table_id, safe='')}/records/{quote(record_id, safe='')}"
+        )
+        data = self._request("PUT", path, json={"fields": fields})
+        record = data.get("record")
+        if not isinstance(record, dict):
+            raise FeishuAPIError("飞书更新记录响应缺少 record")
+        updated_id = record.get("record_id")
+        if not isinstance(updated_id, str) or not updated_id:
+            raise FeishuAPIError("飞书更新记录响应缺少 record_id")
+        return updated_id
 
     def resolve_wiki_app_token(self, wiki_token: str) -> str:
         data = self._request(
