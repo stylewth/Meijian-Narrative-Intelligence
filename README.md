@@ -25,9 +25,24 @@
 | 数据预处理 | 多平台市场评论 | 校验、筛选、分层拆分、AI 标注、证据冻结 | 五条基础品牌叙事机会 |
 | 叙事压力测试 | 五条候选与冻结证据 | 五维检查、Luna 审查、DeepSeek 修订、HOLDOUT 与真人盲评 | 三条进入演化的候选 |
 | 实时决策看板 | 229 条基线与四批增量证据 | 逐批更新分数、风险、排名和叙事文本 | 三支柱核心叙事与分层场景 |
+
+### 数据预处理
+
 ![数据预处理（当前 Web UI）](assets/preprocessing.png)
 
-![叙事压力测试（当前 Web UI）](assets/pressure-test.png)
+### 叙事压力测试
+
+![pressure](assets\pressure-test.png)
+
+#### AI自主对话推动叙事演进
+
+![](assets\agent evolution.png)
+
+#### 盲评
+
+![](assets\real review.png)
+
+### 实时看板
 
 ![实时叙事演化（当前 Web UI）](assets/evolution.png)
 
