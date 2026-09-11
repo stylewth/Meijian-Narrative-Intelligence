@@ -656,7 +656,7 @@ def build_stage_detail_html(stage: PreprocessingStageDetailView) -> str:
         outputs = (("有效", "有效语料"), ("排除", "排除"), ("待复核", "待复核"))
         output_html = "".join(
             f'<article class="mj-clean-output mj-clean-output--{index + 1}" data-flow="out">'
-            f"<small>{label}</small><strong>{escape(metrics.get(metric, "—"))}</strong></article>"
+            f"<small>{label}</small><strong>{escape(metrics.get(metric, '—'))}</strong></article>"
             for index, (label, metric) in enumerate(outputs)
         )
         actual_sum = sum(_metric_count(metrics.get(metric, "")) for _, metric in outputs)
