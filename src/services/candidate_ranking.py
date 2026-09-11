@@ -30,7 +30,7 @@ from src.services import _build_system_prompt, _serialize_prompt_input
 SCORE_WEIGHTS: dict[str, float] = {
     "evidence_strength": 0.25,
     "emotional_tension": 0.20,
-    "meijian_fit_and_exclusivity": 0.25,
+    "brand_fit_and_exclusivity": 0.25,
     "competitor_difference": 0.15,
     "scene_conversion": 0.15,
 }
@@ -47,8 +47,8 @@ def calculate_weighted_score(scores: CandidateScores) -> float:
     return round(
         scores.evidence_strength.score * SCORE_WEIGHTS["evidence_strength"]
         + scores.emotional_tension.score * SCORE_WEIGHTS["emotional_tension"]
-        + scores.meijian_fit_and_exclusivity.score
-        * SCORE_WEIGHTS["meijian_fit_and_exclusivity"]
+        + scores.brand_fit_and_exclusivity.score
+        * SCORE_WEIGHTS["brand_fit_and_exclusivity"]
         + scores.competitor_difference.score
         * SCORE_WEIGHTS["competitor_difference"]
         + scores.scene_conversion.score * SCORE_WEIGHTS["scene_conversion"],
@@ -320,7 +320,7 @@ def _ranking_key(
     return (
         -weighted_score,
         -scores.evidence_strength.score,
-        -scores.meijian_fit_and_exclusivity.score,
+        -scores.brand_fit_and_exclusivity.score,
         -scores.emotional_tension.score,
         generation_order,
     )

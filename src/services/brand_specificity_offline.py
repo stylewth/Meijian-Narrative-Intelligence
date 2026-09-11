@@ -379,7 +379,7 @@ def _validate_output_refs(
                     raise ValueError("patch references an unknown BrandFact ID")
         if not set(audit.consumer_evidence).issubset(evidence_ids):
             raise ValueError("audit references an unknown consumer evidence ID")
-        if not set(audit.meijian_assets).issubset(brand_fact_ids):
+        if not set(audit.brand_assets).issubset(brand_fact_ids):
             raise ValueError("audit references an unknown BrandFact ID")
 
 

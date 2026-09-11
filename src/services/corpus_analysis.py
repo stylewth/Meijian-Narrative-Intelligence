@@ -16,8 +16,8 @@ def _collect_evidence(result: CorpusAnalysisResult) -> list[EvidenceQuote]:
         evidence.extend(conflict.counter_evidence)
     comparison = result.feedback_comparison
     for clusters in (
-        comparison.meijian_positive,
-        comparison.meijian_negative,
+        comparison.brand_positive,
+        comparison.brand_negative,
         comparison.competitor_positive,
         comparison.competitor_negative,
     ):

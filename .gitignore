@@ -41,3 +41,6 @@ lessons.md
 .DS_Store
 Thumbs.db
 ~$*
+
+# Local pytest scratch dirs (basetemp used by validation runs)
+.pytest_tmp/

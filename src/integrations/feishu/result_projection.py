@@ -157,7 +157,7 @@ def candidate_rows(
                     (
                         f"证据 {scores.evidence_strength.score:.1f}",
                         f"情绪 {scores.emotional_tension.score:.1f}",
-                        f"专属 {scores.meijian_fit_and_exclusivity.score:.1f}",
+                        f"专属 {scores.brand_fit_and_exclusivity.score:.1f}",
                         f"差异 {scores.competitor_difference.score:.1f}",
                         f"场景 {scores.scene_conversion.score:.1f}",
                     )

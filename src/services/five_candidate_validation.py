@@ -547,8 +547,8 @@ def _validate_v1_revision_bindings(
         raise ValidationStateError("revision unresolved findings do not match dispositions")
     allowed_fields = {
         "title", "target_audience", "user_conflict", "brand_opportunity",
-        "why_meijian", "competitor_difference", "brand_role", "draft_proposition",
-        "main_scenes", "content_theme", "risks",
+        "why_brand", "why_meijian", "competitor_difference", "brand_role",
+        "draft_proposition", "main_scenes", "content_theme", "risks",
     }
     original = candidate.model_dump(mode="json")
     revised = revision.revised_candidate.model_dump(mode="json")

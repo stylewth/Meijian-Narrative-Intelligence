@@ -78,6 +78,7 @@ class LLMClient:
         self._response_format = settings.llm_response_format
         self._thinking_enabled = settings.llm_thinking_enabled
         self._reasoning_effort = settings.llm_reasoning_effort or "max"
+        self._max_tokens = settings.llm_max_tokens
         if client is None:
             client_kwargs: dict[str, Any] = {
                 "api_key": settings.llm_api_key,
@@ -139,6 +140,10 @@ class LLMClient:
             ],
             "response_format": response_format,
         }
+        # 思考模式下 reasoning 先消耗输出预算，不显式给足 max_tokens 时
+        # 可见 JSON 会被服务端默认上限截断。
+        if self._max_tokens is not None:
+            request_kwargs["max_tokens"] = self._max_tokens
         if self._thinking_enabled:
             request_kwargs["reasoning_effort"] = self._reasoning_effort
             request_kwargs["extra_body"] = {"thinking": {"type": "enabled"}}

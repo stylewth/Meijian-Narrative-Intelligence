@@ -44,7 +44,7 @@ _CANDIDATE_CHANGE_FIELDS = ("change_id", "candidate_id", "status", "reason")
 _EVOLUTION_DIMENSIONS = (
     ("evidence_strength", "证据充分度"),
     ("emotional_tension", "情绪冲突张力"),
-    ("meijian_fit_and_exclusivity", "梅见适配与独占性"),
+    ("brand_fit_and_exclusivity", "品牌适配与独占性"),
     ("competitor_difference", "竞品差异度"),
     ("scene_conversion", "场景转化能力"),
 )

@@ -16,6 +16,7 @@ from types import MappingProxyType
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 import streamlit as st
 
+from src.brand_profile import get_active_brand
 from src.config import Settings
 from src.data_sources.file_source import load_tabular_file
 from src.data_sources.feishu_bitable_source import load_feishu_bitable
@@ -1493,7 +1494,10 @@ def render_preprocessing_workspace(
     *, split_manifest_path: Path, prepared_root: Path, mode: str | None = None,
     on_milestone: Callable[[], None] | None = None,
 ) -> None:
-    st.markdown('<p class="hero-kicker">梅见 · 数据预处理工作台</p>', unsafe_allow_html=True)
+    st.markdown(
+        f'<p class="hero-kicker">{get_active_brand().brand_name} · 数据预处理工作台</p>',
+        unsafe_allow_html=True,
+    )
     st.title("数据预处理")
     st.caption("完成五步冻结后解锁叙事压力测试；预处理临时状态不会写入后续决策业务状态。")
     selected_mode = mode

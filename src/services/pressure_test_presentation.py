@@ -41,6 +41,7 @@ _FIELD_LABELS = {
     "target_audience": "目标人群",
     "user_conflict": "用户矛盾",
     "brand_opportunity": "品牌机会",
+    "why_brand": "品牌理由",
     "why_meijian": "梅见理由",
     "competitor_difference": "竞品差异",
     "brand_role": "品牌角色",

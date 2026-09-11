@@ -23,10 +23,12 @@ PROMPT_NAMES = frozenset(
 )
 PROMPT_VERSIONS = {
     name: (
-        "v3"
+        "v4"
         if name == "candidate_generation"
-        else "v2"
+        else "v4"
         if name == "evidence_routing"
+        else "v2"
+        if name in {"system", "corpus_analysis", "candidate_scoring"}
         else PROMPT_VERSION
     )
     for name in PROMPT_NAMES

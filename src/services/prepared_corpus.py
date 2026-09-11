@@ -351,5 +351,9 @@ def list_prepared_corpora(
     for entry in sorted(root_path.iterdir(), key=lambda item: item.name):
         if entry.name.startswith(".") or not entry.is_dir():
             continue
+        # 版本根目录（如 formal-v1，内含 packages/ 子目录）不是语料包，跳过；
+        # 缺工件的疑似损坏包目录仍然由 _read_directory 响亮报错。
+        if not all((entry / name).is_file() for name in _FILE_NAMES):
+            continue
         result.append(load_prepared_corpus(root_path, entry.name))
     return result

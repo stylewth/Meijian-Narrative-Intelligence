@@ -3,7 +3,7 @@ from __future__ import annotations
 import unicodedata
 from collections.abc import Iterable
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from src.evidence import validate_evidence_quotes
 from src.llm_client import LLMClient
@@ -25,7 +25,10 @@ class _CandidateDraft(StrictBaseModel):
     target_audience: str = Field(min_length=1)
     user_conflict: str = Field(min_length=1)
     brand_opportunity: str = Field(min_length=1)
-    why_meijian: str = Field(min_length=1)
+    why_brand: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices("why_brand", "why_meijian"),
+    )
     competitor_difference: str = Field(min_length=1)
     brand_role: str = Field(min_length=1)
     draft_proposition: str = Field(min_length=1)

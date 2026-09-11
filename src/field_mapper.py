@@ -11,7 +11,7 @@ RECORD_ALIASES: dict[str, tuple[str, ...]] = {
     "platform_url_available": ("平台链接可用",),
     "raw_id": ("原始编号",),
     "raw_content": ("原始内容", "用户真实评论", "用户评论", "评论内容"),
-    "comment_id": ("编号", "评论编号", "ID"),
+    "comment_id": ("编号", "评论编号", "ID", "语料编号"),
     "sample_type": ("样本类型", "语料类型", "反馈类型"),
     "source_platform": ("来源平台", "平台", "来源"),
     "original_url": ("原始链接",),

@@ -113,7 +113,7 @@ _CHECKPOINT_SCENE_KEYS = frozenset(
 _SCORE_FIELDS = (
     "evidence_strength",
     "emotional_tension",
-    "meijian_fit_and_exclusivity",
+    "brand_fit_and_exclusivity",
     "competitor_difference",
     "scene_conversion",
 )

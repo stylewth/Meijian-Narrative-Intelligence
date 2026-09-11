@@ -4,7 +4,7 @@ from datetime import datetime
 import re
 from typing import Literal, TypeAlias
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 from src.string_enum import StringEnum
 
@@ -22,6 +22,7 @@ def _validate_sha256_values(values: dict[str, str]) -> dict[str, str]:
 
 class SampleType(StringEnum):
     MEIJIAN_FEEDBACK = "梅见反馈"
+    TARGET_BRAND_FEEDBACK = "目标品牌反馈"
     COMPETITOR_FEEDBACK = "竞品反馈"
     DRINKING_EMOTION = "饮酒情绪"
     SCENE_NEED = "场景需求"
@@ -303,6 +304,7 @@ _SPECIFICITY_PATCH_FIELDS = (
     "target_audience",
     "user_conflict",
     "brand_opportunity",
+    "why_brand",
     "why_meijian",
     "competitor_difference",
     "brand_role",
@@ -353,6 +355,7 @@ class SpecificityFieldPatch(StrictBaseModel):
         "target_audience",
         "user_conflict",
         "brand_opportunity",
+        "why_brand",
         "why_meijian",
         "competitor_difference",
         "brand_role",
@@ -388,7 +391,10 @@ class CandidateSpecificityAudit(StrictBaseModel):
     candidate_version: int = Field(ge=1)
     findings: list[SpecificityFinding] = Field(min_length=len(SpecificityAuditType))
     consumer_evidence: list[str]
-    meijian_assets: list[str]
+    brand_assets: list[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("brand_assets", "meijian_assets"),
+    )
     competitor_replacement_result: str = Field(min_length=1)
     product_delivery_conditions: list[str]
     applicable_scenarios: list[str]
@@ -451,6 +457,7 @@ class SpecificityFieldDiff(StrictBaseModel):
         "target_audience",
         "user_conflict",
         "brand_opportunity",
+        "why_brand",
         "why_meijian",
         "competitor_difference",
         "brand_role",
@@ -1048,7 +1055,12 @@ class SingleCommentAnalysis(StrictBaseModel):
     real_emotion: str = Field(min_length=1)
     core_conflict: str = Field(min_length=1)
     main_concerns: list[str] = Field(min_length=1)
-    local_implication_for_meijian: str = Field(min_length=1)
+    local_implication_for_brand: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices(
+            "local_implication_for_brand", "local_implication_for_meijian"
+        ),
+    )
     evidence_quotes: list[EvidenceQuote] = Field(min_length=1)
     uncertainty: str | None = None
 
@@ -1071,7 +1083,12 @@ class EmotionalConflict(StrictBaseModel):
     supporting_evidence: list[EvidenceQuote] = Field(min_length=1)
     counter_evidence: list[EvidenceQuote] = Field(default_factory=list)
     counter_evidence_note: str | None = None
-    implication_for_meijian: str = Field(min_length=1)
+    implication_for_brand: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices(
+            "implication_for_brand", "implication_for_meijian"
+        ),
+    )
 
     @model_validator(mode="after")
     def explain_missing_counter_evidence(self) -> "EmotionalConflict":
@@ -1086,8 +1103,14 @@ class FeedbackCluster(StrictBaseModel):
 
 
 class BrandFeedbackComparison(StrictBaseModel):
-    meijian_positive: list[FeedbackCluster] = Field(default_factory=list)
-    meijian_negative: list[FeedbackCluster] = Field(default_factory=list)
+    brand_positive: list[FeedbackCluster] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("brand_positive", "meijian_positive"),
+    )
+    brand_negative: list[FeedbackCluster] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("brand_negative", "meijian_negative"),
+    )
     competitor_positive: list[FeedbackCluster] = Field(default_factory=list)
     competitor_negative: list[FeedbackCluster] = Field(default_factory=list)
 
@@ -1123,7 +1146,11 @@ class ScoreItem(StrictBaseModel):
 class CandidateScores(StrictBaseModel):
     evidence_strength: ScoreItem
     emotional_tension: ScoreItem
-    meijian_fit_and_exclusivity: ScoreItem
+    brand_fit_and_exclusivity: ScoreItem = Field(
+        validation_alias=AliasChoices(
+            "brand_fit_and_exclusivity", "meijian_fit_and_exclusivity"
+        )
+    )
     competitor_difference: ScoreItem
     scene_conversion: ScoreItem
 
@@ -1136,7 +1163,10 @@ class NarrativeCandidate(StrictBaseModel):
     target_audience: str = Field(min_length=1)
     user_conflict: str = Field(min_length=1)
     brand_opportunity: str = Field(min_length=1)
-    why_meijian: str = Field(min_length=1)
+    why_brand: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices("why_brand", "why_meijian"),
+    )
     competitor_difference: str = Field(min_length=1)
     brand_role: str = Field(min_length=1)
     draft_proposition: str = Field(min_length=1)
@@ -1889,7 +1919,9 @@ class FinalNarrativeReport(StrictBaseModel):
     brand_worldview: str
     brand_role: str
     brand_proposition: str
-    why_meijian: str
+    why_brand: str = Field(
+        validation_alias=AliasChoices("why_brand", "why_meijian")
+    )
     core_scenes: list[str]
     content_themes: list[str]
     campaign_idea: str

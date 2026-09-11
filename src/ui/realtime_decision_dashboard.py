@@ -487,7 +487,7 @@ class AttributionProjection:
 _DIMENSION_LABELS = {
     "evidence_strength": "证据充分度",
     "emotional_tension": "情绪冲突张力",
-    "meijian_fit_and_exclusivity": "梅见适配与独占性",
+    "brand_fit_and_exclusivity": "品牌适配与独占性",
     "competitor_difference": "竞品差异度",
     "scene_conversion": "场景转化能力",
 }
@@ -666,6 +666,11 @@ def build_checkpoint_detail(
         raise ValueError(f"检查点缺少候选 {candidate_id}")
 
     scores = getattr(candidate, "scores", None)
+    if isinstance(scores, dict) and "meijian_fit_and_exclusivity" in scores:
+        scores = {
+            **scores,
+            "brand_fit_and_exclusivity": scores.pop("meijian_fit_and_exclusivity"),
+        }
     if not isinstance(scores, dict) or set(scores) != set(_DIMENSION_LABELS):
         raise ValueError(f"候选 {candidate_id} 的五维 scores 不完整")
     dimensions = []

@@ -37,6 +37,7 @@ ALLOWED_NARRATIVE_PATCH_FIELDS = frozenset(
         "target_audience",
         "user_conflict",
         "brand_opportunity",
+        "why_brand",
         "why_meijian",
         "competitor_difference",
         "brand_role",
