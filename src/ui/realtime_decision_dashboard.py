@@ -501,7 +501,7 @@ _INITIAL_RATIONALE_TRANSLATIONS = {
         "Choice overload, worry about wasting money, and contradictory taste reviews create solid emotional tension around choosing the right bottle.",
         "选择太多、担心花冤枉钱，以及彼此矛盾的口味评价，共同形成了“如何选对一瓶”的明确情绪张力。",
     ),
-    ("EC-ADD-01-口味图鉴", "meijian_fit_and_exclusivity"): (
+    ("EC-ADD-01-口味图鉴", "brand_fit_and_exclusivity"): (
         "The pain point is tied directly to Meijian's multiple SKUs and users' first-purchase decisions; an official guide could be distinctive, but it is not built and competitors may offer similar flavor navigation.",
         "这一痛点直接来自梅见多款产品与用户首次购买时的选择困难；官方图鉴可能形成特色，但目前尚未制作，竞品也可能提供类似的口味导航。",
     ),
@@ -521,7 +521,7 @@ _INITIAL_RATIONALE_TRANSLATIONS = {
         "The 'is it blended?' distrust and worry about safety/health create high emotional stakes and the strongest tension in the set.",
         "“是不是勾兑的”这类不信任，以及对安全与健康的担忧，形成了很强的情绪压力，是本组候选中张力最强的一项。",
     ),
-    ("EC-ADD-02-梅见溯源记", "meijian_fit_and_exclusivity"): (
+    ("EC-ADD-02-梅见溯源记", "brand_fit_and_exclusivity"): (
         "Directly targets a core Meijian suspicion and leverages wine-cellar/craft imagery that could feel distinctive; exclusivity is limited because competitors can also use craft-transparency narratives and the traceability is unverified.",
         "直接回应梅见面临的核心质疑，并借助酒窖与酿造工艺画面形成品牌感；但竞品同样可以讲工艺透明，且追溯能力尚未核实，因此专属度受限。",
     ),
@@ -541,7 +541,7 @@ _INITIAL_RATIONALE_TRANSLATIONS = {
         "Real tension between wanting private micro-drinking and avoiding social judgement or pressure, but expressed in a lighter, everyday tone rather than high-stakes conflict.",
         "想独自小酌，又想避开他人评价与社交压力，构成了真实矛盾；但整体更偏轻松日常，不是高强度冲突。",
     ),
-    ("EC-03-双容量双剧本", "meijian_fit_and_exclusivity"): (
+    ("EC-03-双容量双剧本", "brand_fit_and_exclusivity"): (
         "Both capacities and usage contexts appear in Meijian user feedback, making brand fit strong; exclusivity is limited by the acknowledged RIO ownership of solo-drinking occasions and unverified product availability.",
         "两种容量与使用情境都出现在梅见用户反馈中，品牌契合度较强；但独饮场景已被锐澳占据，且产品供应未核实，因此专属度有限。",
     ),
