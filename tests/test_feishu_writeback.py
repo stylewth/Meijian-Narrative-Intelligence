@@ -650,6 +650,47 @@ def test_worker_records_real_completion_feedback_for_dynamic_job(tmp_path):
     assert store.pending_feedback_jobs() == []
 
 
+def test_feedback_loop_consumes_success_without_sending_a_card(tmp_path):
+    from tools.run_feishu_bot import WritebackFeedbackLoop
+    from src.integrations.feishu.writeback_targets import WritebackTarget
+
+    store = WritebackStore(tmp_path / "wb.sqlite3")
+    target = WritebackTarget(
+        table_key="RUN_LOG",
+        app_token="app_demo",
+        table_id="tbl_demo",
+        field_names=tuple(DYNAMIC_RUN_LOG_FIELDS),
+        table_url="https://demo.feishu.cn/base/app_demo?table=tbl_demo",
+    )
+    job = store.enqueue(
+        "run-1",
+        table_key="RUN_LOG",
+        record_kind="RUN_LOG",
+        fields=_sample_fields(),
+        demo_run_id="demo-a",
+        event_key="success:1:log",
+        target=target,
+    )
+    now = datetime(2026, 9, 9, 8, 30, tzinfo=timezone.utc)
+    store.claim_next_writeback(now)
+    store.mark_wrote(job.job_id, record_id="rec_1", written_at=now)
+    store.enqueue_terminal_feedback(job.job_id)
+
+    class FakeCardClient:
+        def __init__(self) -> None:
+            self.cards = []
+
+        def send_card(self, chat_id, card, *, uuid):
+            self.cards.append((chat_id, card, uuid))
+            return "message-1"
+
+    client = FakeCardClient()
+    WritebackFeedbackLoop(store, client, "oc_demo")._tick()
+
+    assert client.cards == []
+    assert store.pending_feedback_jobs() == []
+
+
 def test_feedback_loop_reports_actual_write_and_can_retry_failure(tmp_path):
     from tools.run_feishu_bot import (
         WritebackFeedbackLoop,

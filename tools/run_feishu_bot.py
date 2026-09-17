@@ -718,18 +718,17 @@ class WritebackFeedbackLoop:
 
     def _tick(self) -> None:
         for job in self._store.pending_feedback_jobs():
+            if job.status == "WROTE":
+                self._store.mark_feedback_sent(job.job_id)
+                continue
+
             jobs = self._store.jobs_for_demo_run(job.demo_run_id or "")
             wrote = sum(item.status == "WROTE" for item in jobs)
             total = len(jobs)
             table_label = "日志表" if job.table_key == "RUN_LOG" else "结果表"
-            if job.status == "WROTE":
-                title = "飞书写回完成"
-                template = "turquoise"
-                status_line = f"本轮实际已写入：{wrote}/{total} 条"
-            else:
-                title = "飞书写回失败"
-                template = "red"
-                status_line = f"本轮实际已写入：{wrote}/{total} 条；当前记录失败"
+            title = "飞书写回失败"
+            template = "red"
+            status_line = f"本轮实际已写入：{wrote}/{total} 条；当前记录失败"
             content = (
                 f"demo_run_id：{job.demo_run_id}\n"
                 f"当前记录：{table_label} · {job.record_kind}\n"
